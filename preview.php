@@ -73,16 +73,25 @@ if (!$fullPath || !$baseUploadDir || strpos($fullPath, $baseUploadDir) !== 0 || 
 
 $ext = strtolower(pathinfo($targetFileName, PATHINFO_EXTENSION));
 
-// Map correct MIME types for inline preview
+// Serve all supported formats with correct MIME types for both inline preview and JS-based viewers
 $mimeTypes = [
     'pdf'  => 'application/pdf',
     'png'  => 'image/png',
     'jpg'  => 'image/jpeg',
     'jpeg' => 'image/jpeg',
     'txt'  => 'text/plain; charset=utf-8',
+    'csv'  => 'text/csv; charset=utf-8',
+    'doc'  => 'application/msword',
+    'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'xls'  => 'application/vnd.ms-excel',
+    'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'ppt'  => 'application/vnd.ms-powerpoint',
+    'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'zip'  => 'application/zip',
 ];
 
-$mimeType = $mimeTypes[$ext] ?? ($doc['file_type'] ?: 'application/octet-stream');
+// Fallback: if file type is a valid MIME string use it, otherwise serve as binary stream
+$mimeType = $mimeTypes[$ext] ?? (str_contains((string)$doc['file_type'], '/') ? $doc['file_type'] : 'application/octet-stream');
 
 // Clean output buffer before streaming
 if (ob_get_level()) {
@@ -95,7 +104,8 @@ header('Content-Type: ' . $mimeType);
 header('Content-Disposition: inline; filename="' . $cleanFileName . '"');
 header('Content-Length: ' . filesize($fullPath));
 header('Cache-Control: private, max-age=3600');
-header("Content-Security-Policy: default-src 'self'; object-src 'self' blob:; frame-ancestors 'self';");
+header("X-Frame-Options: SAMEORIGIN");
+header("Content-Security-Policy: frame-ancestors 'self';");
 
 readfile($fullPath);
 exit;

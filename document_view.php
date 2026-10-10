@@ -338,7 +338,7 @@ include __DIR__ . '/includes/header.php';
                         The uploaded file for this record is missing from storage (uploaded before persistent volume was attached). Please upload a new version to attach the file and enable preview.
                     </p>
                     <?php if ($canEdit): ?>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="openNewVersionModal()">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('versionModal').classList.add('open')">
                         <i data-lucide="upload"></i> Upload New Version
                     </button>
                     <?php endif; ?>
@@ -724,7 +724,7 @@ include __DIR__ . '/includes/header.php';
                     </div>
                 </div>
 
-                <input type="file" id="verFileInput" name="new_version_file" required style="display:none;"
+                <input type="file" id="verFileInput" name="new_version_file" style="display:none;"
                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.zip">
                 <input type="file" id="verFolderInput" style="display:none;" webkitdirectory directory multiple>
             </div>
