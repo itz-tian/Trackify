@@ -95,6 +95,7 @@ header('Content-Type: ' . $mimeType);
 header('Content-Disposition: inline; filename="' . $cleanFileName . '"');
 header('Content-Length: ' . filesize($fullPath));
 header('Cache-Control: private, max-age=3600');
+header("Content-Security-Policy: default-src 'self'; object-src 'self' blob:; frame-ancestors 'self';");
 
 readfile($fullPath);
 exit;

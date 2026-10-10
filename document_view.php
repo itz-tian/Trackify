@@ -345,16 +345,32 @@ include __DIR__ . '/includes/header.php';
                 </div>
 
                 <?php elseif ($ext === 'pdf'): ?>
-                <!-- PDF Interactive Inline Preview -->
+                <!-- PDF Interactive Inline Preview with Mobile / Plugin Fallback -->
                 <div style="position:relative; width:100%; border-radius:10px; overflow:hidden; border:1px solid var(--border-hairline); background:#525659;">
-                    <iframe src="<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>#toolbar=1&navpanes=0"
+                    <object data="<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>#toolbar=1&navpanes=0"
+                            type="application/pdf"
                             class="doc-preview-iframe"
+                            style="width:100%; min-height:560px; display:block;"
                             title="PDF Preview: <?= htmlspecialchars(doc_title($doc['title'], $doc['reference_number'] ?? null)) ?>">
-                        <p style="padding:20px; text-align:center; color:#fff;">
-                            Your browser does not support inline PDF viewing. 
-                            <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" style="color:#64d2ff;">Click here to download the file.</a>
-                        </p>
-                    </iframe>
+                        <!-- Graceful mobile / plugin fallback -->
+                        <div style="padding:48px 20px; text-align:center; color:var(--text-primary); background:var(--bg-card-subtle);">
+                            <div style="width:52px; height:52px; border-radius:14px; background:rgba(0,113,227,0.12); color:var(--apple-blue); display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                                <i data-lucide="file-text" style="width:28px; height:28px;"></i>
+                            </div>
+                            <h4 style="font-size:15px; font-weight:600; margin-bottom:6px; color:var(--text-primary);">Mobile PDF Viewer</h4>
+                            <p class="text-muted text-sm" style="max-width:360px; margin:0 auto 16px; line-height:1.5;">
+                                Mobile browsers do not support rendering PDFs directly inside embedded frames. Tap below to view full screen or download.
+                            </p>
+                            <div style="display:inline-flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                                <a href="<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>" target="_blank" class="btn btn-primary btn-sm">
+                                    <i data-lucide="external-link"></i> Open Full Screen
+                                </a>
+                                <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm">
+                                    <i data-lucide="download"></i> Download PDF
+                                </a>
+                            </div>
+                        </div>
+                    </object>
                 </div>
 
                 <?php elseif (in_array($ext, ['png', 'jpg', 'jpeg'])): ?>
@@ -616,13 +632,43 @@ include __DIR__ . '/includes/header.php';
             <div class="modal-title"><i data-lucide="upload-cloud" style="color:var(--apple-blue); margin-right:6px;"></i> Upload New Document Version</div>
             <button type="button" class="modal-close" onclick="document.getElementById('versionModal').classList.remove('open')">×</button>
         </div>
-        <form method="POST" enctype="multipart/form-data">
+        <form method="POST" enctype="multipart/form-data" id="versionForm">
             <?= csrf_field() ?>
             <input type="hidden" name="upload_version" value="1">
             <div class="form-group">
-                <label>Select New File <span style="color:var(--apple-red); font-weight:700;">*</span></label>
-                <input type="file" name="new_version_file" required style="padding:10px; background:var(--bg-card-subtle); border-radius:8px; width:100%; border:1px solid var(--border-card);">
-                <div class="text-muted text-sm" style="margin-top:4px;">Supported: PDF, Word, Excel, PPT, Text, Images, ZIP. Max 20MB. Current version is v<?= $doc['version'] ?>.</div>
+                <label>Select New File or Folder <span style="color:var(--apple-red); font-weight:700;">*</span></label>
+                <div class="apple-dropzone" id="verDropZone" style="padding:20px; border:2px dashed var(--border-card); border-radius:12px; text-align:center; background:var(--bg-card-subtle); cursor:pointer;">
+                    <div style="font-weight:600; font-size:13.5px; color:var(--text-primary); margin-bottom:4px;">
+                        Choose a file or select a folder
+                    </div>
+                    <div class="text-muted text-sm" style="margin-bottom:12px;">
+                        Supported: PDF, Word, Excel, PPT, Text, Images, ZIP. Folders will be automatically packaged into a .ZIP file. Max 20MB. Current version is v<?= $doc['version'] ?>.
+                    </div>
+                    <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;" onclick="event.stopPropagation();">
+                        <button type="button" class="btn btn-outline btn-sm" id="verChooseFileBtn"><i data-lucide="file-up"></i> Choose File</button>
+                        <button type="button" class="btn btn-outline btn-sm" id="verChooseFolderBtn"><i data-lucide="folder-up"></i> Choose Folder</button>
+                    </div>
+                    <div id="verFolderHint" class="text-muted text-sm" style="display:none; margin-top:9px;"></div>
+
+                    <!-- Progress indicator while zipping folder -->
+                    <div id="verZipProgress" style="display:none; margin-top:12px; font-size:12.5px; color:var(--apple-blue); font-weight:500;">
+                        <i data-lucide="loader-circle" class="icon-spin"></i> Compressing folder into ZIP archive…
+                    </div>
+
+                    <!-- Selected file preview capsule -->
+                    <div id="verFilePreview" style="display:none; margin-top:12px; align-items:center; justify-content:center; gap:8px;">
+                        <span style="display:inline-flex; align-items:center; gap:6px; background:rgba(0,113,227,0.12); color:var(--apple-blue); font-weight:600; font-size:12px; padding:5px 12px; border-radius:var(--radius-pill);">
+                            <i data-lucide="file-check"></i> <span id="verFileName">File</span> (<span id="verFileSize">0 KB</span>)
+                        </span>
+                        <button type="button" id="verRemoveFileBtn" onclick="event.stopPropagation(); resetVerFile();" style="border:none; background:rgba(0,0,0,0.06); width:24px; height:24px; border-radius:50%; cursor:pointer; color:var(--text-secondary); display:inline-flex; align-items:center; justify-content:center;">
+                            <i data-lucide="x" style="font-size:11px;"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <input type="file" id="verFileInput" name="new_version_file" required style="display:none;"
+                       accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.zip">
+                <input type="file" id="verFolderInput" style="display:none;" webkitdirectory directory multiple>
             </div>
             <div class="form-group">
                 <label>Update Status When Uploading</label>
@@ -641,7 +687,7 @@ include __DIR__ . '/includes/header.php';
             </div>
             <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
                 <button type="button" class="btn btn-outline" onclick="document.getElementById('versionModal').classList.remove('open')">Cancel</button>
-                <button type="submit" class="btn btn-primary">Upload v<?= $doc['version'] + 1 ?></button>
+                <button type="submit" id="verSubmitBtn" class="btn btn-primary">Upload v<?= $doc['version'] + 1 ?></button>
             </div>
         </form>
     </div>
@@ -721,5 +767,204 @@ include __DIR__ . '/includes/header.php';
         </form>
     </div>
 </div>
+
+<script src="<?= APP_URL ?>/assets/js/jszip.min.js"></script>
+<script>
+(function() {
+    const verForm         = document.getElementById('versionForm');
+    const verDropZone     = document.getElementById('verDropZone');
+    const verFileInput    = document.getElementById('verFileInput');
+    const verFolderInput  = document.getElementById('verFolderInput');
+    const verChooseFileBtn = document.getElementById('verChooseFileBtn');
+    const verChooseFolderBtn = document.getElementById('verChooseFolderBtn');
+    const verFilePreview  = document.getElementById('verFilePreview');
+    const verFileName     = document.getElementById('verFileName');
+    const verFileSize     = document.getElementById('verFileSize');
+    const verZipProgress  = document.getElementById('verZipProgress');
+    const verFolderHint   = document.getElementById('verFolderHint');
+    const verSubmitBtn    = document.getElementById('verSubmitBtn');
+
+    let isZipping = false;
+
+    function formatBytes(bytes) {
+        if (!bytes) return '0 B';
+        const units = ['B','KB','MB','GB'];
+        const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+        return (bytes / Math.pow(1024, i)).toFixed(i ? 2 : 0) + ' ' + units[i];
+    }
+
+    function setInputFiles(input, fileList) {
+        try {
+            const dt = new DataTransfer();
+            fileList.forEach(f => dt.items.add(f));
+            input.files = dt.files;
+        } catch (e) {
+            console.error('DataTransfer assignment failed:', e);
+        }
+    }
+
+    window.resetVerFile = function() {
+        isZipping = false;
+        verFileInput.value = '';
+        verFolderInput.value = '';
+        if (verFilePreview) verFilePreview.style.display = 'none';
+        if (verFolderHint) verFolderHint.style.display = 'none';
+        if (verZipProgress) verZipProgress.style.display = 'none';
+        if (verSubmitBtn) verSubmitBtn.disabled = false;
+        if (verDropZone) verDropZone.style.borderColor = 'var(--border-card)';
+    };
+
+    function showSelectedFile(file, note) {
+        if (!file) return;
+        if (verFileName) verFileName.textContent = file.name;
+        if (verFileSize) verFileSize.textContent = formatBytes(file.size);
+        if (verFilePreview) verFilePreview.style.display = 'inline-flex';
+        if (note && verFolderHint) {
+            verFolderHint.innerHTML = note;
+            verFolderHint.style.display = 'block';
+        } else if (verFolderHint) {
+            verFolderHint.style.display = 'none';
+        }
+        if (window.lucide) lucide.createIcons();
+    }
+
+    verDropZone?.addEventListener('click', () => verFileInput.click());
+    verChooseFileBtn?.addEventListener('click', (e) => { e.stopPropagation(); verFileInput.click(); });
+    verChooseFolderBtn?.addEventListener('click', (e) => { e.stopPropagation(); verFolderInput.click(); });
+
+    verFileInput?.addEventListener('change', () => {
+        verFolderInput.value = '';
+        if (verFileInput.files && verFileInput.files.length) {
+            showSelectedFile(verFileInput.files[0]);
+        } else {
+            resetVerFile();
+        }
+    });
+
+    verFolderInput?.addEventListener('change', async () => {
+        const rawFiles = Array.from(verFolderInput.files || []);
+        if (!rawFiles.length) {
+            resetVerFile();
+            return;
+        }
+
+        let folderName = 'archive';
+        const firstPath = rawFiles[0].webkitRelativePath || rawFiles[0].name;
+        const parts = firstPath.split(/[\\/]/);
+        if (parts.length > 1 && parts[0].trim() !== '') {
+            folderName = parts[0].trim();
+        }
+
+        if (typeof JSZip === 'undefined') {
+            alert('Folder compression is currently unavailable because the ZIP library could not load. Please upload a file directly.');
+            return;
+        }
+
+        const allowedExts = new Set(['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','png','jpg','jpeg','zip']);
+        const supportedFiles = rawFiles.filter(f => {
+            const ext = f.name.toLowerCase().split('.').pop();
+            return allowedExts.has(ext);
+        });
+        const skippedFiles = rawFiles.filter(f => !supportedFiles.includes(f));
+
+        if (!supportedFiles.length) {
+            alert('The selected folder does not contain any supported documents (PDF, Word, Excel, PPT, Text, Images, ZIP).');
+            resetVerFile();
+            return;
+        }
+
+        try {
+            isZipping = true;
+            if (verSubmitBtn) verSubmitBtn.disabled = true;
+            if (verZipProgress) {
+                verZipProgress.style.display = 'block';
+                if (window.lucide) lucide.createIcons();
+            }
+            if (verFolderHint) {
+                verFolderHint.style.display = 'block';
+                verFolderHint.textContent = `Packaging ${supportedFiles.length} file(s) from "${folderName}" into a ZIP archive…`;
+            }
+
+            const zip = new JSZip();
+            for (const file of supportedFiles) {
+                const relPath = file.webkitRelativePath || file.name;
+                zip.file(relPath, file);
+            }
+
+            const zipBlob = await zip.generateAsync({
+                type: 'blob',
+                compression: 'DEFLATE',
+                compressionOptions: { level: 6 }
+            });
+
+            const zipFile = new File([zipBlob], `${folderName}.zip`, { type: 'application/zip' });
+            setInputFiles(verFileInput, [zipFile]);
+            verFolderInput.value = '';
+
+            if (verZipProgress) verZipProgress.style.display = 'none';
+            if (verSubmitBtn) verSubmitBtn.disabled = false;
+            isZipping = false;
+
+            let note = `<i data-lucide="archive" style="display:inline; width:13px; height:13px;"></i> Folder "<strong>${folderName}</strong>" compressed into <code>${folderName}.zip</code> (${supportedFiles.length} files).`;
+            if (skippedFiles.length) {
+                note += `<br><span style="color:var(--apple-orange);">${skippedFiles.length} unsupported file(s) skipped.</span>`;
+            }
+            showSelectedFile(zipFile, note);
+        } catch (err) {
+            console.error('Error zipping folder in version modal:', err);
+            if (verZipProgress) verZipProgress.style.display = 'none';
+            if (verSubmitBtn) verSubmitBtn.disabled = false;
+            isZipping = false;
+            alert('Could not compress the selected folder into a ZIP archive.');
+            resetVerFile();
+        }
+    });
+
+    // Drag and drop into version modal dropzone
+    ['dragenter', 'dragover'].forEach(name => {
+        verDropZone?.addEventListener(name, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            verDropZone.style.borderColor = 'var(--apple-blue)';
+        });
+    });
+
+    ['dragleave', 'dragend', 'drop'].forEach(name => {
+        verDropZone?.addEventListener(name, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            verDropZone.style.borderColor = 'var(--border-card)';
+        });
+    });
+
+    verDropZone?.addEventListener('drop', (e) => {
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+            try {
+                verFileInput.files = e.dataTransfer.files;
+            } catch (err) {}
+            showSelectedFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    verForm?.addEventListener('submit', function(e) {
+        if (isZipping) {
+            e.preventDefault();
+            alert('Please wait until the folder finishes compressing into a ZIP file.');
+            return false;
+        }
+        if (!verFileInput.files || !verFileInput.files.length) {
+            e.preventDefault();
+            alert('Please select a file or folder for the new document version.');
+            return false;
+        }
+        const maxBytes = 20 * 1024 * 1024;
+        if (verFileInput.files[0].size > maxBytes) {
+            e.preventDefault();
+            alert(`The chosen file is ${formatBytes(verFileInput.files[0].size)}, exceeding the 20MB limit.`);
+            return false;
+        }
+    });
+})();
+</script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

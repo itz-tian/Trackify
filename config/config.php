@@ -134,8 +134,8 @@ function send_security_headers(): void {
     }
 
     // Content Security Policy — 'unsafe-inline' required because the app uses inline <script>/<style>.
-    // Once scripts are moved to external files, 'unsafe-inline' can be removed for stronger protection.
-    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';");
+    // object-src and frame-src 'self' blob: allow browser PDF plugins and frames to render documents.
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; object-src 'self' blob:; frame-src 'self' blob:; base-uri 'self'; form-action 'self';");
 }
 
 send_security_headers();
