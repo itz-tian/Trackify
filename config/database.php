@@ -34,6 +34,8 @@ class Database {
                         if (file_exists($schemaPath)) {
                             $sql = file_get_contents($schemaPath);
                             $sql = preg_replace('/^\s*--.*$/m', '', $sql);
+                            // Strip CREATE DATABASE and USE statements — the DB already exists on Railway
+                            $sql = preg_replace('/^\s*(CREATE\s+DATABASE|USE)\s+[^\n;]+;?\s*$/im', '', $sql);
                             $statements = array_filter(array_map('trim', explode(';', $sql)));
                             foreach ($statements as $stmt) {
                                 if ($stmt !== '') $pdo->exec($stmt);

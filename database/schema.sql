@@ -1,8 +1,5 @@
 -- Database Schema
 
-CREATE DATABASE IF NOT EXISTS dms_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE dms_db;
-
 -- Departments
 CREATE TABLE departments (
     id INT AUTO_INCREMENT PRIMARY KEY,
