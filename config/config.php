@@ -45,10 +45,22 @@ define('BCRYPT_COST', 12);
 // Default days allowed for a document approval decision (used by the calendar).
 if (!defined('APPROVAL_SLA_DAYS')) define('APPROVAL_SLA_DAYS', 7);
 
+// ── HTTPS & Reverse Proxy Detection ──────────────────────────────────────────
+if (!function_exists('is_https_request')) {
+    function is_https_request(): bool {
+        if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') return true;
+        if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') return true;
+        if (isset($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) === 'on') return true;
+        if (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443) return true;
+        return false;
+    }
+}
+
 // ── APP_URL — fully automatic, no hardcoded folder name ──────────────────────
-// Works whether the app lives at the root of a domain or inside a subfolder.
+// Works whether the app lives at the root of a domain or inside a subfolder,
+// and correctly detects HTTPS when running behind reverse proxies (Railway, Cloudflare, etc.).
 if (!defined('APP_URL')) {
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $protocol = is_https_request() ? 'https' : 'http';
     $host     = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
     // Derive the subfolder path by comparing the real app root to the document root.
@@ -83,7 +95,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/',
-        'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'secure'   => is_https_request(),
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
@@ -113,7 +125,7 @@ function send_security_headers(): void {
     header('X-XSS-Protection: 1; mode=block');
 
     // HSTS: tell browsers to always use HTTPS for the next year (HTTPS-only servers).
-    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+    if (is_https_request()) {
         header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
     }
 
