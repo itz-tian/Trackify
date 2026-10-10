@@ -64,7 +64,10 @@ class Database {
 
             if (self::$instance === null) {
                 $err = $lastException ? $lastException->getMessage() : 'Unknown database error';
-                $details = "Host: " . DB_HOST . ":" . (defined('DB_PORT') ? DB_PORT : '3306') . " | User: " . DB_USER . " | Database: " . DB_NAME . "\nError: " . $err;
+                $availableKeys = array_keys(array_merge($_SERVER, $_ENV, getenv()));
+                $dbKeys = array_filter($availableKeys, fn($k) => stripos($k, 'mysql') !== false || stripos($k, 'db') !== false || stripos($k, 'database') !== false || stripos($k, 'host') !== false);
+                $foundStr = !empty($dbKeys) ? implode(', ', $dbKeys) : 'NONE';
+                $details = "Host: " . DB_HOST . ":" . (defined('DB_PORT') ? DB_PORT : '3306') . " | User: " . DB_USER . " | Database: " . DB_NAME . "\nDetected DB Env Keys: [" . $foundStr . "]\nError: " . $err;
                 $msg = htmlspecialchars($details);
                 http_response_code(500);
                 die('<!DOCTYPE html><html><head><meta charset="UTF-8">
