@@ -1,0 +1,12 @@
+<?php
+require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/classes/Auth.php';
+$auth=new Auth();$auth->requireLogin();$db=Database::getInstance();
+$where='d.deleted_at IS NULL AND d.expires_at IS NOT NULL';$params=[];
+$role=$_SESSION['user_role'] ?? 'staff'; $dept=(int)($_SESSION['user_dept'] ?? 0);
+if ($role === 'viewer') { $where .= " AND d.status='approved'"; } elseif ($role !== 'admin') { $where .= ' AND d.department_id=?'; $params[]=$dept; }
+$stmt=$db->prepare("SELECT d.id,d.title,d.reference_number,d.expires_at,d.status,c.name category_name,dep.name department_name FROM documents d LEFT JOIN categories c ON d.category_id=c.id LEFT JOIN departments dep ON d.department_id=dep.id WHERE $where ORDER BY d.expires_at ASC");$stmt->execute($params);$docs=$stmt->fetchAll();include __DIR__.'/includes/header.php'; ?>
+<div class="card"><div class="card-header"><span class="card-title"><i data-lucide="calendar-clock" style="color:var(--apple-orange);margin-right:8px;"></i>Document Deadlines</span><span class="text-muted text-sm">Expiration monitoring</span></div><div class="table-wrap"><table><thead><tr><th>Reference</th><th>Document</th><th>Department</th><th>Deadline</th><th>Status</th><th>Remaining</th></tr></thead><tbody>
+<?php if(!$docs): ?><tr><td colspan="6" class="text-center text-muted" style="padding:45px;">No document deadlines found.</td></tr><?php else: foreach($docs as $d): $days=(int)floor((strtotime($d['expires_at'])-strtotime(date('Y-m-d')))/86400); $expired=$days<0; ?><tr><td class="text-sm fw-600"><?= htmlspecialchars($d['reference_number']??'—') ?></td><td><a href="<?= APP_URL ?>/document_view.php?id=<?= (int)$d['id'] ?>" style="color:var(--text-primary);text-decoration:none;font-weight:600;"><?= htmlspecialchars(doc_title($d['title'], $d['reference_number'] ?? null)) ?></a><div class="text-sm text-muted"><?= htmlspecialchars($d['category_name']??'—') ?></div></td><td class="text-sm"><?= htmlspecialchars($d['department_name']??'—') ?></td><td class="text-sm"><?= date('M d, Y',strtotime($d['expires_at'])) ?></td><td class="text-sm"><?= ucfirst(str_replace('_',' ',$d['status'])) ?></td><td><?php [$dlClass,$dlLabel]=deadline_badge($days); ?><span class="badge <?= $dlClass ?>"><?= $dlLabel ?></span></td></tr><?php endforeach; endif; ?>
+</tbody></table></div></div><?php include __DIR__.'/includes/footer.php'; ?>
