@@ -63,7 +63,9 @@ class Database {
             }
 
             if (self::$instance === null) {
-                $msg = htmlspecialchars($lastException ? $lastException->getMessage() : 'Unknown database error');
+                $err = $lastException ? $lastException->getMessage() : 'Unknown database error';
+                $details = "Host: " . DB_HOST . ":" . (defined('DB_PORT') ? DB_PORT : '3306') . " | User: " . DB_USER . " | Database: " . DB_NAME . "\nError: " . $err;
+                $msg = htmlspecialchars($details);
                 http_response_code(500);
                 die('<!DOCTYPE html><html><head><meta charset="UTF-8">
                 <title>DocuTrack — Database Setup Required</title>
