@@ -135,8 +135,8 @@ function send_security_headers(): void {
 
     // Content Security Policy — 'unsafe-inline' required because the app uses inline <script>/<style>.
     // object-src and frame-src 'self' blob: allow browser PDF plugins and frames to render documents.
-    // worker-src blob: is required for PDF.js Web Worker which renders pages off the main thread.
-    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; object-src 'self' blob:; frame-src 'self' blob:; worker-src blob:; connect-src 'self'; base-uri 'self'; form-action 'self';");
+    // worker-src 'self' blob: is required for PDF.js Web Worker which renders pages off the main thread.
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; object-src 'self' blob:; frame-src 'self' blob:; worker-src 'self' blob:; connect-src 'self'; base-uri 'self'; form-action 'self';");
 }
 
 send_security_headers();

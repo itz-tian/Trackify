@@ -409,20 +409,75 @@ include __DIR__ . '/includes/header.php';
                 </div>
 
                 <?php elseif (in_array($ext, ['xls', 'xlsx'])): ?>
-                <!-- Spreadsheet Interactive Table Viewer -->
+                <!-- Excel-Styled Interactive Spreadsheet Grid Viewer -->
                 <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card);">
                     <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
                         <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
-                            <i data-lucide="file-spreadsheet" style="color:var(--apple-green); width:18px; height:18px;"></i>
-                            Spreadsheet Preview
+                            <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; background:#107c41; color:#fff; border-radius:4px; font-size:12px; font-weight:700;">X</span>
+                            <span>Excel Spreadsheet View</span>
+                            <span id="xlsxGridMetaBadge" class="badge" style="background:rgba(16,124,65,0.12); color:#107c41; font-size:11px; padding:2px 8px; border-radius:10px; display:none;"></span>
                         </div>
-                        <div id="xlsxSheetsContainer" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div id="xlsxSheetsContainer" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
+                            <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm">
+                                <i data-lucide="download"></i> Download .<?= $ext ?>
+                            </a>
+                        </div>
                     </div>
                     <div id="xlsxLoading" style="text-align:center; padding:40px; color:var(--text-secondary);">
-                        <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px; color:var(--apple-green);"></i>
-                        <div>Loading spreadsheet data…</div>
+                        <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px; color:#107c41;"></i>
+                        <div>Building spreadsheet grid…</div>
                     </div>
-                    <div id="xlsxTableWrapper" style="overflow:auto; max-height:550px; padding:12px;"></div>
+                    <div id="xlsxTableWrapper" style="overflow:auto; max-height:580px; padding:0; background:var(--bg-card);"></div>
+                </div>
+
+                <?php elseif (in_array($ext, ['ppt', 'pptx'])): ?>
+                <!-- PowerPoint Interactive Presentation & Visuals Viewer -->
+                <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
+                            <i data-lucide="presentation" style="color:var(--apple-orange); width:18px; height:18px;"></i>
+                            PowerPoint Slides & Visuals
+                            <span id="pptxImageCountBadge" class="badge" style="background:rgba(255,149,0,0.15); color:var(--apple-orange); font-size:11px; padding:2px 8px; border-radius:12px; display:none;"></span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div id="pptxViewModes" style="display:none; gap:4px;">
+                                <button type="button" id="pptxBtnDeck" class="btn btn-primary btn-sm" style="font-size:11.5px; padding:4px 10px;">Slide Deck</button>
+                                <button type="button" id="pptxBtnGrid" class="btn btn-outline btn-sm" style="font-size:11.5px; padding:4px 10px;">All Images Grid</button>
+                            </div>
+                            <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm">
+                                <i data-lucide="download"></i> Download .<?= $ext ?>
+                            </a>
+                        </div>
+                    </div>
+                    <div id="pptxLoading" style="text-align:center; padding:40px; color:var(--text-secondary);">
+                        <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px; color:var(--apple-orange);"></i>
+                        <div>Extracting presentation visuals…</div>
+                    </div>
+                    <!-- Slide Deck View (Featured Slide + Controls + Thumbnails) -->
+                    <div id="pptxDeckContainer" style="display:none; padding:16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:var(--bg-card-subtle); padding:8px 14px; border-radius:8px; font-size:12px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <button type="button" id="pptxPrevBtn" class="btn btn-outline btn-sm" style="padding:3px 10px;">‹ Previous</button>
+                                <span style="font-weight:600;" id="pptxSlideIndicator">Visual 1 of 1</span>
+                                <button type="button" id="pptxNextBtn" class="btn btn-outline btn-sm" style="padding:3px 10px;">Next ›</button>
+                            </div>
+                            <span id="pptxCurrentFileName" class="text-muted" style="font-size:11.5px;"></span>
+                        </div>
+                        <div style="text-align:center; background:#1c1c1e; border-radius:8px; padding:16px; min-height:360px; display:flex; align-items:center; justify-content:center;">
+                            <a id="pptxActiveImageLink" href="#" target="_blank" title="Click to view full image in new tab">
+                                <img id="pptxActiveImage" src="" alt="Presentation Visual" style="max-width:100%; max-height:560px; object-fit:contain; border-radius:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5); cursor:zoom-in;">
+                            </a>
+                        </div>
+                        <!-- Thumbnail Strip -->
+                        <div id="pptxThumbStrip" style="display:flex; gap:8px; overflow-x:auto; padding:12px 0 4px; margin-top:10px;"></div>
+                    </div>
+                    <!-- Grid View of All Visuals -->
+                    <div id="pptxGridContainer" style="display:none; padding:16px; max-height:600px; overflow-y:auto;">
+                        <div id="pptxGridWrapper" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:14px;"></div>
+                    </div>
+                    <!-- Text Outline Fallback (for presentations with no images) -->
+                    <div id="pptxTextContainer" style="display:none; padding:20px; max-height:500px; overflow-y:auto;"></div>
                 </div>
 
                 <?php elseif ($ext === 'zip'): ?>
@@ -1135,21 +1190,47 @@ include __DIR__ . '/includes/header.php';
         zoomInBtn?.addEventListener('click', onZoomIn);
         zoomOutBtn?.addEventListener('click', onZoomOut);
 
-        // Load document
-        pdfjsLib.getDocument(pdfUrl).promise.then(function(pdfDoc_) {
-            pdfDoc = pdfDoc_;
-            if (pageCountEl) pageCountEl.textContent = pdfDoc.numPages;
-            renderPage(pageNum);
-        }).catch(function(err) {
-            console.error('PDF.js render error:', err);
-            if (spinner) {
+        // Load document via arrayBuffer for consistent cross-browser binary delivery
+        const loadTimeout = setTimeout(function() {
+            if (!pdfDoc && spinner) {
                 spinner.innerHTML = `
-                    <div style="color:var(--apple-orange); margin-bottom:8px;"><i data-lucide="alert-triangle"></i> Failed to render PDF preview directly.</div>
+                    <div style="color:var(--apple-orange); margin-bottom:8px;"><i data-lucide="alert-triangle"></i> Canvas rendering is taking longer than expected.</div>
                     <a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#fff; border-color:#fff;">Open Full PDF in New Tab</a>
                 `;
                 if (window.lucide) lucide.createIcons();
             }
-        });
+        }, 8000);
+
+        fetch(pdfUrl)
+            .then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.arrayBuffer();
+            })
+            .then(function(buf) {
+                return pdfjsLib.getDocument({
+                    data: new Uint8Array(buf),
+                    cMapUrl: '<?= APP_URL ?>/assets/vendor/pdfjs/cmaps/',
+                    cMapPacked: true,
+                    isEvalSupported: false
+                }).promise;
+            })
+            .then(function(pdfDoc_) {
+                clearTimeout(loadTimeout);
+                pdfDoc = pdfDoc_;
+                if (pageCountEl) pageCountEl.textContent = pdfDoc.numPages;
+                renderPage(pageNum);
+            })
+            .catch(function(err) {
+                clearTimeout(loadTimeout);
+                console.error('PDF.js render error:', err);
+                if (spinner) {
+                    spinner.innerHTML = `
+                        <div style="color:var(--apple-orange); margin-bottom:8px;"><i data-lucide="alert-triangle"></i> Failed to render PDF preview directly.</div>
+                        <a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#fff; border-color:#fff;">Open Full PDF in New Tab</a>
+                    `;
+                    if (window.lucide) lucide.createIcons();
+                }
+            });
     })();
     </script>
     <?php endif; ?>
@@ -1198,15 +1279,31 @@ include __DIR__ . '/includes/header.php';
         const tableWrapper = document.getElementById('xlsxTableWrapper');
         const sheetsContainer = document.getElementById('xlsxSheetsContainer');
         const loading = document.getElementById('xlsxLoading');
+        const metaBadge = document.getElementById('xlsxGridMetaBadge');
         if (!tableWrapper) return;
         if (typeof XLSX === 'undefined') {
             if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Spreadsheet viewer library could not be loaded. Please download the file to view.</div>';
             return;
         }
 
+        function escHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function getColLetter(idx) {
+            let s = '';
+            while (idx >= 0) {
+                s = String.fromCharCode((idx % 26) + 65) + s;
+                idx = Math.floor(idx / 26) - 1;
+            }
+            return s;
+        }
+
         fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>')
             .then(res => {
-                if (!res.ok) throw new Error('Network error loading spreadsheet');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
                 return res.arrayBuffer();
             })
             .then(buffer => {
@@ -1220,27 +1317,72 @@ include __DIR__ . '/includes/header.php';
 
                 function renderSheet(name) {
                     const sheet = workbook.Sheets[name];
-                    const html = XLSX.utils.sheet_to_html(sheet, { id: 'xlsxPreviewTable', editable: false });
-                    tableWrapper.innerHTML = html;
-                    const tbl = document.getElementById('xlsxPreviewTable');
-                    if (tbl) {
-                        tbl.className = 'table';
-                        tbl.style.width = '100%';
-                        tbl.style.borderCollapse = 'collapse';
-                        tbl.style.fontSize = '12px';
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+
+                    if (!rows || !rows.length) {
+                        tableWrapper.innerHTML = '<div class="text-muted text-center" style="padding:40px;">This sheet is empty.</div>';
+                        if (metaBadge) metaBadge.style.display = 'none';
+                        return;
                     }
+
+                    let maxCols = 0;
+                    rows.forEach(r => { if (r && r.length > maxCols) maxCols = r.length; });
+                    if (maxCols === 0) maxCols = 1;
+
+                    if (metaBadge) {
+                        metaBadge.textContent = `${rows.length} Rows × ${maxCols} Cols`;
+                        metaBadge.style.display = 'inline-block';
+                    }
+
+                    // Build authentic Excel grid table
+                    let html = '<div style="overflow:auto; max-height:560px;">';
+                    html += '<table style="border-collapse:collapse; width:max-content; min-width:100%; font-size:12px;">';
+                    
+                    // Column Letters Header Row (A, B, C...)
+                    html += '<thead><tr>';
+                    html += '<th style="position:sticky; top:0; left:0; z-index:15; background:var(--bg-card-subtle); border:1px solid var(--border-hairline); width:44px; min-width:44px; height:26px;"></th>';
+                    for (let c = 0; c < maxCols; c++) {
+                        html += `<th style="position:sticky; top:0; z-index:10; background:var(--bg-card-subtle); color:var(--text-secondary); font-weight:600; text-align:center; border:1px solid var(--border-hairline); padding:4px 10px; min-width:85px; font-size:11px; user-select:none;">${getColLetter(c)}</th>`;
+                    }
+                    html += '</tr></thead><tbody>';
+
+                    // Data Rows with Row Numbers (1, 2, 3...)
+                    rows.forEach((row, rIdx) => {
+                        html += '<tr>';
+                        html += `<th style="position:sticky; left:0; z-index:9; background:var(--bg-card-subtle); color:var(--text-secondary); font-weight:600; text-align:center; border:1px solid var(--border-hairline); padding:4px 8px; width:44px; min-width:44px; font-size:11px; user-select:none;">${rIdx + 1}</th>`;
+                        for (let c = 0; c < maxCols; c++) {
+                            const rawVal = row ? row[c] : '';
+                            const strVal = (rawVal !== undefined && rawVal !== null) ? String(rawVal) : '';
+                            const isNum = !isNaN(strVal) && strVal.trim() !== '' && !/^[A-Za-z]/.test(strVal);
+                            const alignStyle = isNum ? 'text-align:right; font-variant-numeric:tabular-nums;' : 'text-align:left;';
+                            html += `<td style="border:1px solid var(--border-hairline); padding:5px 10px; color:var(--text-primary); white-space:nowrap; max-width:340px; overflow:hidden; text-overflow:ellipsis; ${alignStyle}">${escHtml(strVal)}</td>`;
+                        }
+                        html += '</tr>';
+                    });
+
+                    html += '</tbody></table></div>';
+                    tableWrapper.innerHTML = html;
                 }
 
+                // Render sheet tabs styled like Excel
+                sheetsContainer.innerHTML = '';
                 workbook.SheetNames.forEach((name, idx) => {
                     const btn = document.createElement('button');
                     btn.type = 'button';
-                    btn.className = idx === 0 ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+                    btn.className = idx === 0 ? 'btn btn-sm' : 'btn btn-outline btn-sm';
+                    if (idx === 0) {
+                        btn.style.cssText = 'background:#107c41; color:#fff; border:none; font-size:11.5px; padding:4px 12px; font-weight:600; border-radius:6px;';
+                    } else {
+                        btn.style.cssText = 'font-size:11.5px; padding:4px 12px; border-radius:6px;';
+                    }
                     btn.textContent = name;
-                    btn.style.fontSize = '11px';
-                    btn.style.padding = '3px 10px';
                     btn.onclick = () => {
-                        sheetsContainer.querySelectorAll('button').forEach(b => b.className = 'btn btn-outline btn-sm');
-                        btn.className = 'btn btn-primary btn-sm';
+                        sheetsContainer.querySelectorAll('button').forEach(b => {
+                            b.className = 'btn btn-outline btn-sm';
+                            b.style.cssText = 'font-size:11.5px; padding:4px 12px; border-radius:6px;';
+                        });
+                        btn.className = 'btn btn-sm';
+                        btn.style.cssText = 'background:#107c41; color:#fff; border:none; font-size:11.5px; padding:4px 12px; font-weight:600; border-radius:6px;';
                         renderSheet(name);
                     };
                     sheetsContainer.appendChild(btn);
@@ -1251,6 +1393,232 @@ include __DIR__ . '/includes/header.php';
             .catch(err => {
                 console.error('XLSX render error:', err);
                 if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Could not render spreadsheet. Please download to view.</div>';
+            });
+    })();
+    </script>
+    <?php endif; ?>
+
+    <?php if (in_array($ext, ['ppt', 'pptx'])): ?>
+    <script>
+    (function() {
+        const loading = document.getElementById('pptxLoading');
+        const deckContainer = document.getElementById('pptxDeckContainer');
+        const gridContainer = document.getElementById('pptxGridContainer');
+        const textContainer = document.getElementById('pptxTextContainer');
+        const viewModes = document.getElementById('pptxViewModes');
+        const countBadge = document.getElementById('pptxImageCountBadge');
+
+        const activeImg = document.getElementById('pptxActiveImage');
+        const activeLink = document.getElementById('pptxActiveImageLink');
+        const prevBtn = document.getElementById('pptxPrevBtn');
+        const nextBtn = document.getElementById('pptxNextBtn');
+        const indicator = document.getElementById('pptxSlideIndicator');
+        const fileNameEl = document.getElementById('pptxCurrentFileName');
+        const thumbStrip = document.getElementById('pptxThumbStrip');
+        const gridWrapper = document.getElementById('pptxGridWrapper');
+        const btnDeck = document.getElementById('pptxBtnDeck');
+        const btnGrid = document.getElementById('pptxBtnGrid');
+
+        if (typeof JSZip === 'undefined') {
+            if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Presentation viewer library could not be loaded. Please download the file to view.</div>';
+            return;
+        }
+
+        function escHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>')
+            .then(res => {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.arrayBuffer();
+            })
+            .then(buffer => JSZip.loadAsync(buffer))
+            .then(async zip => {
+                // Find all image files in presentation
+                const imageFileNames = Object.keys(zip.files).filter(name => {
+                    if (zip.files[name].dir) return false;
+                    return /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(name);
+                });
+
+                // Prioritize ppt/media/
+                imageFileNames.sort((a, b) => {
+                    const aMedia = /^ppt\/media\//i.test(a);
+                    const bMedia = /^ppt\/media\//i.test(b);
+                    if (aMedia && !bMedia) return -1;
+                    if (!aMedia && bMedia) return 1;
+                    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+                });
+
+                const images = [];
+                for (const name of imageFileNames) {
+                    try {
+                        const blob = await zip.files[name].async('blob');
+                        const url = URL.createObjectURL(blob);
+                        const cleanName = name.replace(/^ppt\/media\//i, '').replace(/^[^\/]+\//, '');
+                        images.push({
+                            fullName: name,
+                            name: cleanName,
+                            url: url,
+                            size: blob.size
+                        });
+                    } catch (e) {
+                        console.error('Error extracting image', name, e);
+                    }
+                }
+
+                if (loading) loading.style.display = 'none';
+
+                if (images.length > 0) {
+                    if (countBadge) {
+                        countBadge.textContent = `${images.length} Visuals Found`;
+                        countBadge.style.display = 'inline-block';
+                    }
+                    if (viewModes) viewModes.style.display = 'flex';
+
+                    let currentIndex = 0;
+
+                    function showSlide(idx) {
+                        if (idx < 0) idx = 0;
+                        if (idx >= images.length) idx = images.length - 1;
+                        currentIndex = idx;
+                        const item = images[idx];
+                        if (activeImg) activeImg.src = item.url;
+                        if (activeLink) activeLink.href = item.url;
+                        if (indicator) indicator.textContent = `Visual ${idx + 1} of ${images.length}`;
+                        if (fileNameEl) {
+                            const kb = Math.round(item.size / 1024);
+                            fileNameEl.textContent = `${item.name} (${kb} KB)`;
+                        }
+
+                        if (thumbStrip) {
+                            thumbStrip.querySelectorAll('.pptx-thumb').forEach((th, i) => {
+                                th.style.outline = (i === idx) ? '3px solid var(--apple-orange)' : 'none';
+                                th.style.opacity = (i === idx) ? '1' : '0.65';
+                            });
+                            const activeThumb = thumbStrip.children[idx];
+                            if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        }
+                    }
+
+                    if (thumbStrip) {
+                        thumbStrip.innerHTML = '';
+                        images.forEach((item, idx) => {
+                            const th = document.createElement('img');
+                            th.className = 'pptx-thumb';
+                            th.src = item.url;
+                            th.alt = item.name;
+                            th.style.cssText = 'height:54px; width:80px; object-fit:cover; border-radius:6px; cursor:pointer; flex-shrink:0; background:#000; transition:all 0.2s;';
+                            th.onclick = () => showSlide(idx);
+                            thumbStrip.appendChild(th);
+                        });
+                    }
+
+                    if (gridWrapper) {
+                        gridWrapper.innerHTML = '';
+                        images.forEach((item, idx) => {
+                            const card = document.createElement('div');
+                            card.style.cssText = 'border:1px solid var(--border-hairline); border-radius:8px; overflow:hidden; background:var(--bg-card-subtle); display:flex; flex-direction:column;';
+                            const kb = Math.round(item.size / 1024);
+                            card.innerHTML = `
+                                <div style="height:150px; background:#1c1c1e; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer;">
+                                    <img src="${item.url}" alt="${item.name}" style="max-height:100%; max-width:100%; object-fit:contain;">
+                                </div>
+                                <div style="padding:8px 10px; font-size:11.5px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-hairline);">
+                                    <span style="font-weight:600; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:120px;">${escHtml(item.name)}</span>
+                                    <span class="text-muted">${kb} KB</span>
+                                </div>
+                            `;
+                            card.querySelector('div').onclick = () => {
+                                if (btnDeck) btnDeck.click();
+                                showSlide(idx);
+                            };
+                            gridWrapper.appendChild(card);
+                        });
+                    }
+
+                    if (prevBtn) prevBtn.onclick = () => showSlide(currentIndex - 1);
+                    if (nextBtn) nextBtn.onclick = () => showSlide(currentIndex + 1);
+
+                    if (btnDeck && btnGrid) {
+                        btnDeck.onclick = () => {
+                            btnDeck.className = 'btn btn-primary btn-sm';
+                            btnGrid.className = 'btn btn-outline btn-sm';
+                            deckContainer.style.display = 'block';
+                            gridContainer.style.display = 'none';
+                        };
+                        btnGrid.onclick = () => {
+                            btnGrid.className = 'btn btn-primary btn-sm';
+                            btnDeck.className = 'btn btn-outline btn-sm';
+                            deckContainer.style.display = 'none';
+                            gridContainer.style.display = 'block';
+                        };
+                    }
+
+                    deckContainer.style.display = 'block';
+                    showSlide(0);
+
+                } else {
+                    const slideFiles = Object.keys(zip.files).filter(name => /^ppt\/slides\/slide\d+\.xml$/i.test(name));
+                    slideFiles.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+                    if (slideFiles.length > 0) {
+                        if (countBadge) {
+                            countBadge.textContent = `${slideFiles.length} Slides`;
+                            countBadge.style.display = 'inline-block';
+                        }
+                        let textHtml = '<div style="margin-bottom:14px; font-size:12.5px; color:var(--text-secondary);">';
+                        textHtml += '<i data-lucide="info" style="width:14px; height:14px; display:inline-block; vertical-align:middle; margin-right:4px;"></i> No embedded media files were found in this presentation. Text content for each slide is presented below:';
+                        textHtml += '</div>';
+
+                        for (let i = 0; i < slideFiles.length; i++) {
+                            const xmlStr = await zip.files[slideFiles[i]].async('string');
+                            const parser = new DOMParser();
+                            const xmlDoc = parser.parseFromString(xmlStr, 'text/xml');
+                            const textNodes = xmlDoc.getElementsByTagName('a:t');
+                            const lines = [];
+                            for (let j = 0; j < textNodes.length; j++) {
+                                const t = textNodes[j].textContent.trim();
+                                if (t) lines.push(t);
+                            }
+
+                            textHtml += `
+                                <div style="background:var(--bg-card-subtle); border:1px solid var(--border-hairline); border-radius:8px; padding:12px 16px; margin-bottom:10px;">
+                                    <div style="font-weight:700; font-size:12px; color:var(--apple-orange); margin-bottom:6px;">Slide ${i + 1}</div>
+                                    <div style="font-size:13px; line-height:1.5; color:var(--text-primary);">
+                                        ${lines.length ? lines.map(l => `<div>• ${escHtml(l)}</div>`).join('') : '<span class="text-muted" style="font-style:italic;">(Blank slide or shape graphics)</span>'}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        if (textContainer) {
+                            textContainer.innerHTML = textHtml;
+                            textContainer.style.display = 'block';
+                            if (window.lucide) lucide.createIcons();
+                        }
+                    } else {
+                        if (textContainer) {
+                            textContainer.innerHTML = '<div class="text-muted text-center" style="padding:30px;">Could not extract slides from this presentation. Please download the file to view.</div>';
+                            textContainer.style.display = 'block';
+                        }
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('PPTX parse error:', err);
+                if (loading) {
+                    loading.innerHTML = `
+                        <div style="padding:20px; text-align:center;">
+                            <div style="color:var(--text-secondary); margin-bottom:12px; font-size:13px;">This presentation file could not be parsed directly.</div>
+                            <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-primary btn-sm">
+                                <i data-lucide="download"></i> Download Presentation
+                            </a>
+                        </div>
+                    `;
+                    if (window.lucide) lucide.createIcons();
+                }
             });
     })();
     </script>
@@ -1287,7 +1655,25 @@ include __DIR__ . '/includes/header.php';
                     return;
                 }
 
-                let html = '<div style="display:flex; flex-direction:column; gap:6px;">';
+                // Check for image files in the archive
+                const imgNames = fileNames.filter(n => !zip.files[n].dir && /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(n));
+                imgNames.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+                let html = '';
+                if (imgNames.length > 0) {
+                    html += `
+                        <div style="margin-bottom:16px;">
+                            <div style="font-weight:600; font-size:12.5px; color:var(--text-primary); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                                <i data-lucide="image" style="width:16px; height:16px; color:var(--apple-blue);"></i>
+                                Extracted Images & Slides (${imgNames.length})
+                            </div>
+                            <div id="zipImageGallery" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:10px; max-height:320px; overflow-y:auto; padding:4px 2px;"></div>
+                        </div>
+                    `;
+                }
+
+                html += '<div style="font-weight:600; font-size:12px; color:var(--text-secondary); margin-bottom:8px;">All Archive Files (' + fileNames.length + ')</div>';
+                html += '<div style="display:flex; flex-direction:column; gap:6px;">';
                 fileNames.forEach(name => {
                     const entry = zip.files[name];
                     const isDir = Boolean(entry.dir || name.endsWith('/'));
@@ -1313,6 +1699,29 @@ include __DIR__ . '/includes/header.php';
                 html += '</div>';
                 listWrapper.innerHTML = html;
                 if (window.lucide) lucide.createIcons();
+
+                // Asynchronously load image thumbnails
+                if (imgNames.length > 0) {
+                    const gallery = document.getElementById('zipImageGallery');
+                    if (gallery) {
+                        imgNames.forEach(async n => {
+                            try {
+                                const blob = await zip.files[n].async('blob');
+                                const url = URL.createObjectURL(blob);
+                                const card = document.createElement('a');
+                                card.href = url;
+                                card.target = '_blank';
+                                card.title = n + ' (Click to view full image)';
+                                card.style.cssText = 'display:block; border-radius:6px; overflow:hidden; border:1px solid var(--border-hairline); background:#1c1c1e; height:95px; text-decoration:none; position:relative; box-shadow:0 2px 6px rgba(0,0,0,0.1);';
+                                card.innerHTML = `
+                                    <img src="${url}" alt="${escHtml(n)}" style="width:100%; height:100%; object-fit:contain;">
+                                    <div style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.7); color:#fff; font-size:9.5px; padding:2px 4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escHtml(n.split('/').pop())}</div>
+                                `;
+                                gallery.appendChild(card);
+                            } catch (e) {}
+                        });
+                    }
+                }
             })
             .catch(err => {
                 console.error('ZIP reader error:', err);
