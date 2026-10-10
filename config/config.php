@@ -1,14 +1,22 @@
 <?php
 // ── Database ─────────────────────────────────────────────────────────────────
 // Reads Railway / Cloud environment variables first; falls back to local XAMPP defaults.
-$dbHost = getenv('MYSQLHOST') ?: getenv('DB_HOST') ?: 'localhost';
-$dbUser = getenv('MYSQLUSER') ?: getenv('DB_USER') ?: 'root';
-$dbPass = getenv('MYSQLPASSWORD') ?: (getenv('MYSQL_PASSWORD') !== false ? getenv('MYSQL_PASSWORD') : (getenv('DB_PASS') !== false ? getenv('DB_PASS') : ''));
-$dbName = getenv('MYSQLDATABASE') ?: getenv('DB_NAME') ?: 'dms_db';
-$dbPort = getenv('MYSQLPORT') ?: getenv('DB_PORT') ?: '3306';
+$env = function(string $key): ?string {
+    $val = getenv($key);
+    if ($val !== false && $val !== '') return $val;
+    if (isset($_ENV[$key]) && $_ENV[$key] !== '') return (string)$_ENV[$key];
+    if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') return (string)$_SERVER[$key];
+    return null;
+};
 
-// If Railway provides a full MYSQL_URL (e.g. mysql://user:pass@host:port/dbname)
-$mysqlUrl = getenv('MYSQL_URL') ?: getenv('DATABASE_URL');
+$dbHost = $env('MYSQLHOST') ?? $env('DB_HOST') ?? 'localhost';
+$dbUser = $env('MYSQLUSER') ?? $env('DB_USER') ?? 'root';
+$dbPass = $env('MYSQLPASSWORD') ?? $env('MYSQL_PASSWORD') ?? $env('DB_PASS') ?? '';
+$dbName = $env('MYSQLDATABASE') ?? $env('DB_NAME') ?? 'dms_db';
+$dbPort = $env('MYSQLPORT') ?? $env('DB_PORT') ?? '3306';
+
+// If Railway provides a full MYSQL_URL or DATABASE_URL
+$mysqlUrl = $env('MYSQL_URL') ?? $env('DATABASE_URL');
 if ($mysqlUrl) {
     $parsedUrl = parse_url($mysqlUrl);
     if ($parsedUrl) {
