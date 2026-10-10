@@ -1,7 +1,7 @@
 # Dockerfile for Railway deployment
-FROM php:8.2-apache
+FROM php:8.2-cli
 
-# Install required system libraries and PHP extensions
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
@@ -16,20 +16,18 @@ RUN apt-get update && apt-get install -y \
     mysqli \
     gd \
     zip \
-    && a2enmod rewrite headers \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy application files to web root
-COPY . /var/www/html/
+# Set working directory
+WORKDIR /app
 
-# Ensure correct permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html \
-    && chmod -R 777 /var/www/html/uploads
+# Copy all application code
+COPY . /app
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# Ensure uploads folder is writable
+RUN chmod -R 777 /app/uploads
 
-EXPOSE 80
+EXPOSE 8080
 
-CMD ["/usr/local/bin/entrypoint.sh"]
+# Run PHP built-in webserver bound to Railway dynamic PORT
+CMD ["sh", "-c", "php -S 0.0.0.0:${PORT:-8080} -t /app"]
