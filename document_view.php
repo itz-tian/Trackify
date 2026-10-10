@@ -152,7 +152,7 @@ include __DIR__ . '/includes/header.php';
 <!-- Approval Banner -->
 <?php if (in_array($doc['status'], ['pending_review', 'under_review'])): ?>
     <?php if ($canApprove): ?>
-    <div class="card mb-16" style="border-left: 4px solid var(--apple-orange); background: linear-gradient(90deg, rgba(255, 149, 0, 0.08) 0%, #ffffff 100%);">
+    <div class="card mb-16" style="border-left: 4px solid var(--apple-orange); background: linear-gradient(90deg, rgba(255, 149, 0, 0.08) 0%, var(--bg-card) 100%);">
         <div class="card-body" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
             <div>
                 <div style="font-weight:700; font-size:15px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
@@ -182,18 +182,18 @@ include __DIR__ . '/includes/header.php';
         </div>
     </div>
     <?php else: ?>
-    <div class="card mb-16" style="border-left: 4px solid var(--apple-blue); background: rgba(0, 113, 227, 0.04);">
+    <div class="card mb-16" style="border-left: 4px solid var(--apple-blue); background: linear-gradient(90deg, var(--apple-blue-subtle) 0%, var(--bg-card) 100%);">
         <div class="card-body" style="display:flex; align-items:center; gap:12px;">
             <i data-lucide="clock" style="color:var(--apple-blue); font-size:18px;"></i>
             <div>
-                <div style="font-weight:600; font-size:13.5px;">Pending Approval</div>
+                <div style="font-weight:600; font-size:13.5px; color:var(--text-primary);">Pending Approval</div>
                 <div class="text-muted text-sm">This document is currently awaiting review by the Department Head or Administration.</div>
             </div>
         </div>
     </div>
     <?php endif; ?>
 <?php elseif ($doc['status'] === 'draft' && ($isOwner || $isAdmin)): ?>
-    <div class="card mb-16" style="border-left: 4px solid var(--apple-blue); background: #ffffff;">
+    <div class="card mb-16" style="border-left: 4px solid var(--apple-blue); background: linear-gradient(90deg, var(--apple-blue-subtle) 0%, var(--bg-card) 100%);">
         <div class="card-body" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
             <div>
                 <div style="font-weight:700; font-size:14px; color:var(--text-primary);">
