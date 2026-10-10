@@ -15,13 +15,35 @@ $notifStmt->execute([$_SESSION['user_id']]);
 $unreadCount = (int)$notifStmt->fetchColumn();
 
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
+
+$pageTitles = [
+    'dashboard'         => 'Dashboard',
+    'documents'         => 'Documents',
+    'document_view'     => 'Document View',
+    'upload'            => 'Upload Document',
+    'approvals'         => 'Approvals',
+    'notifications'     => 'Notifications',
+    'recent_documents'  => 'Recent Documents',
+    'deadlines'         => 'Deadlines',
+    'calendar'          => 'Calendar',
+    'activity_log'      => 'Activity Log',
+    'archive'           => 'Archive',
+    'recycle_bin'       => 'Recycle Bin',
+    'reports'           => 'Reports',
+    'profile'           => 'Profile',
+    'users'             => 'Manage Users',
+    'departments'       => 'Departments',
+    'categories'        => 'Categories',
+];
+
+$topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('_', ' ', $currentPage)));
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= APP_NAME ?> — <?= ucfirst(str_replace('_', ' ', $currentPage)) ?></title>
+    <title><?= APP_NAME ?> — <?= htmlspecialchars($topbarTitle) ?></title>
     <link rel="icon" type="image/png" href="<?= APP_URL ?>/assets/favicon.png?v=<?= APP_VERSION ?>">
     <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/style.css?v=<?= APP_VERSION ?>">
     <script>
@@ -200,7 +222,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
         <button onclick="toggleSidebar()" class="menu-btn" id="menuBtn" title="Collapse / expand sidebar (Ctrl+B)" aria-label="Toggle sidebar" aria-controls="sidebar" aria-expanded="true">
             <i data-lucide="menu"></i>
         </button>
-        <div class="topbar-title" id="pageTitle">Loading…</div>
+        <div class="topbar-title" id="pageTitle"><?= htmlspecialchars($topbarTitle) ?></div>
     </div>
     <div class="topbar-actions">
         <a href="<?= APP_URL ?>/notifications.php" class="topbar-btn" title="Notifications">

@@ -1023,16 +1023,27 @@ include __DIR__ . '/includes/header.php';
         }
     });
 })();
+</script>
 <!-- ── Multi-Format Document Preview Libraries ── -->
 <?php if ($hasDiskFile): ?>
     <?php if ($ext === 'pdf'): ?>
     <script src="<?= APP_URL ?>/assets/vendor/pdfjs/pdf.min.js"></script>
     <script>
     (function() {
-        if (typeof pdfjsLib === 'undefined') return;
+        const spinner = document.getElementById('pdfLoadingSpinner');
+        const pdfUrl = '<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>';
+        if (typeof pdfjsLib === 'undefined') {
+            if (spinner) {
+                spinner.innerHTML = `
+                    <div style="color:var(--apple-orange); margin-bottom:8px;"><i data-lucide="alert-triangle"></i> PDF reader library could not be loaded.</div>
+                    <a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#fff; border-color:#fff;">Open Full PDF in New Tab</a>
+                `;
+                if (window.lucide) lucide.createIcons();
+            }
+            return;
+        }
         pdfjsLib.GlobalWorkerOptions.workerSrc = '<?= APP_URL ?>/assets/vendor/pdfjs/pdf.worker.min.js';
 
-        const pdfUrl = '<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>';
         let pdfDoc = null;
         let pageNum = 1;
         let pageRendering = false;
@@ -1149,7 +1160,11 @@ include __DIR__ . '/includes/header.php';
     (function() {
         const docxContainer = document.getElementById('docxPreviewContainer');
         const loading = document.getElementById('docxLoading');
-        if (!docxContainer || typeof docx === 'undefined') return;
+        if (!docxContainer) return;
+        if (typeof docx === 'undefined') {
+            if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Word viewer library could not be loaded. Please download the file to view.</div>';
+            return;
+        }
 
         fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>')
             .then(res => {
@@ -1183,7 +1198,11 @@ include __DIR__ . '/includes/header.php';
         const tableWrapper = document.getElementById('xlsxTableWrapper');
         const sheetsContainer = document.getElementById('xlsxSheetsContainer');
         const loading = document.getElementById('xlsxLoading');
-        if (!tableWrapper || typeof XLSX === 'undefined') return;
+        if (!tableWrapper) return;
+        if (typeof XLSX === 'undefined') {
+            if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Spreadsheet viewer library could not be loaded. Please download the file to view.</div>';
+            return;
+        }
 
         fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>')
             .then(res => {
@@ -1242,11 +1261,21 @@ include __DIR__ . '/includes/header.php';
     (function() {
         const listWrapper = document.getElementById('zipFileListWrapper');
         const loading = document.getElementById('zipListLoading');
-        if (!listWrapper || typeof JSZip === 'undefined') return;
+        if (!listWrapper) return;
+        if (typeof JSZip === 'undefined') {
+            if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">ZIP library could not be loaded. Please download the file to view.</div>';
+            return;
+        }
+
+        function escHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
 
         fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>')
             .then(res => {
-                if (!res.ok) throw new Error('Network error loading ZIP');
+                if (!res.ok) throw new Error('HTTP ' + res.status + ' loading ZIP');
                 return res.arrayBuffer();
             })
             .then(buffer => JSZip.loadAsync(buffer))
@@ -1261,14 +1290,21 @@ include __DIR__ . '/includes/header.php';
                 let html = '<div style="display:flex; flex-direction:column; gap:6px;">';
                 fileNames.forEach(name => {
                     const entry = zip.files[name];
-                    const isDir = entry.dir;
+                    const isDir = Boolean(entry.dir || name.endsWith('/'));
                     const iconName = isDir ? 'folder' : 'file';
-                    const sizeStr = isDir ? 'Folder' : (entry._data ? (entry._data.uncompressedSize ? Math.round(entry._data.uncompressedSize / 1024) + ' KB' : 'File') : 'File');
+                    let sizeStr = isDir ? 'Folder' : 'File';
+                    try {
+                        const uSize = entry._data ? entry._data.uncompressedSize : (entry.uncompressedSize || null);
+                        if (typeof uSize === 'number' && !isNaN(uSize) && uSize >= 0) {
+                            sizeStr = uSize < 1024 ? uSize + ' B' : Math.round(uSize / 1024) + ' KB';
+                        }
+                    } catch (e) {}
+
                     html += `
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--bg-card-subtle); border-radius:8px; font-size:12.5px;">
                             <div style="display:flex; align-items:center; gap:8px; word-break:break-all;">
                                 <i data-lucide="${iconName}" style="width:16px; height:16px; color:${isDir ? 'var(--apple-blue)' : 'var(--text-secondary)'}; flex-shrink:0;"></i>
-                                <span style="font-weight:${isDir ? '600' : '400'}; color:var(--text-primary);">${name}</span>
+                                <span style="font-weight:${isDir ? '600' : '400'}; color:var(--text-primary);">${escHtml(name)}</span>
                             </div>
                             <span class="text-muted" style="font-size:11.5px; margin-left:12px; flex-shrink:0;">${sizeStr}</span>
                         </div>

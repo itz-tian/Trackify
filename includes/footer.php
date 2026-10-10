@@ -94,8 +94,12 @@
 <script>
 lucide.createIcons();
 
-// Set title
-document.getElementById('pageTitle').textContent = document.title.split('—')[1]?.trim() || document.title;
+// Sync title if dynamically set by client page
+const ptEl = document.getElementById('pageTitle');
+if (ptEl && document.title && document.title.includes('—')) {
+    const t = document.title.split('—')[1]?.trim();
+    if (t) ptEl.textContent = t;
+}
 
 // Auto-dismiss alerts
 document.querySelectorAll('.alert').forEach(el => {
