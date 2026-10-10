@@ -52,7 +52,8 @@ class Database {
                             }
 
                             // Reconnect to new DB
-                            $dsn = "mysql:host={$host};dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+                            $portPart2 = defined('DB_PORT') && DB_PORT ? ";port=" . DB_PORT : "";
+                            $dsn = "mysql:host={$host}{$portPart2};dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
                             self::$instance = new PDO($dsn, DB_USER, DB_PASS, $options);
                             break;
                         } catch (Throwable $initException) {

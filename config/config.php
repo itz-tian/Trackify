@@ -2,10 +2,11 @@
 // ── Database ─────────────────────────────────────────────────────────────────
 // Reads Railway / Cloud environment variables first; falls back to local XAMPP defaults.
 $env = function(string $key): ?string {
+    // Railway injects variables into $_SERVER (not process env), so check $_SERVER first.
+    if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') return (string)$_SERVER[$key];
+    if (isset($_ENV[$key]) && $_ENV[$key] !== '') return (string)$_ENV[$key];
     $val = getenv($key);
     if ($val !== false && $val !== '') return $val;
-    if (isset($_ENV[$key]) && $_ENV[$key] !== '') return (string)$_ENV[$key];
-    if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') return (string)$_SERVER[$key];
     return null;
 };
 
