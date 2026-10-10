@@ -24,6 +24,10 @@ class Database {
                     $portPart = defined('DB_PORT') && DB_PORT ? ";port=" . DB_PORT : "";
                     $dsn = "mysql:host={$host}{$portPart};dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
                     $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+                    // Disable ONLY_FULL_GROUP_BY for session to ensure cross-version MySQL 8 compatibility
+                    try {
+                        $pdo->exec("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
+                    } catch (Throwable $ignored) {}
 
                     // Check if schema is already applied (users table must exist).
                     // On Railway, the 'railway' DB already exists so error 1049 never fires —

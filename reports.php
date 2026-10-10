@@ -41,7 +41,7 @@ if ($userRole === 'admin') {
         SELECT dep.name, COUNT(d.id) AS cnt
         FROM departments dep 
         LEFT JOIN documents d ON dep.id = d.department_id AND d.deleted_at IS NULL
-        GROUP BY dep.id ORDER BY cnt DESC
+        GROUP BY dep.id, dep.name ORDER BY cnt DESC
     ");
     $deptData = $deptStmt->fetchAll();
 } else {
@@ -50,7 +50,7 @@ if ($userRole === 'admin') {
         FROM departments dep 
         LEFT JOIN documents d ON dep.id = d.department_id AND d.deleted_at IS NULL AND d.department_id = ?
         WHERE dep.id = ?
-        GROUP BY dep.id ORDER BY cnt DESC
+        GROUP BY dep.id, dep.name ORDER BY cnt DESC
     ");
     $deptStmt->execute([$userDept, $userDept]);
     $deptData = $deptStmt->fetchAll();
@@ -58,11 +58,11 @@ if ($userRole === 'admin') {
 
 // Monthly uploads
 $monthlyStmt = $db->prepare("
-    SELECT DATE_FORMAT(created_at,'%b %Y') AS month, COUNT(*) AS cnt
+    SELECT DATE_FORMAT(MIN(created_at),'%b %Y') AS month, COUNT(*) AS cnt
     FROM documents
     WHERE $scopeWhere AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
     GROUP BY DATE_FORMAT(created_at,'%Y-%m')
-    ORDER BY created_at ASC
+    ORDER BY MIN(created_at) ASC
 ");
 $monthlyStmt->execute($scopeParams);
 $monthlyData = $monthlyStmt->fetchAll();
@@ -73,7 +73,7 @@ if ($userRole === 'admin') {
         SELECT CONCAT(u.first_name,' ',u.last_name) AS name, COUNT(d.id) AS cnt
         FROM users u 
         LEFT JOIN documents d ON u.id = d.uploaded_by AND d.deleted_at IS NULL
-        GROUP BY u.id ORDER BY cnt DESC LIMIT 8
+        GROUP BY u.id, u.first_name, u.last_name ORDER BY cnt DESC LIMIT 8
     ");
     $topUsers = $topStmt->fetchAll();
 } else {
@@ -82,7 +82,7 @@ if ($userRole === 'admin') {
         FROM users u 
         LEFT JOIN documents d ON u.id = d.uploaded_by AND d.deleted_at IS NULL AND d.department_id = ?
         WHERE u.department_id = ?
-        GROUP BY u.id ORDER BY cnt DESC LIMIT 8
+        GROUP BY u.id, u.first_name, u.last_name ORDER BY cnt DESC LIMIT 8
     ");
     $topStmt->execute([$userDept, $userDept]);
     $topUsers = $topStmt->fetchAll();

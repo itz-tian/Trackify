@@ -50,7 +50,6 @@ if ($userRole === 'admin') {
         LEFT JOIN users u ON d.uploaded_by = u.id
         LEFT JOIN approval_workflows aw ON d.id = aw.document_id AND aw.approver_id = ?
         WHERE d.deleted_at IS NULL AND d.status IN ('pending_review', 'under_review') AND u.role <> 'admin'
-        GROUP BY d.id
         ORDER BY d.priority = 'urgent' DESC, d.priority = 'high' DESC, d.created_at DESC
     ";
     $stmt = $db->prepare($query);
