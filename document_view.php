@@ -345,32 +345,34 @@ include __DIR__ . '/includes/header.php';
                 </div>
 
                 <?php elseif ($ext === 'pdf'): ?>
-                <!-- PDF Interactive Inline Preview with Mobile / Plugin Fallback -->
-                <div style="position:relative; width:100%; border-radius:10px; overflow:hidden; border:1px solid var(--border-hairline); background:#525659;">
-                    <object data="<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>#toolbar=1&navpanes=0"
-                            type="application/pdf"
-                            class="doc-preview-iframe"
-                            style="width:100%; min-height:560px; display:block;"
-                            title="PDF Preview: <?= htmlspecialchars(doc_title($doc['title'], $doc['reference_number'] ?? null)) ?>">
-                        <!-- Graceful mobile / plugin fallback -->
-                        <div style="padding:48px 20px; text-align:center; color:var(--text-primary); background:var(--bg-card-subtle);">
-                            <div style="width:52px; height:52px; border-radius:14px; background:rgba(0,113,227,0.12); color:var(--apple-blue); display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px;">
-                                <i data-lucide="file-text" style="width:28px; height:28px;"></i>
-                            </div>
-                            <h4 style="font-size:15px; font-weight:600; margin-bottom:6px; color:var(--text-primary);">Mobile PDF Viewer</h4>
-                            <p class="text-muted text-sm" style="max-width:360px; margin:0 auto 16px; line-height:1.5;">
-                                Mobile browsers do not support rendering PDFs directly inside embedded frames. Tap below to view full screen or download.
-                            </p>
-                            <div style="display:inline-flex; gap:10px; flex-wrap:wrap; justify-content:center;">
-                                <a href="<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>" target="_blank" class="btn btn-primary btn-sm">
-                                    <i data-lucide="external-link"></i> Open Full Screen
-                                </a>
-                                <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm">
-                                    <i data-lucide="download"></i> Download PDF
-                                </a>
-                            </div>
+                <!-- Universal In-Browser PDF Preview (PDF.js Canvas Renderer for Android, iOS & Desktop) -->
+                <div id="pdfViewerContainer" style="border-radius:10px; overflow:hidden; border:1px solid var(--border-hairline); background:#525659;">
+                    <!-- PDF Controls Toolbar -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#323639; padding:8px 14px; color:#f1f1f1; font-size:12.5px; border-bottom:1px solid rgba(255,255,255,0.1); flex-wrap:wrap; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <button type="button" id="pdfPrevPage" class="btn btn-sm" style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:4px 9px; border-radius:6px; cursor:pointer;">‹ Prev</button>
+                            <span style="font-weight:500;">
+                                Page <span id="pdfPageNum">1</span> / <span id="pdfPageCount">—</span>
+                            </span>
+                            <button type="button" id="pdfNextPage" class="btn btn-sm" style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:4px 9px; border-radius:6px; cursor:pointer;">Next ›</button>
                         </div>
-                    </object>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button type="button" id="pdfZoomOut" class="btn btn-sm" style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:4px 9px; border-radius:6px; cursor:pointer;">−</button>
+                            <span id="pdfZoomLevel" style="font-size:11.5px; min-width:38px; text-align:center;">100%</span>
+                            <button type="button" id="pdfZoomIn" class="btn btn-sm" style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:4px 9px; border-radius:6px; cursor:pointer;">+</button>
+                            <a href="<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>" target="_blank" class="btn btn-sm" style="background:rgba(0,113,227,0.85); color:#fff; border:none; padding:4px 10px; border-radius:6px; text-decoration:none;">
+                                <i data-lucide="external-link" style="width:12px; height:12px; display:inline;"></i> Full Screen
+                            </a>
+                        </div>
+                    </div>
+                    <!-- PDF Page Render Canvas Viewport -->
+                    <div id="pdfCanvasWrapper" style="overflow:auto; max-height:680px; min-height:480px; padding:16px; display:flex; justify-content:center; align-items:flex-start; background:#525659;">
+                        <div id="pdfLoadingSpinner" style="color:#fff; padding:40px; text-align:center;">
+                            <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px;"></i>
+                            <div>Rendering PDF pages…</div>
+                        </div>
+                        <canvas id="pdfCanvas" style="display:none; box-shadow:0 4px 20px rgba(0,0,0,0.35); max-width:100%; height:auto; background:#fff;"></canvas>
+                    </div>
                 </div>
 
                 <?php elseif (in_array($ext, ['png', 'jpg', 'jpeg'])): ?>
@@ -382,8 +384,64 @@ include __DIR__ . '/includes/header.php';
                              style="max-width:100%; max-height:560px; border-radius:8px; box-shadow:0 4px 18px rgba(0,0,0,0.08); object-fit:contain; cursor:zoom-in;">
                     </a>
                     <div style="font-size:12px; color:var(--text-secondary); margin-top:10px;">
-                        Click image to view in full resolution
+                        Tap or click image to view in full resolution
                     </div>
+                </div>
+
+                <?php elseif ($ext === 'docx'): ?>
+                <!-- DOCX Interactive Document Viewer -->
+                <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline);">
+                        <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
+                            <i data-lucide="file-text" style="color:var(--apple-blue); width:18px; height:18px;"></i>
+                            Word Document Preview
+                        </div>
+                        <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm">
+                            <i data-lucide="download"></i> Download .docx
+                        </a>
+                    </div>
+                    <div id="docxPreviewContainer" style="padding:24px; max-height:650px; overflow:auto; background:#fff; color:#1d1d1f; line-height:1.6;">
+                        <div id="docxLoading" style="text-align:center; padding:40px; color:var(--text-secondary);">
+                            <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px; color:var(--apple-blue);"></i>
+                            <div>Rendering Word document…</div>
+                        </div>
+                    </div>
+                </div>
+
+                <?php elseif (in_array($ext, ['xls', 'xlsx'])): ?>
+                <!-- Spreadsheet Interactive Table Viewer -->
+                <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
+                            <i data-lucide="file-spreadsheet" style="color:var(--apple-green); width:18px; height:18px;"></i>
+                            Spreadsheet Preview
+                        </div>
+                        <div id="xlsxSheetsContainer" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+                    </div>
+                    <div id="xlsxLoading" style="text-align:center; padding:40px; color:var(--text-secondary);">
+                        <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px; color:var(--apple-green);"></i>
+                        <div>Loading spreadsheet data…</div>
+                    </div>
+                    <div id="xlsxTableWrapper" style="overflow:auto; max-height:550px; padding:12px;"></div>
+                </div>
+
+                <?php elseif ($ext === 'zip'): ?>
+                <!-- ZIP Archive Inspector -->
+                <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline);">
+                        <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
+                            <i data-lucide="archive" style="color:var(--apple-orange); width:18px; height:18px;"></i>
+                            Archive Contents
+                        </div>
+                        <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm">
+                            <i data-lucide="download"></i> Download ZIP
+                        </a>
+                    </div>
+                    <div id="zipListLoading" style="text-align:center; padding:40px; color:var(--text-secondary);">
+                        <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px; color:var(--apple-orange);"></i>
+                        <div>Reading archive files…</div>
+                    </div>
+                    <div id="zipFileListWrapper" style="padding:12px; max-height:500px; overflow:auto;"></div>
                 </div>
 
                 <?php elseif ($ext === 'txt'): ?>
@@ -395,7 +453,7 @@ include __DIR__ . '/includes/header.php';
                 <pre style="background:rgba(0,0,0,0.02); border:1px solid var(--border-hairline); border-radius:10px; padding:18px 20px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size:12.5px; line-height:1.6; max-height:500px; overflow:auto; color:var(--text-primary); white-space:pre-wrap;"><?= htmlspecialchars($textContent) ?></pre>
 
                 <?php else: ?>
-                <!-- Microsoft Office / Binary Format Quick Look Card -->
+                <!-- Unsupported / Other Format Quick Look Card -->
                 <div style="text-align:center; padding:44px 20px; background:linear-gradient(180deg, rgba(0,0,0,0.01) 0%, rgba(0,0,0,0.03) 100%); border-radius:12px; border:1px dashed var(--border-hairline);">
                     <div style="width:68px; height:68px; border-radius:18px; background:<?= $icon[2] ?>; color:<?= $icon[1] ?>; display:inline-flex; align-items:center; justify-content:center; font-size:32px; margin-bottom:14px; box-shadow:0 4px 14px rgba(0,0,0,0.06);">
                         <i data-lucide="<?= $icon[0] ?>"></i>
@@ -404,7 +462,7 @@ include __DIR__ . '/includes/header.php';
                         <?= htmlspecialchars($doc['file_name']) ?>
                     </h3>
                     <p style="font-size:13px; color:var(--text-secondary); max-width:460px; margin:0 auto 20px; line-height:1.5;">
-                        This document is in <strong><?= strtoupper($ext) ?></strong> format (<?= htmlspecialchars($doc['file_type']) ?>). Web browsers cannot natively render editable Microsoft Office files inside a page without downloading.
+                        This document is in <strong><?= strtoupper($ext) ?></strong> format (<?= htmlspecialchars($doc['file_type']) ?>). Tap below to download and view using your device's native app.
                     </p>
                     <div style="display:inline-flex; gap:10px; flex-wrap:wrap; justify-content:center;">
                         <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-primary">
@@ -965,6 +1023,268 @@ include __DIR__ . '/includes/header.php';
         }
     });
 })();
-</script>
+<!-- ── Multi-Format Document Preview Libraries ── -->
+<?php if ($hasDiskFile): ?>
+    <?php if ($ext === 'pdf'): ?>
+    <script src="<?= APP_URL ?>/assets/vendor/pdfjs/pdf.min.js"></script>
+    <script>
+    (function() {
+        if (typeof pdfjsLib === 'undefined') return;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '<?= APP_URL ?>/assets/vendor/pdfjs/pdf.worker.min.js';
+
+        const pdfUrl = '<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>';
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let scale = 1.0;
+
+        const canvas = document.getElementById('pdfCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const spinner = document.getElementById('pdfLoadingSpinner');
+        const pageNumEl = document.getElementById('pdfPageNum');
+        const pageCountEl = document.getElementById('pdfPageCount');
+        const zoomEl = document.getElementById('pdfZoomLevel');
+        const prevBtn = document.getElementById('pdfPrevPage');
+        const nextBtn = document.getElementById('pdfNextPage');
+        const zoomInBtn = document.getElementById('pdfZoomIn');
+        const zoomOutBtn = document.getElementById('pdfZoomOut');
+
+        function renderPage(num) {
+            pageRendering = true;
+            pdfDoc.getPage(num).then(function(page) {
+                // Determine responsive scale based on viewport width
+                const containerWidth = document.getElementById('pdfCanvasWrapper')?.clientWidth || 600;
+                const unscaledViewport = page.getViewport({ scale: 1.0 });
+                let autoScale = scale;
+                if (window.innerWidth < 768) {
+                    autoScale = (Math.max(containerWidth - 32, 280) / unscaledViewport.width) * scale;
+                }
+
+                const viewport = page.getViewport({ scale: autoScale });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                const renderTask = page.render(renderContext);
+
+                renderTask.promise.then(function() {
+                    pageRendering = false;
+                    if (spinner) spinner.style.display = 'none';
+                    canvas.style.display = 'block';
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                });
+            });
+
+            if (pageNumEl) pageNumEl.textContent = num;
+            if (zoomEl) zoomEl.textContent = Math.round(scale * 100) + '%';
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        function onPrevPage() {
+            if (pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        }
+
+        function onNextPage() {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        }
+
+        function onZoomIn() {
+            if (scale >= 2.5) return;
+            scale = +(scale + 0.2).toFixed(1);
+            queueRenderPage(pageNum);
+        }
+
+        function onZoomOut() {
+            if (scale <= 0.6) return;
+            scale = +(scale - 0.2).toFixed(1);
+            queueRenderPage(pageNum);
+        }
+
+        prevBtn?.addEventListener('click', onPrevPage);
+        nextBtn?.addEventListener('click', onNextPage);
+        zoomInBtn?.addEventListener('click', onZoomIn);
+        zoomOutBtn?.addEventListener('click', onZoomOut);
+
+        // Load document
+        pdfjsLib.getDocument(pdfUrl).promise.then(function(pdfDoc_) {
+            pdfDoc = pdfDoc_;
+            if (pageCountEl) pageCountEl.textContent = pdfDoc.numPages;
+            renderPage(pageNum);
+        }).catch(function(err) {
+            console.error('PDF.js render error:', err);
+            if (spinner) {
+                spinner.innerHTML = `
+                    <div style="color:var(--apple-orange); margin-bottom:8px;"><i data-lucide="alert-triangle"></i> Failed to render PDF preview directly.</div>
+                    <a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#fff; border-color:#fff;">Open Full PDF in New Tab</a>
+                `;
+                if (window.lucide) lucide.createIcons();
+            }
+        });
+    })();
+    </script>
+    <?php endif; ?>
+
+    <?php if ($ext === 'docx'): ?>
+    <script src="<?= APP_URL ?>/assets/vendor/docx/docx-preview.min.js"></script>
+    <script>
+    (function() {
+        const docxContainer = document.getElementById('docxPreviewContainer');
+        const loading = document.getElementById('docxLoading');
+        if (!docxContainer || typeof docx === 'undefined') return;
+
+        fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>')
+            .then(res => {
+                if (!res.ok) throw new Error('Network error loading DOCX');
+                return res.blob();
+            })
+            .then(blob => {
+                if (loading) loading.style.display = 'none';
+                docx.renderAsync(blob, docxContainer, null, {
+                    className: 'docx-rendered-body',
+                    inWrapper: false,
+                    ignoreWidth: false,
+                    ignoreHeight: false
+                }).catch(err => {
+                    console.error('docx preview render error:', err);
+                    docxContainer.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Unable to parse document layout. Please download the file to view.</div>';
+                });
+            })
+            .catch(err => {
+                console.error('docx fetch error:', err);
+                if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Could not load document preview. Please download to view.</div>';
+            });
+    })();
+    </script>
+    <?php endif; ?>
+
+    <?php if (in_array($ext, ['xls', 'xlsx'])): ?>
+    <script src="<?= APP_URL ?>/assets/vendor/xlsx/xlsx.full.min.js"></script>
+    <script>
+    (function() {
+        const tableWrapper = document.getElementById('xlsxTableWrapper');
+        const sheetsContainer = document.getElementById('xlsxSheetsContainer');
+        const loading = document.getElementById('xlsxLoading');
+        if (!tableWrapper || typeof XLSX === 'undefined') return;
+
+        fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>')
+            .then(res => {
+                if (!res.ok) throw new Error('Network error loading spreadsheet');
+                return res.arrayBuffer();
+            })
+            .then(buffer => {
+                const workbook = XLSX.read(buffer, { type: 'array' });
+                if (loading) loading.style.display = 'none';
+
+                if (!workbook.SheetNames || !workbook.SheetNames.length) {
+                    tableWrapper.innerHTML = '<div class="text-muted text-center" style="padding:20px;">No sheets found in spreadsheet.</div>';
+                    return;
+                }
+
+                function renderSheet(name) {
+                    const sheet = workbook.Sheets[name];
+                    const html = XLSX.utils.sheet_to_html(sheet, { id: 'xlsxPreviewTable', editable: false });
+                    tableWrapper.innerHTML = html;
+                    const tbl = document.getElementById('xlsxPreviewTable');
+                    if (tbl) {
+                        tbl.className = 'table';
+                        tbl.style.width = '100%';
+                        tbl.style.borderCollapse = 'collapse';
+                        tbl.style.fontSize = '12px';
+                    }
+                }
+
+                workbook.SheetNames.forEach((name, idx) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = idx === 0 ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+                    btn.textContent = name;
+                    btn.style.fontSize = '11px';
+                    btn.style.padding = '3px 10px';
+                    btn.onclick = () => {
+                        sheetsContainer.querySelectorAll('button').forEach(b => b.className = 'btn btn-outline btn-sm');
+                        btn.className = 'btn btn-primary btn-sm';
+                        renderSheet(name);
+                    };
+                    sheetsContainer.appendChild(btn);
+                });
+
+                renderSheet(workbook.SheetNames[0]);
+            })
+            .catch(err => {
+                console.error('XLSX render error:', err);
+                if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Could not render spreadsheet. Please download to view.</div>';
+            });
+    })();
+    </script>
+    <?php endif; ?>
+
+    <?php if ($ext === 'zip'): ?>
+    <script>
+    (function() {
+        const listWrapper = document.getElementById('zipFileListWrapper');
+        const loading = document.getElementById('zipListLoading');
+        if (!listWrapper || typeof JSZip === 'undefined') return;
+
+        fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>')
+            .then(res => {
+                if (!res.ok) throw new Error('Network error loading ZIP');
+                return res.arrayBuffer();
+            })
+            .then(buffer => JSZip.loadAsync(buffer))
+            .then(zip => {
+                if (loading) loading.style.display = 'none';
+                const fileNames = Object.keys(zip.files);
+                if (!fileNames.length) {
+                    listWrapper.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Archive is empty.</div>';
+                    return;
+                }
+
+                let html = '<div style="display:flex; flex-direction:column; gap:6px;">';
+                fileNames.forEach(name => {
+                    const entry = zip.files[name];
+                    const isDir = entry.dir;
+                    const iconName = isDir ? 'folder' : 'file';
+                    const sizeStr = isDir ? 'Folder' : (entry._data ? (entry._data.uncompressedSize ? Math.round(entry._data.uncompressedSize / 1024) + ' KB' : 'File') : 'File');
+                    html += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--bg-card-subtle); border-radius:8px; font-size:12.5px;">
+                            <div style="display:flex; align-items:center; gap:8px; word-break:break-all;">
+                                <i data-lucide="${iconName}" style="width:16px; height:16px; color:${isDir ? 'var(--apple-blue)' : 'var(--text-secondary)'}; flex-shrink:0;"></i>
+                                <span style="font-weight:${isDir ? '600' : '400'}; color:var(--text-primary);">${name}</span>
+                            </div>
+                            <span class="text-muted" style="font-size:11.5px; margin-left:12px; flex-shrink:0;">${sizeStr}</span>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                listWrapper.innerHTML = html;
+                if (window.lucide) lucide.createIcons();
+            })
+            .catch(err => {
+                console.error('ZIP reader error:', err);
+                if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Could not inspect archive files. Please download to view.</div>';
+            });
+    })();
+    </script>
+    <?php endif; ?>
+<?php endif; ?>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
