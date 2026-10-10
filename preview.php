@@ -46,7 +46,29 @@ $baseUploadDir = realpath(UPLOAD_PATH);
 $fullPath = realpath(__DIR__ . '/' . ltrim($targetFilePath, '/\\'));
 
 if (!$fullPath || !$baseUploadDir || strpos($fullPath, $baseUploadDir) !== 0 || !is_file($fullPath)) {
-    render_error_page(404);
+    http_response_code(404);
+    header('Content-Type: text/html; charset=utf-8');
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body { margin:0; display:flex; align-items:center; justify-content:center; height:100vh; background:#1c1c1e; color:#8e8e93; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align:center; padding:20px; box-sizing:border-box; }
+            .box { max-width:320px; }
+            h2 { font-size:15px; color:#f5f5f7; margin-bottom:6px; font-weight:600; }
+            p { font-size:12.5px; line-height:1.5; margin:0; color:#8e8e93; }
+        </style>
+    </head>
+    <body>
+        <div class="box">
+            <h2>File Not Available</h2>
+            <p>The document file could not be located in storage.</p>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
 }
 
 $ext = strtolower(pathinfo($targetFileName, PATHINFO_EXTENSION));

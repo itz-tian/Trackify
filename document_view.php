@@ -298,6 +298,10 @@ include __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Document Preview -->
+        <?php
+        $diskFile = realpath(__DIR__ . '/' . ltrim($doc['file_path'], '/\\'));
+        $hasDiskFile = ($diskFile && is_file($diskFile));
+        ?>
         <div class="card mb-16">
             <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
                 <span class="card-title">
@@ -308,18 +312,39 @@ include __DIR__ . '/includes/header.php';
                     <span class="text-sm text-muted" style="font-size:12px;">
                         <?= strtoupper($ext) ?> · <?= number_format($doc['file_size'] / 1024, 1) ?> KB
                     </span>
-                    <?php if (in_array($ext, ['pdf', 'png', 'jpg', 'jpeg', 'txt'])): ?>
-                    <a href="<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>" target="_blank" class="btn btn-outline btn-sm" title="Open full screen in a new tab">
-                        <i data-lucide="external-link"></i> Open Tab
-                    </a>
+                    <?php if ($hasDiskFile): ?>
+                        <?php if (in_array($ext, ['pdf', 'png', 'jpg', 'jpeg', 'txt'])): ?>
+                        <a href="<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>" target="_blank" class="btn btn-outline btn-sm" title="Open full screen in a new tab">
+                            <i data-lucide="external-link"></i> Open Tab
+                        </a>
+                        <?php endif; ?>
+                        <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm" title="Download original file">
+                            <i data-lucide="download"></i> Download
+                        </a>
                     <?php endif; ?>
-                    <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm" title="Download original file">
-                        <i data-lucide="download"></i> Download
-                    </a>
                 </div>
             </div>
             <div class="card-body" style="padding:16px;">
-                <?php if ($ext === 'pdf'): ?>
+                <?php if (!$hasDiskFile): ?>
+                <!-- Missing file state: graceful fallback instead of broken nested iframe -->
+                <div style="text-align:center; padding:38px 20px; background:var(--bg-card-subtle); border-radius:12px; border:1px dashed var(--border-hairline);">
+                    <div style="width:54px; height:54px; border-radius:16px; background:rgba(255, 149, 0, 0.12); color:var(--apple-orange); display:inline-flex; align-items:center; justify-content:center; font-size:26px; margin-bottom:12px;">
+                        <i data-lucide="file-question"></i>
+                    </div>
+                    <h3 style="font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:6px;">
+                        File Unavailable in Storage
+                    </h3>
+                    <p style="font-size:13px; color:var(--text-secondary); max-width:440px; margin:0 auto 16px; line-height:1.5;">
+                        The uploaded file for this record is missing from storage (uploaded before persistent volume was attached). Please upload a new version to attach the file and enable preview.
+                    </p>
+                    <?php if ($canEdit): ?>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openNewVersionModal()">
+                        <i data-lucide="upload"></i> Upload New Version
+                    </button>
+                    <?php endif; ?>
+                </div>
+
+                <?php elseif ($ext === 'pdf'): ?>
                 <!-- PDF Interactive Inline Preview -->
                 <div style="position:relative; width:100%; border-radius:10px; overflow:hidden; border:1px solid var(--border-hairline); background:#525659;">
                     <iframe src="<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>#toolbar=1&navpanes=0"
