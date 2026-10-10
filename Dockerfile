@@ -29,5 +29,15 @@ RUN chmod -R 777 /app/uploads
 
 EXPOSE 8080
 
-# Run PHP built-in webserver bound to Railway dynamic PORT
-CMD ["sh", "-c", "php -S 0.0.0.0:${PORT:-8080} -t /app"]
+# Entrypoint: print DB env vars on startup (visible in Railway logs), then write a PHP env cache, then start server
+CMD ["sh", "-c", "\
+  echo '=== RAILWAY ENV VARS ===' && \
+  echo \"MYSQLHOST=$MYSQLHOST\" && \
+  echo \"MYSQLPORT=$MYSQLPORT\" && \
+  echo \"MYSQLUSER=$MYSQLUSER\" && \
+  echo \"MYSQLDATABASE=$MYSQLDATABASE\" && \
+  echo \"DATABASE_URL=$DATABASE_URL\" && \
+  echo \"MYSQLPASSWORD=[hidden]\" && \
+  echo '========================' && \
+  php -S 0.0.0.0:${PORT:-8080} -t /app \
+"]
