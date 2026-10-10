@@ -1,14 +1,19 @@
 # Dockerfile for Railway deployment
 FROM php:8.2-cli
 
+# Set timezone to Asia/Manila (UTC+8)
+ENV TZ="Asia/Manila"
+
 # Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
+    tzdata \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
     zip \
     unzip \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
     pdo \

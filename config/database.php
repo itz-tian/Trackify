@@ -27,6 +27,7 @@ class Database {
                     // Disable ONLY_FULL_GROUP_BY for session to ensure cross-version MySQL 8 compatibility
                     try {
                         $pdo->exec("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
+                        $pdo->exec("SET time_zone = '+08:00'");
                     } catch (Throwable $ignored) {}
 
                     // Check if schema is already applied (users table must exist).

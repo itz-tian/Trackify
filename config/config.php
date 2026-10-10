@@ -1,4 +1,8 @@
 <?php
+// ── Application Timezone ─────────────────────────────────────────────────────
+date_default_timezone_set('Asia/Manila');
+define('APP_TIMEZONE', 'Asia/Manila');
+
 // ── Database ─────────────────────────────────────────────────────────────────
 // Reads Railway / Cloud environment variables first; falls back to local XAMPP defaults.
 $env = function(string $key): ?string {
