@@ -148,7 +148,6 @@ include __DIR__ . '/../includes/header.php';
                     <select name="role">
                         <option value="staff">Staff</option>
                         <option value="department_head">Department Head</option>
-                        <option value="viewer">Viewer</option>
                         <option value="admin">Admin</option>
                     </select>
                 </div>

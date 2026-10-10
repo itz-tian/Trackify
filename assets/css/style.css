@@ -515,20 +515,118 @@
         /* Responsive Layout Helpers */
         .content-split {
             display: grid;
-            grid-template-columns: 1fr 340px;
+            grid-template-columns: minmax(0, 1fr) 340px;
             gap: 20px;
-            align-items: stretch;
+            align-items: start;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .content-split > div,
+        .content-split > .card {
+            min-width: 0;
+            max-width: 100%;
         }
 
         .content-split > .card {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            overflow: hidden;
         }
 
         .content-split > .card > .card-body,
         .content-split > .card > .table-wrap {
             flex: 1 1 auto;
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        /* Excel Spreadsheet Grid Responsive Container */
+        .excel-grid-wrapper {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto !important;
+            overflow-y: auto !important;
+            max-height: 580px;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 0 0 10px 10px;
+            background: var(--bg-card);
+            box-sizing: border-box;
+        }
+
+        .excel-table {
+            border-collapse: collapse;
+            width: max-content;
+            min-width: 100%;
+            font-size: 12px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .excel-table th,
+        .excel-table td {
+            border: 1px solid var(--border-hairline);
+            padding: 5px 10px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .excel-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--bg-card-subtle);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-align: center;
+            user-select: none;
+        }
+
+        .excel-table tbody th {
+            position: sticky;
+            left: 0;
+            z-index: 9;
+            background: var(--bg-card-subtle);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-align: center;
+            user-select: none;
+            width: 44px;
+            min-width: 44px;
+        }
+
+        .excel-table thead th:first-child {
+            left: 0;
+            z-index: 20;
+        }
+
+        /* Presentation & PDF Extracted Page Layouts */
+        .extracted-page-card {
+            width: 100%;
+            max-width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+            border: 1px solid var(--border-hairline);
+            background: var(--bg-card);
+            margin-bottom: 18px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .extracted-page-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .extracted-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 14px;
+            background: var(--bg-card-subtle);
+            border-bottom: 1px solid var(--border-hairline);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
         }
 
         .grid-2col {
@@ -1129,7 +1227,7 @@
         /* Tablet & Medium Displays (<= 1180px) */
         @media (max-width: 1180px) {
             .content-split {
-                grid-template-columns: 1fr;
+                grid-template-columns: minmax(0, 1fr);
                 gap: 20px;
                 align-items: start;
             }

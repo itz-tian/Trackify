@@ -302,13 +302,13 @@ include __DIR__ . '/includes/header.php';
         $diskFile = realpath(__DIR__ . '/' . ltrim($doc['file_path'], '/\\'));
         $hasDiskFile = ($diskFile && is_file($diskFile));
         ?>
-        <div class="card mb-16">
-            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="card mb-16" style="min-width:0; max-width:100%; overflow:hidden;">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                 <span class="card-title">
                     <i data-lucide="eye" style="color:var(--apple-blue); margin-right:8px;"></i>
                     Document Preview
                 </span>
-                <div style="display:flex; gap:8px; align-items:center;">
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                     <span class="text-sm text-muted" style="font-size:12px;">
                         <?= strtoupper($ext) ?> · <?= number_format($doc['file_size'] / 1024, 1) ?> KB
                     </span>
@@ -324,7 +324,7 @@ include __DIR__ . '/includes/header.php';
                     <?php endif; ?>
                 </div>
             </div>
-            <div class="card-body" style="padding:16px;">
+            <div class="card-body" style="padding:16px; min-width:0; max-width:100%; overflow:hidden;">
                 <?php if (!$hasDiskFile): ?>
                 <!-- Missing file state: graceful fallback instead of broken nested iframe -->
                 <div style="text-align:center; padding:38px 20px; background:var(--bg-card-subtle); border-radius:12px; border:1px dashed var(--border-hairline);">
@@ -345,33 +345,53 @@ include __DIR__ . '/includes/header.php';
                 </div>
 
                 <?php elseif ($ext === 'pdf'): ?>
-                <!-- Universal In-Browser PDF Preview (PDF.js Canvas Renderer for Android, iOS & Desktop) -->
-                <div id="pdfViewerContainer" style="border-radius:10px; overflow:hidden; border:1px solid var(--border-hairline); background:#525659;">
+                <!-- Universal In-Browser PDF Preview: Extracted Pages Reader + Slide View + Native Frame -->
+                <div id="pdfViewerContainer" style="border-radius:10px; overflow:hidden; border:1px solid var(--border-hairline); background:#525659; width:100%; max-width:100%;">
                     <!-- PDF Controls Toolbar -->
                     <div style="display:flex; justify-content:space-between; align-items:center; background:#323639; padding:8px 14px; color:#f1f1f1; font-size:12.5px; border-bottom:1px solid rgba(255,255,255,0.1); flex-wrap:wrap; gap:8px;">
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <button type="button" id="pdfPrevPage" class="btn btn-sm" style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:4px 9px; border-radius:6px; cursor:pointer;">‹ Prev</button>
-                            <span style="font-weight:500;">
-                                Page <span id="pdfPageNum">1</span> / <span id="pdfPageCount">—</span>
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <span id="pdfPageBadge" class="badge" style="background:rgba(255,255,255,0.15); color:#fff; font-size:11.5px; padding:3px 8px; border-radius:6px;">
+                                <span id="pdfExtractedCount">Loading pages…</span>
                             </span>
-                            <button type="button" id="pdfNextPage" class="btn btn-sm" style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:4px 9px; border-radius:6px; cursor:pointer;">Next ›</button>
+                            <div id="pdfSlideNavControls" style="display:none; align-items:center; gap:6px;">
+                                <button type="button" id="pdfPrevPage" class="btn btn-sm" style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:4px 9px; border-radius:6px; cursor:pointer;">‹ Prev</button>
+                                <span style="font-weight:500;">
+                                    Page <span id="pdfPageNum">1</span> / <span id="pdfPageCount">—</span>
+                                </span>
+                                <button type="button" id="pdfNextPage" class="btn btn-sm" style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:4px 9px; border-radius:6px; cursor:pointer;">Next ›</button>
+                            </div>
                         </div>
-                        <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <button type="button" id="pdfViewToggleBtn" class="btn btn-sm" style="background:rgba(255,255,255,0.15); color:#fff; border:none; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:11.5px;">
+                                <i data-lucide="layers" style="width:13px; height:13px; display:inline-block; vertical-align:middle;"></i> All Pages View
+                            </button>
                             <button type="button" id="pdfZoomOut" class="btn btn-sm" style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:4px 9px; border-radius:6px; cursor:pointer;">−</button>
                             <span id="pdfZoomLevel" style="font-size:11.5px; min-width:38px; text-align:center;">100%</span>
                             <button type="button" id="pdfZoomIn" class="btn btn-sm" style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:4px 9px; border-radius:6px; cursor:pointer;">+</button>
+                            <button type="button" id="pdfNativeToggle" class="btn btn-sm" style="background:rgba(255,255,255,0.1); color:#fff; border:none; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:11.5px;" title="Switch to browser native PDF frame">
+                                Native View
+                            </button>
                             <a href="<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>" target="_blank" class="btn btn-sm" style="background:rgba(0,113,227,0.85); color:#fff; border:none; padding:4px 10px; border-radius:6px; text-decoration:none;">
                                 <i data-lucide="external-link" style="width:12px; height:12px; display:inline;"></i> Full Screen
                             </a>
                         </div>
                     </div>
-                    <!-- PDF Page Render Canvas Viewport -->
-                    <div id="pdfCanvasWrapper" style="overflow:auto; max-height:680px; min-height:480px; padding:16px; display:flex; justify-content:center; align-items:flex-start; background:#525659;">
+                    <!-- PDF Canvas Viewport -->
+                    <div id="pdfCanvasWrapper" style="overflow-x:auto; overflow-y:auto; max-height:720px; min-height:480px; padding:16px; background:#525659; -webkit-overflow-scrolling:touch;">
                         <div id="pdfLoadingSpinner" style="color:#fff; padding:40px; text-align:center;">
                             <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px;"></i>
-                            <div>Rendering PDF pages…</div>
+                            <div>Extracting PDF pages…</div>
                         </div>
-                        <canvas id="pdfCanvas" style="display:none; box-shadow:0 4px 20px rgba(0,0,0,0.35); max-width:100%; height:auto; background:#fff;"></canvas>
+                        <!-- Container for all extracted pages stacked vertically -->
+                        <div id="pdfPagesContainer" style="display:none; flex-direction:column; align-items:center; gap:20px; width:100%;"></div>
+                        <!-- Single slide view container -->
+                        <div id="pdfSingleContainer" style="display:none; justify-content:center; align-items:flex-start; width:100%;">
+                            <canvas id="pdfSingleCanvas" style="box-shadow:0 4px 20px rgba(0,0,0,0.35); max-width:100%; height:auto; background:#fff; border-radius:4px;"></canvas>
+                        </div>
+                        <!-- Native iframe container -->
+                        <div id="pdfNativeWrapper" style="display:none; width:100%; height:680px;">
+                            <iframe id="pdfIframe" src="" style="width:100%; height:100%; border:none; border-radius:6px; background:#fff;"></iframe>
+                        </div>
                     </div>
                 </div>
 
@@ -390,7 +410,7 @@ include __DIR__ . '/includes/header.php';
 
                 <?php elseif ($ext === 'docx'): ?>
                 <!-- DOCX Interactive Document Viewer -->
-                <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card);">
+                <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card); width:100%; max-width:100%;">
                     <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline);">
                         <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
                             <i data-lucide="file-text" style="color:var(--apple-blue); width:18px; height:18px;"></i>
@@ -400,7 +420,7 @@ include __DIR__ . '/includes/header.php';
                             <i data-lucide="download"></i> Download .docx
                         </a>
                     </div>
-                    <div id="docxPreviewContainer" style="padding:24px; max-height:650px; overflow:auto; background:#fff; color:#1d1d1f; line-height:1.6;">
+                    <div id="docxPreviewContainer" style="padding:24px; max-height:650px; overflow:auto; background:#fff; color:#1d1d1f; line-height:1.6; -webkit-overflow-scrolling:touch;">
                         <div id="docxLoading" style="text-align:center; padding:40px; color:var(--text-secondary);">
                             <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px; color:var(--apple-blue);"></i>
                             <div>Rendering Word document…</div>
@@ -410,14 +430,14 @@ include __DIR__ . '/includes/header.php';
 
                 <?php elseif (in_array($ext, ['xls', 'xlsx'])): ?>
                 <!-- Excel-Styled Interactive Spreadsheet Grid Viewer -->
-                <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card);">
+                <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card); width:100%; max-width:100%;">
                     <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
                         <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
                             <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; background:#107c41; color:#fff; border-radius:4px; font-size:12px; font-weight:700;">X</span>
                             <span>Excel Spreadsheet View</span>
                             <span id="xlsxGridMetaBadge" class="badge" style="background:rgba(16,124,65,0.12); color:#107c41; font-size:11px; padding:2px 8px; border-radius:10px; display:none;"></span>
                         </div>
-                        <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                             <div id="xlsxSheetsContainer" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
                             <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm">
                                 <i data-lucide="download"></i> Download .<?= $ext ?>
@@ -428,22 +448,23 @@ include __DIR__ . '/includes/header.php';
                         <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px; color:#107c41;"></i>
                         <div>Building spreadsheet grid…</div>
                     </div>
-                    <div id="xlsxTableWrapper" style="overflow:auto; max-height:580px; padding:0; background:var(--bg-card);"></div>
+                    <div id="xlsxTableWrapper" class="excel-grid-wrapper" style="width:100%; max-width:100%; overflow-x:auto !important; overflow-y:auto !important; max-height:580px; -webkit-overflow-scrolling:touch; background:var(--bg-card);"></div>
                 </div>
 
                 <?php elseif (in_array($ext, ['ppt', 'pptx'])): ?>
-                <!-- PowerPoint Interactive Presentation & Visuals Viewer -->
-                <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card);">
+                <!-- PowerPoint Interactive Presentation & Extracted Slide Pages Viewer -->
+                <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card); width:100%; max-width:100%;">
                     <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
                         <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
                             <i data-lucide="presentation" style="color:var(--apple-orange); width:18px; height:18px;"></i>
-                            PowerPoint Slides & Visuals
+                            PowerPoint Slides & Pages
                             <span id="pptxImageCountBadge" class="badge" style="background:rgba(255,149,0,0.15); color:var(--apple-orange); font-size:11px; padding:2px 8px; border-radius:12px; display:none;"></span>
                         </div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <div id="pptxViewModes" style="display:none; gap:4px;">
-                                <button type="button" id="pptxBtnDeck" class="btn btn-primary btn-sm" style="font-size:11.5px; padding:4px 10px;">Slide Deck</button>
-                                <button type="button" id="pptxBtnGrid" class="btn btn-outline btn-sm" style="font-size:11.5px; padding:4px 10px;">All Images Grid</button>
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <div id="pptxViewModes" style="display:none; gap:4px; flex-wrap:wrap;">
+                                <button type="button" id="pptxBtnPages" class="btn btn-primary btn-sm" style="font-size:11.5px; padding:4px 10px;">All Slide Pages</button>
+                                <button type="button" id="pptxBtnDeck" class="btn btn-outline btn-sm" style="font-size:11.5px; padding:4px 10px;">Slide Deck</button>
+                                <button type="button" id="pptxBtnGrid" class="btn btn-outline btn-sm" style="font-size:11.5px; padding:4px 10px;">Media Grid</button>
                             </div>
                             <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm">
                                 <i data-lucide="download"></i> Download .<?= $ext ?>
@@ -452,21 +473,25 @@ include __DIR__ . '/includes/header.php';
                     </div>
                     <div id="pptxLoading" style="text-align:center; padding:40px; color:var(--text-secondary);">
                         <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px; color:var(--apple-orange);"></i>
-                        <div>Extracting presentation visuals…</div>
+                        <div>Extracting presentation slide pages…</div>
+                    </div>
+                    <!-- All Extracted Slide Pages (Scrollable Stack) -->
+                    <div id="pptxPagesContainer" style="display:none; padding:16px; max-height:680px; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+                        <div id="pptxPagesWrapper" style="display:flex; flex-direction:column; gap:20px; align-items:center; width:100%; max-width:860px; margin:0 auto;"></div>
                     </div>
                     <!-- Slide Deck View (Featured Slide + Controls + Thumbnails) -->
                     <div id="pptxDeckContainer" style="display:none; padding:16px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:var(--bg-card-subtle); padding:8px 14px; border-radius:8px; font-size:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:var(--bg-card-subtle); padding:8px 14px; border-radius:8px; font-size:12px; flex-wrap:wrap; gap:8px;">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <button type="button" id="pptxPrevBtn" class="btn btn-outline btn-sm" style="padding:3px 10px;">‹ Previous</button>
-                                <span style="font-weight:600;" id="pptxSlideIndicator">Visual 1 of 1</span>
+                                <span style="font-weight:600;" id="pptxSlideIndicator">Slide 1 of 1</span>
                                 <button type="button" id="pptxNextBtn" class="btn btn-outline btn-sm" style="padding:3px 10px;">Next ›</button>
                             </div>
                             <span id="pptxCurrentFileName" class="text-muted" style="font-size:11.5px;"></span>
                         </div>
                         <div style="text-align:center; background:#1c1c1e; border-radius:8px; padding:16px; min-height:360px; display:flex; align-items:center; justify-content:center;">
-                            <a id="pptxActiveImageLink" href="#" target="_blank" title="Click to view full image in new tab">
-                                <img id="pptxActiveImage" src="" alt="Presentation Visual" style="max-width:100%; max-height:560px; object-fit:contain; border-radius:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5); cursor:zoom-in;">
+                            <a id="pptxActiveImageLink" href="#" target="_blank" title="Click to view full slide in new tab">
+                                <img id="pptxActiveImage" src="" alt="Presentation Slide" style="max-width:100%; max-height:560px; object-fit:contain; border-radius:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5); cursor:zoom-in;">
                             </a>
                         </div>
                         <!-- Thumbnail Strip -->
@@ -476,27 +501,58 @@ include __DIR__ . '/includes/header.php';
                     <div id="pptxGridContainer" style="display:none; padding:16px; max-height:600px; overflow-y:auto;">
                         <div id="pptxGridWrapper" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:14px;"></div>
                     </div>
-                    <!-- Text Outline Fallback (for presentations with no images) -->
+                    <!-- Text Outline Fallback -->
                     <div id="pptxTextContainer" style="display:none; padding:20px; max-height:500px; overflow-y:auto;"></div>
                 </div>
 
                 <?php elseif ($ext === 'zip'): ?>
-                <!-- ZIP Archive Inspector -->
-                <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline);">
+                <!-- ZIP Archive & Extracted Presentation Pages Inspector -->
+                <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card); width:100%; max-width:100%;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
                         <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
                             <i data-lucide="archive" style="color:var(--apple-orange); width:18px; height:18px;"></i>
-                            Archive Contents
+                            <span id="zipHeaderTitle">Archive & Slide Pages</span>
+                            <span id="zipBadgeCount" class="badge" style="background:rgba(255,149,0,0.15); color:var(--apple-orange); font-size:11px; padding:2px 8px; border-radius:12px; display:none;"></span>
                         </div>
-                        <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm">
-                            <i data-lucide="download"></i> Download ZIP
-                        </a>
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <div id="zipViewModes" style="display:none; gap:4px; flex-wrap:wrap;">
+                                <button type="button" id="zipBtnPages" class="btn btn-primary btn-sm" style="font-size:11.5px; padding:4px 10px;">Extracted Pages</button>
+                                <button type="button" id="zipBtnDeck" class="btn btn-outline btn-sm" style="font-size:11.5px; padding:4px 10px;">Slide Deck</button>
+                                <button type="button" id="zipBtnFiles" class="btn btn-outline btn-sm" style="font-size:11.5px; padding:4px 10px;">File Listing</button>
+                            </div>
+                            <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm">
+                                <i data-lucide="download"></i> Download ZIP
+                            </a>
+                        </div>
                     </div>
                     <div id="zipListLoading" style="text-align:center; padding:40px; color:var(--text-secondary);">
                         <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px; color:var(--apple-orange);"></i>
-                        <div>Reading archive files…</div>
+                        <div>Reading archive contents & slides…</div>
                     </div>
-                    <div id="zipFileListWrapper" style="padding:12px; max-height:500px; overflow:auto;"></div>
+                    <!-- Extracted Pages Scrollable View (Page 1, Page 2... stacked) -->
+                    <div id="zipPagesContainer" style="display:none; padding:16px; max-height:680px; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+                        <div id="zipPagesWrapper" style="display:flex; flex-direction:column; gap:20px; align-items:center; width:100%; max-width:860px; margin:0 auto;"></div>
+                    </div>
+                    <!-- Slide Deck View -->
+                    <div id="zipDeckContainer" style="display:none; padding:16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:var(--bg-card-subtle); padding:8px 14px; border-radius:8px; font-size:12px; flex-wrap:wrap; gap:8px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <button type="button" id="zipPrevBtn" class="btn btn-outline btn-sm" style="padding:3px 10px;">‹ Previous</button>
+                                <span style="font-weight:600;" id="zipSlideIndicator">Page 1 of 1</span>
+                                <button type="button" id="zipNextBtn" class="btn btn-outline btn-sm" style="padding:3px 10px;">Next ›</button>
+                            </div>
+                            <span id="zipCurrentFileName" class="text-muted" style="font-size:11.5px;"></span>
+                        </div>
+                        <div style="text-align:center; background:#1c1c1e; border-radius:8px; padding:16px; min-height:360px; display:flex; align-items:center; justify-content:center;">
+                            <a id="zipActiveImageLink" href="#" target="_blank" title="Click to view full image in new tab">
+                                <img id="zipActiveImage" src="" alt="Extracted Slide Page" style="max-width:100%; max-height:560px; object-fit:contain; border-radius:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5); cursor:zoom-in;">
+                            </a>
+                        </div>
+                        <!-- Thumbnail Strip -->
+                        <div id="zipThumbStrip" style="display:flex; gap:8px; overflow-x:auto; padding:12px 0 4px; margin-top:10px;"></div>
+                    </div>
+                    <!-- File list wrapper -->
+                    <div id="zipFileListWrapper" style="display:none; padding:12px; max-height:500px; overflow:auto;"></div>
                 </div>
 
                 <?php elseif ($ext === 'txt'): ?>
@@ -1086,127 +1142,220 @@ include __DIR__ . '/includes/header.php';
     <script>
     (function() {
         const spinner = document.getElementById('pdfLoadingSpinner');
+        const pagesContainer = document.getElementById('pdfPagesContainer');
+        const singleContainer = document.getElementById('pdfSingleContainer');
+        const singleCanvas = document.getElementById('pdfSingleCanvas');
+        const nativeWrapper = document.getElementById('pdfNativeWrapper');
+        const iframe = document.getElementById('pdfIframe');
+        const pageBadge = document.getElementById('pdfPageBadge');
+        const extractedCount = document.getElementById('pdfExtractedCount');
+        const slideNavControls = document.getElementById('pdfSlideNavControls');
+        const pageNumEl = document.getElementById('pdfPageNum');
+        const pageCountEl = document.getElementById('pdfPageCount');
+        const zoomLevelEl = document.getElementById('pdfZoomLevel');
+        const viewToggleBtn = document.getElementById('pdfViewToggleBtn');
+        const nativeToggleBtn = document.getElementById('pdfNativeToggle');
+        const prevBtn = document.getElementById('pdfPrevPage');
+        const nextBtn = document.getElementById('pdfNextPage');
+        const zoomInBtn = document.getElementById('pdfZoomIn');
+        const zoomOutBtn = document.getElementById('pdfZoomOut');
         const pdfUrl = '<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>';
+
         if (typeof pdfjsLib === 'undefined') {
             if (spinner) {
                 spinner.innerHTML = `
-                    <div style="color:var(--apple-orange); margin-bottom:8px;"><i data-lucide="alert-triangle"></i> PDF reader library could not be loaded.</div>
-                    <a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#fff; border-color:#fff;">Open Full PDF in New Tab</a>
+                    <div style="color:var(--apple-orange); margin-bottom:12px;"><i data-lucide="alert-triangle"></i> PDF reader library could not be loaded.</div>
+                    <a href="${pdfUrl}" target="_blank" class="btn btn-primary btn-sm">Open PDF in New Tab</a>
                 `;
                 if (window.lucide) lucide.createIcons();
             }
             return;
         }
+
+        // Configure worker safely
         pdfjsLib.GlobalWorkerOptions.workerSrc = '<?= APP_URL ?>/assets/vendor/pdfjs/pdf.worker.min.js';
 
         let pdfDoc = null;
-        let pageNum = 1;
-        let pageRendering = false;
-        let pageNumPending = null;
         let scale = 1.0;
+        let activePage = 1;
+        let viewMode = 'all'; // 'all', 'single', or 'native'
+        let isRendering = false;
 
-        const canvas = document.getElementById('pdfCanvas');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        const spinner = document.getElementById('pdfLoadingSpinner');
-        const pageNumEl = document.getElementById('pdfPageNum');
-        const pageCountEl = document.getElementById('pdfPageCount');
-        const zoomEl = document.getElementById('pdfZoomLevel');
-        const prevBtn = document.getElementById('pdfPrevPage');
-        const nextBtn = document.getElementById('pdfNextPage');
-        const zoomInBtn = document.getElementById('pdfZoomIn');
-        const zoomOutBtn = document.getElementById('pdfZoomOut');
+        function updateZoomText() {
+            if (zoomLevelEl) zoomLevelEl.textContent = Math.round(scale * 100) + '%';
+        }
 
-        function renderPage(num) {
-            pageRendering = true;
-            pdfDoc.getPage(num).then(function(page) {
-                // Determine responsive scale based on viewport width
-                const containerWidth = document.getElementById('pdfCanvasWrapper')?.clientWidth || 600;
+        function renderAllPages() {
+            if (!pdfDoc || !pagesContainer) return;
+            pagesContainer.innerHTML = '';
+            pagesContainer.style.display = 'flex';
+            if (singleContainer) singleContainer.style.display = 'none';
+            if (nativeWrapper) nativeWrapper.style.display = 'none';
+            if (slideNavControls) slideNavControls.style.display = 'none';
+            if (viewToggleBtn) {
+                viewToggleBtn.innerHTML = '<i data-lucide="presentation" style="width:13px; height:13px; display:inline-block; vertical-align:middle;"></i> Single Slide';
+                if (window.lucide) lucide.createIcons();
+            }
+
+            const wrapperWidth = document.getElementById('pdfCanvasWrapper')?.clientWidth || 700;
+            const targetWidth = Math.max(Math.min(wrapperWidth - 40, 860) * scale, 300);
+
+            for (let p = 1; p <= pdfDoc.numPages; p++) {
+                const card = document.createElement('div');
+                card.className = 'extracted-page-card';
+                card.style.cssText = 'background:#fff; max-width:860px; width:100%; box-shadow:0 6px 20px rgba(0,0,0,0.3); border-radius:6px; overflow:hidden; margin:0 auto 20px;';
+                card.innerHTML = `
+                    <div class="extracted-page-header" style="background:#2c2c2e; color:#f1f1f1; padding:6px 14px; font-size:11.5px; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:600;">Page ${p} of ${pdfDoc.numPages}</span>
+                        <a href="${pdfUrl}" target="_blank" style="color:#64d2ff; text-decoration:none; font-size:11px;">View Full Page</a>
+                    </div>
+                    <div style="display:flex; justify-content:center; padding:0; background:#fff; overflow:hidden;">
+                        <canvas id="pdfCanvasPage_${p}" style="display:block; max-width:100%; height:auto;"></canvas>
+                    </div>
+                `;
+                pagesContainer.appendChild(card);
+
+                pdfDoc.getPage(p).then(page => {
+                    const canvas = document.getElementById(`pdfCanvasPage_${p}`);
+                    if (!canvas) return;
+                    const ctx = canvas.getContext('2d');
+                    const unscaledViewport = page.getViewport({ scale: 1.0 });
+                    const renderScale = (targetWidth / unscaledViewport.width);
+                    const viewport = page.getViewport({ scale: renderScale });
+
+                    const dpr = window.devicePixelRatio || 1;
+                    canvas.width = Math.floor(viewport.width * dpr);
+                    canvas.height = Math.floor(viewport.height * dpr);
+                    canvas.style.width = Math.floor(viewport.width) + 'px';
+                    canvas.style.height = Math.floor(viewport.height) + 'px';
+
+                    const renderContext = {
+                        canvasContext: ctx,
+                        viewport: viewport,
+                        transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null
+                    };
+                    page.render(renderContext);
+                }).catch(err => console.error('Error rendering page ' + p, err));
+            }
+        }
+
+        function renderSinglePage(num) {
+            if (!pdfDoc || !singleCanvas) return;
+            if (num < 1) num = 1;
+            if (num > pdfDoc.numPages) num = pdfDoc.numPages;
+            activePage = num;
+
+            if (pageNumEl) pageNumEl.textContent = activePage;
+            if (pageCountEl) pageCountEl.textContent = pdfDoc.numPages;
+
+            pagesContainer.style.display = 'none';
+            if (singleContainer) singleContainer.style.display = 'flex';
+            if (nativeWrapper) nativeWrapper.style.display = 'none';
+            if (slideNavControls) slideNavControls.style.display = 'flex';
+            if (viewToggleBtn) {
+                viewToggleBtn.innerHTML = '<i data-lucide="layers" style="width:13px; height:13px; display:inline-block; vertical-align:middle;"></i> All Pages';
+                if (window.lucide) lucide.createIcons();
+            }
+
+            pdfDoc.getPage(activePage).then(page => {
+                const ctx = singleCanvas.getContext('2d');
+                const wrapperWidth = document.getElementById('pdfCanvasWrapper')?.clientWidth || 700;
                 const unscaledViewport = page.getViewport({ scale: 1.0 });
-                let autoScale = scale;
-                if (window.innerWidth < 768) {
-                    autoScale = (Math.max(containerWidth - 32, 280) / unscaledViewport.width) * scale;
-                }
+                const targetWidth = Math.max(Math.min(wrapperWidth - 40, 860) * scale, 300);
+                const renderScale = (targetWidth / unscaledViewport.width);
+                const viewport = page.getViewport({ scale: renderScale });
 
-                const viewport = page.getViewport({ scale: autoScale });
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
+                const dpr = window.devicePixelRatio || 1;
+                singleCanvas.width = Math.floor(viewport.width * dpr);
+                singleCanvas.height = Math.floor(viewport.height * dpr);
+                singleCanvas.style.width = Math.floor(viewport.width) + 'px';
+                singleCanvas.style.height = Math.floor(viewport.height) + 'px';
 
                 const renderContext = {
                     canvasContext: ctx,
-                    viewport: viewport
+                    viewport: viewport,
+                    transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null
                 };
-                const renderTask = page.render(renderContext);
-
-                renderTask.promise.then(function() {
-                    pageRendering = false;
-                    if (spinner) spinner.style.display = 'none';
-                    canvas.style.display = 'block';
-                    if (pageNumPending !== null) {
-                        renderPage(pageNumPending);
-                        pageNumPending = null;
-                    }
-                });
+                page.render(renderContext);
             });
-
-            if (pageNumEl) pageNumEl.textContent = num;
-            if (zoomEl) zoomEl.textContent = Math.round(scale * 100) + '%';
         }
 
-        function queueRenderPage(num) {
-            if (pageRendering) {
-                pageNumPending = num;
+        // View Mode Toggles
+        viewToggleBtn?.addEventListener('click', function() {
+            if (viewMode === 'all') {
+                viewMode = 'single';
+                renderSinglePage(activePage);
             } else {
-                renderPage(num);
+                viewMode = 'all';
+                renderAllPages();
             }
-        }
+        });
 
-        function onPrevPage() {
-            if (pageNum <= 1) return;
-            pageNum--;
-            queueRenderPage(pageNum);
-        }
+        nativeToggleBtn?.addEventListener('click', function() {
+            if (viewMode === 'native') {
+                viewMode = 'all';
+                nativeToggleBtn.style.background = 'rgba(255,255,255,0.1)';
+                renderAllPages();
+            } else {
+                viewMode = 'native';
+                nativeToggleBtn.style.background = 'rgba(0,113,227,0.85)';
+                if (pagesContainer) pagesContainer.style.display = 'none';
+                if (singleContainer) singleContainer.style.display = 'none';
+                if (slideNavControls) slideNavControls.style.display = 'none';
+                if (nativeWrapper) {
+                    nativeWrapper.style.display = 'block';
+                    if (iframe && !iframe.src) iframe.src = pdfUrl;
+                }
+            }
+        });
 
-        function onNextPage() {
-            if (pageNum >= pdfDoc.numPages) return;
-            pageNum++;
-            queueRenderPage(pageNum);
-        }
+        prevBtn?.addEventListener('click', () => {
+            if (activePage > 1) renderSinglePage(activePage - 1);
+        });
+        nextBtn?.addEventListener('click', () => {
+            if (activePage < pdfDoc.numPages) renderSinglePage(activePage + 1);
+        });
 
-        function onZoomIn() {
-            if (scale >= 2.5) return;
-            scale = +(scale + 0.2).toFixed(1);
-            queueRenderPage(pageNum);
-        }
+        zoomInBtn?.addEventListener('click', () => {
+            if (scale < 2.4) {
+                scale = +(scale + 0.2).toFixed(1);
+                updateZoomText();
+                if (viewMode === 'single') renderSinglePage(activePage);
+                else renderAllPages();
+            }
+        });
 
-        function onZoomOut() {
-            if (scale <= 0.6) return;
-            scale = +(scale - 0.2).toFixed(1);
-            queueRenderPage(pageNum);
-        }
+        zoomOutBtn?.addEventListener('click', () => {
+            if (scale > 0.6) {
+                scale = +(scale - 0.2).toFixed(1);
+                updateZoomText();
+                if (viewMode === 'single') renderSinglePage(activePage);
+                else renderAllPages();
+            }
+        });
 
-        prevBtn?.addEventListener('click', onPrevPage);
-        nextBtn?.addEventListener('click', onNextPage);
-        zoomInBtn?.addEventListener('click', onZoomIn);
-        zoomOutBtn?.addEventListener('click', onZoomOut);
-
-        // Load document via arrayBuffer for consistent cross-browser binary delivery
-        const loadTimeout = setTimeout(function() {
+        // 6-second timeout fallback to native viewer if PDF.js stalls
+        const loadTimeout = setTimeout(() => {
             if (!pdfDoc && spinner) {
                 spinner.innerHTML = `
-                    <div style="color:var(--apple-orange); margin-bottom:8px;"><i data-lucide="alert-triangle"></i> Canvas rendering is taking longer than expected.</div>
-                    <a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#fff; border-color:#fff;">Open Full PDF in New Tab</a>
+                    <div style="color:var(--apple-orange); margin-bottom:12px; font-weight:600;">Canvas rendering is taking longer than expected.</div>
+                    <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+                        <button type="button" id="pdfFallbackNativeBtn" class="btn btn-primary btn-sm">Switch to Native PDF Frame</button>
+                        <a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#fff; border-color:#fff;">Open Full PDF in New Tab</a>
+                    </div>
                 `;
-                if (window.lucide) lucide.createIcons();
+                document.getElementById('pdfFallbackNativeBtn')?.addEventListener('click', () => {
+                    nativeToggleBtn?.click();
+                });
             }
-        }, 8000);
+        }, 6000);
 
         fetch(pdfUrl)
-            .then(function(res) {
+            .then(res => {
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 return res.arrayBuffer();
             })
-            .then(function(buf) {
+            .then(buf => {
                 return pdfjsLib.getDocument({
                     data: new Uint8Array(buf),
                     cMapUrl: '<?= APP_URL ?>/assets/vendor/pdfjs/cmaps/',
@@ -1214,20 +1363,28 @@ include __DIR__ . '/includes/header.php';
                     isEvalSupported: false
                 }).promise;
             })
-            .then(function(pdfDoc_) {
+            .then(pdfDoc_ => {
                 clearTimeout(loadTimeout);
                 pdfDoc = pdfDoc_;
+                if (spinner) spinner.style.display = 'none';
+                if (extractedCount) extractedCount.textContent = `${pdfDoc.numPages} Pages Extracted`;
                 if (pageCountEl) pageCountEl.textContent = pdfDoc.numPages;
-                renderPage(pageNum);
+                renderAllPages();
             })
-            .catch(function(err) {
+            .catch(err => {
                 clearTimeout(loadTimeout);
                 console.error('PDF.js render error:', err);
                 if (spinner) {
                     spinner.innerHTML = `
-                        <div style="color:var(--apple-orange); margin-bottom:8px;"><i data-lucide="alert-triangle"></i> Failed to render PDF preview directly.</div>
-                        <a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#fff; border-color:#fff;">Open Full PDF in New Tab</a>
+                        <div style="color:var(--apple-orange); margin-bottom:12px; font-weight:600;"><i data-lucide="alert-triangle"></i> Notice: Device previewing via native viewer.</div>
+                        <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+                            <button type="button" id="pdfErrorNativeBtn" class="btn btn-primary btn-sm">Load in Native Frame</button>
+                            <a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="color:#fff; border-color:#fff;">Open PDF in New Tab</a>
+                        </div>
                     `;
+                    document.getElementById('pdfErrorNativeBtn')?.addEventListener('click', () => {
+                        nativeToggleBtn?.click();
+                    });
                     if (window.lucide) lucide.createIcons();
                 }
             });
@@ -1334,33 +1491,32 @@ include __DIR__ . '/includes/header.php';
                         metaBadge.style.display = 'inline-block';
                     }
 
-                    // Build authentic Excel grid table
-                    let html = '<div style="overflow:auto; max-height:560px;">';
-                    html += '<table style="border-collapse:collapse; width:max-content; min-width:100%; font-size:12px;">';
+                    // Build authentic Excel grid table directly inside the responsive scroll wrapper
+                    let html = '<table class="excel-table">';
                     
                     // Column Letters Header Row (A, B, C...)
                     html += '<thead><tr>';
-                    html += '<th style="position:sticky; top:0; left:0; z-index:15; background:var(--bg-card-subtle); border:1px solid var(--border-hairline); width:44px; min-width:44px; height:26px;"></th>';
+                    html += '<th></th>';
                     for (let c = 0; c < maxCols; c++) {
-                        html += `<th style="position:sticky; top:0; z-index:10; background:var(--bg-card-subtle); color:var(--text-secondary); font-weight:600; text-align:center; border:1px solid var(--border-hairline); padding:4px 10px; min-width:85px; font-size:11px; user-select:none;">${getColLetter(c)}</th>`;
+                        html += `<th>${getColLetter(c)}</th>`;
                     }
                     html += '</tr></thead><tbody>';
 
                     // Data Rows with Row Numbers (1, 2, 3...)
                     rows.forEach((row, rIdx) => {
                         html += '<tr>';
-                        html += `<th style="position:sticky; left:0; z-index:9; background:var(--bg-card-subtle); color:var(--text-secondary); font-weight:600; text-align:center; border:1px solid var(--border-hairline); padding:4px 8px; width:44px; min-width:44px; font-size:11px; user-select:none;">${rIdx + 1}</th>`;
+                        html += `<th>${rIdx + 1}</th>`;
                         for (let c = 0; c < maxCols; c++) {
                             const rawVal = row ? row[c] : '';
                             const strVal = (rawVal !== undefined && rawVal !== null) ? String(rawVal) : '';
                             const isNum = !isNaN(strVal) && strVal.trim() !== '' && !/^[A-Za-z]/.test(strVal);
                             const alignStyle = isNum ? 'text-align:right; font-variant-numeric:tabular-nums;' : 'text-align:left;';
-                            html += `<td style="border:1px solid var(--border-hairline); padding:5px 10px; color:var(--text-primary); white-space:nowrap; max-width:340px; overflow:hidden; text-overflow:ellipsis; ${alignStyle}">${escHtml(strVal)}</td>`;
+                            html += `<td style="white-space:nowrap; max-width:320px; overflow:hidden; text-overflow:ellipsis; ${alignStyle}">${escHtml(strVal)}</td>`;
                         }
                         html += '</tr>';
                     });
 
-                    html += '</tbody></table></div>';
+                    html += '</tbody></table>';
                     tableWrapper.innerHTML = html;
                 }
 
@@ -1402,6 +1558,8 @@ include __DIR__ . '/includes/header.php';
     <script>
     (function() {
         const loading = document.getElementById('pptxLoading');
+        const pagesContainer = document.getElementById('pptxPagesContainer');
+        const pagesWrapper = document.getElementById('pptxPagesWrapper');
         const deckContainer = document.getElementById('pptxDeckContainer');
         const gridContainer = document.getElementById('pptxGridContainer');
         const textContainer = document.getElementById('pptxTextContainer');
@@ -1416,6 +1574,7 @@ include __DIR__ . '/includes/header.php';
         const fileNameEl = document.getElementById('pptxCurrentFileName');
         const thumbStrip = document.getElementById('pptxThumbStrip');
         const gridWrapper = document.getElementById('pptxGridWrapper');
+        const btnPages = document.getElementById('pptxBtnPages');
         const btnDeck = document.getElementById('pptxBtnDeck');
         const btnGrid = document.getElementById('pptxBtnGrid');
 
@@ -1430,6 +1589,15 @@ include __DIR__ . '/includes/header.php';
             return div.innerHTML;
         }
 
+        function naturalSort(a, b) {
+            const aNum = (a.match(/\d+/) || [])[0];
+            const bNum = (b.match(/\d+/) || [])[0];
+            if (aNum !== undefined && bNum !== undefined && aNum !== bNum) {
+                return parseInt(aNum, 10) - parseInt(bNum, 10);
+            }
+            return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+        }
+
         fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>')
             .then(res => {
                 if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -1437,20 +1605,12 @@ include __DIR__ . '/includes/header.php';
             })
             .then(buffer => JSZip.loadAsync(buffer))
             .then(async zip => {
-                // Find all image files in presentation
+                // Find all image files in presentation (ppt/media/*, docProps/thumbnail.jpeg)
                 const imageFileNames = Object.keys(zip.files).filter(name => {
                     if (zip.files[name].dir) return false;
                     return /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(name);
                 });
-
-                // Prioritize ppt/media/
-                imageFileNames.sort((a, b) => {
-                    const aMedia = /^ppt\/media\//i.test(a);
-                    const bMedia = /^ppt\/media\//i.test(b);
-                    if (aMedia && !bMedia) return -1;
-                    if (!aMedia && bMedia) return 1;
-                    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
-                });
+                imageFileNames.sort(naturalSort);
 
                 const images = [];
                 for (const name of imageFileNames) {
@@ -1469,30 +1629,94 @@ include __DIR__ . '/includes/header.php';
                     }
                 }
 
+                // Also parse slides XML
+                const slideFiles = Object.keys(zip.files).filter(name => /^ppt\/slides\/slide\d+\.xml$/i.test(name));
+                slideFiles.sort(naturalSort);
+
+                const parsedSlides = [];
+                for (let i = 0; i < slideFiles.length; i++) {
+                    try {
+                        const xmlStr = await zip.files[slideFiles[i]].async('string');
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(xmlStr, 'text/xml');
+                        const textNodes = xmlDoc.getElementsByTagName('a:t');
+                        const lines = [];
+                        for (let j = 0; j < textNodes.length; j++) {
+                            const t = textNodes[j].textContent.trim();
+                            if (t) lines.push(t);
+                        }
+                        parsedSlides.push({
+                            slideIndex: i + 1,
+                            title: lines[0] || `Slide ${i + 1}`,
+                            lines: lines
+                        });
+                    } catch (e) {}
+                }
+
                 if (loading) loading.style.display = 'none';
 
-                if (images.length > 0) {
+                const totalItems = images.length || parsedSlides.length;
+                if (totalItems > 0) {
                     if (countBadge) {
-                        countBadge.textContent = `${images.length} Visuals Found`;
+                        countBadge.textContent = `${totalItems} Slide Pages`;
                         countBadge.style.display = 'inline-block';
                     }
                     if (viewModes) viewModes.style.display = 'flex';
 
-                    let currentIndex = 0;
+                    // 1. Render All Extracted Slide Pages (Stacked View)
+                    if (pagesWrapper) {
+                        pagesWrapper.innerHTML = '';
+                        if (images.length > 0) {
+                            images.forEach((img, idx) => {
+                                const card = document.createElement('div');
+                                card.className = 'extracted-page-card';
+                                card.innerHTML = `
+                                    <div class="extracted-page-header">
+                                        <span>Slide Page ${idx + 1} of ${images.length}</span>
+                                        <a href="${img.url}" target="_blank" class="text-sm" style="color:var(--apple-blue); text-decoration:none;">Open Full Slide</a>
+                                    </div>
+                                    <div style="background:#1c1c1e; padding:12px; display:flex; justify-content:center; align-items:center;">
+                                        <img src="${img.url}" alt="Slide ${idx + 1}" style="max-width:100%; max-height:560px; object-fit:contain; border-radius:4px; box-shadow:0 4px 16px rgba(0,0,0,0.4);">
+                                    </div>
+                                `;
+                                pagesWrapper.appendChild(card);
+                            });
+                        } else {
+                            parsedSlides.forEach((slide, idx) => {
+                                const card = document.createElement('div');
+                                card.className = 'extracted-page-card';
+                                card.innerHTML = `
+                                    <div class="extracted-page-header">
+                                        <span>Slide Page ${idx + 1} of ${parsedSlides.length}</span>
+                                        <span class="text-muted">${escHtml(slide.title)}</span>
+                                    </div>
+                                    <div style="padding:28px 32px; background:linear-gradient(135deg, #ffffff 0%, #f5f5f7 100%); min-height:260px; display:flex; flex-direction:column; justify-content:center;">
+                                        <h3 style="font-size:18px; font-weight:700; color:#1d1d1f; margin-bottom:14px;">${escHtml(slide.title)}</h3>
+                                        <div style="font-size:13.5px; line-height:1.7; color:#3a3a3c;">
+                                            ${slide.lines.slice(1).map(l => `<div style="margin-bottom:6px;">• ${escHtml(l)}</div>`).join('') || '<span class="text-muted">(Slide graphics or table)</span>'}
+                                        </div>
+                                    </div>
+                                `;
+                                pagesWrapper.appendChild(card);
+                            });
+                        }
+                    }
 
+                    // 2. Setup Slide Deck View (Featured Slide)
+                    let currentDeckIdx = 0;
                     function showSlide(idx) {
+                        if (images.length === 0) return;
                         if (idx < 0) idx = 0;
                         if (idx >= images.length) idx = images.length - 1;
-                        currentIndex = idx;
+                        currentDeckIdx = idx;
                         const item = images[idx];
                         if (activeImg) activeImg.src = item.url;
                         if (activeLink) activeLink.href = item.url;
-                        if (indicator) indicator.textContent = `Visual ${idx + 1} of ${images.length}`;
+                        if (indicator) indicator.textContent = `Slide ${idx + 1} of ${images.length}`;
                         if (fileNameEl) {
                             const kb = Math.round(item.size / 1024);
                             fileNameEl.textContent = `${item.name} (${kb} KB)`;
                         }
-
                         if (thumbStrip) {
                             thumbStrip.querySelectorAll('.pptx-thumb').forEach((th, i) => {
                                 th.style.outline = (i === idx) ? '3px solid var(--apple-orange)' : 'none';
@@ -1503,7 +1727,7 @@ include __DIR__ . '/includes/header.php';
                         }
                     }
 
-                    if (thumbStrip) {
+                    if (thumbStrip && images.length > 0) {
                         thumbStrip.innerHTML = '';
                         images.forEach((item, idx) => {
                             const th = document.createElement('img');
@@ -1516,7 +1740,7 @@ include __DIR__ . '/includes/header.php';
                         });
                     }
 
-                    if (gridWrapper) {
+                    if (gridWrapper && images.length > 0) {
                         gridWrapper.innerHTML = '';
                         images.forEach((item, idx) => {
                             const card = document.createElement('div');
@@ -1527,7 +1751,7 @@ include __DIR__ . '/includes/header.php';
                                     <img src="${item.url}" alt="${item.name}" style="max-height:100%; max-width:100%; object-fit:contain;">
                                 </div>
                                 <div style="padding:8px 10px; font-size:11.5px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-hairline);">
-                                    <span style="font-weight:600; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:120px;">${escHtml(item.name)}</span>
+                                    <span style="font-weight:600; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:120px;">Slide ${idx + 1}</span>
                                     <span class="text-muted">${kb} KB</span>
                                 </div>
                             `;
@@ -1539,70 +1763,44 @@ include __DIR__ . '/includes/header.php';
                         });
                     }
 
-                    if (prevBtn) prevBtn.onclick = () => showSlide(currentIndex - 1);
-                    if (nextBtn) nextBtn.onclick = () => showSlide(currentIndex + 1);
+                    if (prevBtn) prevBtn.onclick = () => showSlide(currentDeckIdx - 1);
+                    if (nextBtn) nextBtn.onclick = () => showSlide(currentDeckIdx + 1);
 
-                    if (btnDeck && btnGrid) {
-                        btnDeck.onclick = () => {
-                            btnDeck.className = 'btn btn-primary btn-sm';
-                            btnGrid.className = 'btn btn-outline btn-sm';
+                    // Mode Switching
+                    function setViewMode(mode) {
+                        [btnPages, btnDeck, btnGrid].forEach(b => {
+                            if (b) {
+                                b.className = 'btn btn-outline btn-sm';
+                                b.style.fontSize = '11.5px';
+                            }
+                        });
+                        if (pagesContainer) pagesContainer.style.display = 'none';
+                        if (deckContainer) deckContainer.style.display = 'none';
+                        if (gridContainer) gridContainer.style.display = 'none';
+
+                        if (mode === 'pages' && pagesContainer) {
+                            if (btnPages) btnPages.className = 'btn btn-primary btn-sm';
+                            pagesContainer.style.display = 'block';
+                        } else if (mode === 'deck' && deckContainer) {
+                            if (btnDeck) btnDeck.className = 'btn btn-primary btn-sm';
                             deckContainer.style.display = 'block';
-                            gridContainer.style.display = 'none';
-                        };
-                        btnGrid.onclick = () => {
-                            btnGrid.className = 'btn btn-primary btn-sm';
-                            btnDeck.className = 'btn btn-outline btn-sm';
-                            deckContainer.style.display = 'none';
+                            showSlide(currentDeckIdx);
+                        } else if (mode === 'grid' && gridContainer) {
+                            if (btnGrid) btnGrid.className = 'btn btn-primary btn-sm';
                             gridContainer.style.display = 'block';
-                        };
+                        }
                     }
 
-                    deckContainer.style.display = 'block';
-                    showSlide(0);
+                    if (btnPages) btnPages.onclick = () => setViewMode('pages');
+                    if (btnDeck) btnDeck.onclick = () => setViewMode('deck');
+                    if (btnGrid) btnGrid.onclick = () => setViewMode('grid');
 
+                    // Default to All Slide Pages View
+                    setViewMode('pages');
                 } else {
-                    const slideFiles = Object.keys(zip.files).filter(name => /^ppt\/slides\/slide\d+\.xml$/i.test(name));
-                    slideFiles.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-
-                    if (slideFiles.length > 0) {
-                        if (countBadge) {
-                            countBadge.textContent = `${slideFiles.length} Slides`;
-                            countBadge.style.display = 'inline-block';
-                        }
-                        let textHtml = '<div style="margin-bottom:14px; font-size:12.5px; color:var(--text-secondary);">';
-                        textHtml += '<i data-lucide="info" style="width:14px; height:14px; display:inline-block; vertical-align:middle; margin-right:4px;"></i> No embedded media files were found in this presentation. Text content for each slide is presented below:';
-                        textHtml += '</div>';
-
-                        for (let i = 0; i < slideFiles.length; i++) {
-                            const xmlStr = await zip.files[slideFiles[i]].async('string');
-                            const parser = new DOMParser();
-                            const xmlDoc = parser.parseFromString(xmlStr, 'text/xml');
-                            const textNodes = xmlDoc.getElementsByTagName('a:t');
-                            const lines = [];
-                            for (let j = 0; j < textNodes.length; j++) {
-                                const t = textNodes[j].textContent.trim();
-                                if (t) lines.push(t);
-                            }
-
-                            textHtml += `
-                                <div style="background:var(--bg-card-subtle); border:1px solid var(--border-hairline); border-radius:8px; padding:12px 16px; margin-bottom:10px;">
-                                    <div style="font-weight:700; font-size:12px; color:var(--apple-orange); margin-bottom:6px;">Slide ${i + 1}</div>
-                                    <div style="font-size:13px; line-height:1.5; color:var(--text-primary);">
-                                        ${lines.length ? lines.map(l => `<div>• ${escHtml(l)}</div>`).join('') : '<span class="text-muted" style="font-style:italic;">(Blank slide or shape graphics)</span>'}
-                                    </div>
-                                </div>
-                            `;
-                        }
-                        if (textContainer) {
-                            textContainer.innerHTML = textHtml;
-                            textContainer.style.display = 'block';
-                            if (window.lucide) lucide.createIcons();
-                        }
-                    } else {
-                        if (textContainer) {
-                            textContainer.innerHTML = '<div class="text-muted text-center" style="padding:30px;">Could not extract slides from this presentation. Please download the file to view.</div>';
-                            textContainer.style.display = 'block';
-                        }
+                    if (textContainer) {
+                        textContainer.innerHTML = '<div class="text-muted text-center" style="padding:30px;">Could not extract slides from this presentation. Please download the file to view.</div>';
+                        textContainer.style.display = 'block';
                     }
                 }
             })
@@ -1627,9 +1825,26 @@ include __DIR__ . '/includes/header.php';
     <?php if ($ext === 'zip'): ?>
     <script>
     (function() {
-        const listWrapper = document.getElementById('zipFileListWrapper');
         const loading = document.getElementById('zipListLoading');
-        if (!listWrapper) return;
+        const headerTitle = document.getElementById('zipHeaderTitle');
+        const badgeCount = document.getElementById('zipBadgeCount');
+        const viewModes = document.getElementById('zipViewModes');
+        const pagesContainer = document.getElementById('zipPagesContainer');
+        const pagesWrapper = document.getElementById('zipPagesWrapper');
+        const deckContainer = document.getElementById('zipDeckContainer');
+        const listWrapper = document.getElementById('zipFileListWrapper');
+        const btnPages = document.getElementById('zipBtnPages');
+        const btnDeck = document.getElementById('zipBtnDeck');
+        const btnFiles = document.getElementById('zipBtnFiles');
+
+        const activeImg = document.getElementById('zipActiveImage');
+        const activeLink = document.getElementById('zipActiveImageLink');
+        const prevBtn = document.getElementById('zipPrevBtn');
+        const nextBtn = document.getElementById('zipNextBtn');
+        const indicator = document.getElementById('zipSlideIndicator');
+        const fileNameEl = document.getElementById('zipCurrentFileName');
+        const thumbStrip = document.getElementById('zipThumbStrip');
+
         if (typeof JSZip === 'undefined') {
             if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">ZIP library could not be loaded. Please download the file to view.</div>';
             return;
@@ -1641,39 +1856,39 @@ include __DIR__ . '/includes/header.php';
             return div.innerHTML;
         }
 
+        function naturalSort(a, b) {
+            const aNum = (a.match(/\d+/) || [])[0];
+            const bNum = (b.match(/\d+/) || [])[0];
+            if (aNum !== undefined && bNum !== undefined && aNum !== bNum) {
+                return parseInt(aNum, 10) - parseInt(bNum, 10);
+            }
+            return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+        }
+
         fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>')
             .then(res => {
                 if (!res.ok) throw new Error('HTTP ' + res.status + ' loading ZIP');
                 return res.arrayBuffer();
             })
             .then(buffer => JSZip.loadAsync(buffer))
-            .then(zip => {
+            .then(async zip => {
                 if (loading) loading.style.display = 'none';
                 const fileNames = Object.keys(zip.files);
                 if (!fileNames.length) {
-                    listWrapper.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Archive is empty.</div>';
+                    if (listWrapper) {
+                        listWrapper.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Archive is empty.</div>';
+                        listWrapper.style.display = 'block';
+                    }
                     return;
                 }
 
-                // Check for image files in the archive
+                // Check for extracted slide / page images in archive
                 const imgNames = fileNames.filter(n => !zip.files[n].dir && /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(n));
-                imgNames.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+                imgNames.sort(naturalSort);
 
-                let html = '';
-                if (imgNames.length > 0) {
-                    html += `
-                        <div style="margin-bottom:16px;">
-                            <div style="font-weight:600; font-size:12.5px; color:var(--text-primary); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-                                <i data-lucide="image" style="width:16px; height:16px; color:var(--apple-blue);"></i>
-                                Extracted Images & Slides (${imgNames.length})
-                            </div>
-                            <div id="zipImageGallery" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:10px; max-height:320px; overflow-y:auto; padding:4px 2px;"></div>
-                        </div>
-                    `;
-                }
-
-                html += '<div style="font-weight:600; font-size:12px; color:var(--text-secondary); margin-bottom:8px;">All Archive Files (' + fileNames.length + ')</div>';
-                html += '<div style="display:flex; flex-direction:column; gap:6px;">';
+                // Populate File Listing
+                let listHtml = '<div style="font-weight:600; font-size:12px; color:var(--text-secondary); margin-bottom:8px;">All Archive Files (' + fileNames.length + ')</div>';
+                listHtml += '<div style="display:flex; flex-direction:column; gap:6px;">';
                 fileNames.forEach(name => {
                     const entry = zip.files[name];
                     const isDir = Boolean(entry.dir || name.endsWith('/'));
@@ -1686,7 +1901,7 @@ include __DIR__ . '/includes/header.php';
                         }
                     } catch (e) {}
 
-                    html += `
+                    listHtml += `
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--bg-card-subtle); border-radius:8px; font-size:12.5px;">
                             <div style="display:flex; align-items:center; gap:8px; word-break:break-all;">
                                 <i data-lucide="${iconName}" style="width:16px; height:16px; color:${isDir ? 'var(--apple-blue)' : 'var(--text-secondary)'}; flex-shrink:0;"></i>
@@ -1696,32 +1911,119 @@ include __DIR__ . '/includes/header.php';
                         </div>
                     `;
                 });
-                html += '</div>';
-                listWrapper.innerHTML = html;
-                if (window.lucide) lucide.createIcons();
+                listHtml += '</div>';
+                if (listWrapper) listWrapper.innerHTML = listHtml;
 
-                // Asynchronously load image thumbnails
+                // If images exist (e.g. extracted slide pages), build visual presentation viewer
                 if (imgNames.length > 0) {
-                    const gallery = document.getElementById('zipImageGallery');
-                    if (gallery) {
-                        imgNames.forEach(async n => {
-                            try {
-                                const blob = await zip.files[n].async('blob');
-                                const url = URL.createObjectURL(blob);
-                                const card = document.createElement('a');
-                                card.href = url;
-                                card.target = '_blank';
-                                card.title = n + ' (Click to view full image)';
-                                card.style.cssText = 'display:block; border-radius:6px; overflow:hidden; border:1px solid var(--border-hairline); background:#1c1c1e; height:95px; text-decoration:none; position:relative; box-shadow:0 2px 6px rgba(0,0,0,0.1);';
-                                card.innerHTML = `
-                                    <img src="${url}" alt="${escHtml(n)}" style="width:100%; height:100%; object-fit:contain;">
-                                    <div style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.7); color:#fff; font-size:9.5px; padding:2px 4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escHtml(n.split('/').pop())}</div>
-                                `;
-                                gallery.appendChild(card);
-                            } catch (e) {}
+                    if (headerTitle) headerTitle.textContent = 'Extracted Slides & Pages';
+                    if (badgeCount) {
+                        badgeCount.textContent = `${imgNames.length} Extracted Pages`;
+                        badgeCount.style.display = 'inline-block';
+                    }
+                    if (viewModes) viewModes.style.display = 'flex';
+
+                    const extractedImages = [];
+                    for (const n of imgNames) {
+                        try {
+                            const blob = await zip.files[n].async('blob');
+                            const url = URL.createObjectURL(blob);
+                            const cleanName = n.split('/').pop();
+                            extractedImages.push({ name: cleanName, url: url, size: blob.size });
+                        } catch (e) {}
+                    }
+
+                    // 1. Build Extracted Pages Stack (Page 1, Page 2... stacked vertically)
+                    if (pagesWrapper) {
+                        pagesWrapper.innerHTML = '';
+                        extractedImages.forEach((img, idx) => {
+                            const card = document.createElement('div');
+                            card.className = 'extracted-page-card';
+                            card.innerHTML = `
+                                <div class="extracted-page-header">
+                                    <span>Page ${idx + 1} of ${extractedImages.length}</span>
+                                    <a href="${img.url}" target="_blank" style="color:var(--apple-blue); text-decoration:none; font-size:11px;">Open Full Page</a>
+                                </div>
+                                <div style="background:#1c1c1e; padding:12px; display:flex; justify-content:center; align-items:center;">
+                                    <img src="${img.url}" alt="Page ${idx + 1}" style="max-width:100%; max-height:560px; object-fit:contain; border-radius:4px; box-shadow:0 4px 16px rgba(0,0,0,0.4);">
+                                </div>
+                            `;
+                            pagesWrapper.appendChild(card);
                         });
                     }
+
+                    // 2. Setup Slide Deck View
+                    let currentDeckIdx = 0;
+                    function showSlide(idx) {
+                        if (idx < 0) idx = 0;
+                        if (idx >= extractedImages.length) idx = extractedImages.length - 1;
+                        currentDeckIdx = idx;
+                        const item = extractedImages[idx];
+                        if (activeImg) activeImg.src = item.url;
+                        if (activeLink) activeLink.href = item.url;
+                        if (indicator) indicator.textContent = `Page ${idx + 1} of ${extractedImages.length}`;
+                        if (fileNameEl) {
+                            const kb = Math.round(item.size / 1024);
+                            fileNameEl.textContent = `${item.name} (${kb} KB)`;
+                        }
+                        if (thumbStrip) {
+                            thumbStrip.querySelectorAll('.zip-thumb').forEach((th, i) => {
+                                th.style.outline = (i === idx) ? '3px solid var(--apple-orange)' : 'none';
+                                th.style.opacity = (i === idx) ? '1' : '0.65';
+                            });
+                            const activeThumb = thumbStrip.children[idx];
+                            if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        }
+                    }
+
+                    if (thumbStrip) {
+                        thumbStrip.innerHTML = '';
+                        extractedImages.forEach((item, idx) => {
+                            const th = document.createElement('img');
+                            th.className = 'zip-thumb';
+                            th.src = item.url;
+                            th.alt = item.name;
+                            th.style.cssText = 'height:54px; width:80px; object-fit:cover; border-radius:6px; cursor:pointer; flex-shrink:0; background:#000; transition:all 0.2s;';
+                            th.onclick = () => showSlide(idx);
+                            thumbStrip.appendChild(th);
+                        });
+                    }
+
+                    if (prevBtn) prevBtn.onclick = () => showSlide(currentDeckIdx - 1);
+                    if (nextBtn) nextBtn.onclick = () => showSlide(currentDeckIdx + 1);
+
+                    function setZipMode(mode) {
+                        [btnPages, btnDeck, btnFiles].forEach(b => {
+                            if (b) b.className = 'btn btn-outline btn-sm';
+                        });
+                        if (pagesContainer) pagesContainer.style.display = 'none';
+                        if (deckContainer) deckContainer.style.display = 'none';
+                        if (listWrapper) listWrapper.style.display = 'none';
+
+                        if (mode === 'pages' && pagesContainer) {
+                            if (btnPages) btnPages.className = 'btn btn-primary btn-sm';
+                            pagesContainer.style.display = 'block';
+                        } else if (mode === 'deck' && deckContainer) {
+                            if (btnDeck) btnDeck.className = 'btn btn-primary btn-sm';
+                            deckContainer.style.display = 'block';
+                            showSlide(currentDeckIdx);
+                        } else if (mode === 'files' && listWrapper) {
+                            if (btnFiles) btnFiles.className = 'btn btn-primary btn-sm';
+                            listWrapper.style.display = 'block';
+                        }
+                    }
+
+                    if (btnPages) btnPages.onclick = () => setZipMode('pages');
+                    if (btnDeck) btnDeck.onclick = () => setZipMode('deck');
+                    if (btnFiles) btnFiles.onclick = () => setZipMode('files');
+
+                    // Default to Extracted Pages View
+                    setZipMode('pages');
+                } else {
+                    if (listWrapper) listWrapper.style.display = 'block';
                 }
+
+                if (window.lucide) lucide.createIcons();
             })
             .catch(err => {
                 console.error('ZIP reader error:', err);
