@@ -77,8 +77,8 @@ if (!defined('APP_URL')) {
 define('UPLOAD_PATH', __DIR__ . '/../uploads/');
 define('UPLOAD_URL', APP_URL . '/uploads/');
 define('MAX_FILE_SIZE', 20 * 1024 * 1024); // 20 MB
-// ZIP removed: ZIPs can contain scripts and are not required for document management.
-define('ALLOWED_EXTENSIONS', ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'png', 'jpg', 'jpeg']);
+// Permitted file types for upload and versioning. ZIP is used by folder compress-and-upload.
+define('ALLOWED_EXTENSIONS', ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'png', 'jpg', 'jpeg', 'zip', 'csv']);
 
 define('SESSION_TIMEOUT', 3600);            // idle timeout (seconds without activity) — 1 hour
 define('SESSION_ABSOLUTE_TIMEOUT', 28800);  // hard limit per login — 8 hours

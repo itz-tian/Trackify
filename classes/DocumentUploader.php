@@ -82,7 +82,7 @@ class DocumentUploader {
         }
 
         if (!in_array($ext, ALLOWED_EXTENSIONS, true)) {
-            return ['success' => false, 'message' => 'File extension not allowed.'];
+            return ['success' => false, 'message' => 'File extension "' . ($ext ? '.' . $ext : '(none)') . '" is not permitted. Supported formats: ' . implode(', ', array_map('strtoupper', ALLOWED_EXTENSIONS)) . '.'];
         }
 
         $requestedReference = trim((string)($data['_resolved_reference'] ?? $data['reference_number'] ?? ''));
@@ -107,10 +107,11 @@ class DocumentUploader {
                 'ppt'  => ['application/vnd.ms-powerpoint', 'application/vnd.ms-office'],
                 'pptx' => ['application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/zip'],
                 'txt'  => ['text/plain'],
+                'csv'  => ['text/plain', 'text/csv', 'application/csv', 'text/x-csv', 'application/vnd.ms-excel'],
                 'png'  => ['image/png'],
                 'jpg'  => ['image/jpeg'],
                 'jpeg' => ['image/jpeg'],
-                'zip'  => ['application/zip', 'application/x-zip-compressed', 'multipart/x-zip']
+                'zip'  => ['application/zip', 'application/x-zip', 'application/x-zip-compressed', 'multipart/x-zip', 'application/octet-stream']
             ];
 
             if ($detectedMime === false || !isset($allowedMimes[$ext]) || !in_array($detectedMime, $allowedMimes[$ext], true)) {

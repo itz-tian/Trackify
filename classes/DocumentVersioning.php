@@ -68,8 +68,10 @@ class DocumentVersioning {
             'xlsx'=>['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/zip'],
             'ppt'=>['application/vnd.ms-powerpoint','application/vnd.ms-office'],
             'pptx'=>['application/vnd.openxmlformats-officedocument.presentationml.presentation','application/zip'],
-            'txt'=>['text/plain','application/x-empty'], 'png'=>['image/png'], 'jpg'=>['image/jpeg'],
-            'jpeg'=>['image/jpeg'], 'zip'=>['application/zip','application/x-zip-compressed','multipart/x-zip']
+            'txt'=>['text/plain','application/x-empty'],
+            'csv'=>['text/plain', 'text/csv', 'application/csv', 'text/x-csv', 'application/vnd.ms-excel'],
+            'png'=>['image/png'], 'jpg'=>['image/jpeg'],
+            'jpeg'=>['image/jpeg'], 'zip'=>['application/zip','application/x-zip','application/x-zip-compressed','multipart/x-zip','application/octet-stream']
         ];
         if (!function_exists('finfo_open')) return ['success' => false, 'message' => 'Server file validation is unavailable.'];
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
