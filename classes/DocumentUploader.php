@@ -176,20 +176,24 @@ class DocumentUploader {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $extension = strtoupper($ext);
+        $categoryId = !empty($data['category_id']) ? (int)$data['category_id'] : null;
+        $departmentId = !empty($data['department_id']) ? (int)$data['department_id'] : (!empty($_SESSION['user_dept']) ? (int)$_SESSION['user_dept'] : null);
+        $expiresAt = !empty($data['expires_at']) ? $data['expires_at'] : null;
+
         $stmt->execute([
             $data['title'],
-            $data['description'] ?? null,
-            $data['category_id'] ?? null,
-            (($_SESSION['user_role'] ?? '') !== 'admin' ? $_SESSION['user_dept'] : ($data['department_id'] ?? $_SESSION['user_dept'])),
+            !empty($data['description']) ? $data['description'] : null,
+            $categoryId,
+            $departmentId,
             $userId,
             $file['name'],
             $relativePath,
             $file['size'],
             $extension,
-            $data['tags'] ?? null,
+            !empty($data['tags']) ? $data['tags'] : null,
             $data['status'] ?? 'draft',
             $data['priority'] ?? 'normal',
-            $data['expires_at'] ?? null,
+            $expiresAt,
             $data['_resolved_reference'] ?? (!empty($data['reference_number']) ? trim($data['reference_number']) : null),
         ]);
 
