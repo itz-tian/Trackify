@@ -1,0 +1,520 @@
+/* =========================================================
+   Trackify DMS — Fullscreen Login Theme (Apple Design System)
+   ========================================================= */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.lucide {
+    width: 1em;
+    height: 1em;
+    stroke-width: 2;
+    vertical-align: -0.125em;
+}
+
+:root {
+    --apple-blue: #0071e3;
+    --apple-blue-hover: #0077ed;
+    --apple-blue-subtle: rgba(0, 113, 227, 0.12);
+    --bg-page: #ffffff;
+    --hero-bg: #161618;
+    --hero-surface: rgba(255, 255, 255, 0.05);
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-tertiary: #86868b;
+    --input-bg: #fbfbfd;
+    --input-border: rgba(0, 0, 0, 0.14);
+    --input-focus: #0071e3;
+    --border-card: rgba(0, 0, 0, 0.08);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", -apple-system-subheadline, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    background: #ffffff;
+    display: flex;
+    min-height: 100vh;
+    width: 100vw;
+    overflow-x: hidden;
+}
+
+/* ── Fullscreen Edge-to-Edge Container (No Card Framing) ── */
+.login-canvas {
+    width: 100vw;
+    min-height: 100vh;
+    display: flex;
+    flex: 1;
+    background: #ffffff;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+}
+
+/* ── Left Hero Panel (Full Height Slate Gradient) ── */
+.login-left {
+    width: 48%;
+    min-width: 440px;
+    max-width: 680px;
+    background: linear-gradient(155deg, #1c1c1e 0%, #161618 100%);
+    padding: 60px 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    color: #ffffff;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    box-sizing: border-box;
+}
+
+.login-left::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    left: -80px;
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, rgba(0, 113, 227, 0.22) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.left-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    z-index: 1;
+}
+
+.brand-logo-img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: 8px;
+    display: block;
+    filter: drop-shadow(0 2px 8px rgba(0, 113, 227, 0.4));
+}
+
+.brand-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+}
+
+.left-center {
+    margin-top: auto;
+    margin-bottom: auto;
+    padding: 48px 0;
+    position: relative;
+    z-index: 1;
+}
+
+.accent-dash {
+    width: 38px;
+    height: 3.5px;
+    background: var(--apple-blue);
+    border-radius: 2px;
+    margin-bottom: 24px;
+}
+
+.left-heading {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #ffffff;
+    letter-spacing: -0.035em;
+    margin-bottom: 32px;
+}
+
+.left-perks {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.left-perk-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.88);
+    font-weight: 450;
+    line-height: 1.4;
+}
+
+.perk-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(0, 113, 227, 0.25);
+    color: #5ac8fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(90, 200, 250, 0.35);
+}
+
+.left-bottom {
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.02em;
+    position: relative;
+    z-index: 1;
+}
+
+/* ── Right Form Panel (Full Height Clean White) ── */
+.login-right {
+    flex: 1;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 72px;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.login-form-box {
+    width: 100%;
+    max-width: 380px;
+}
+
+.login-form-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+}
+
+.login-form-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 28px;
+    line-height: 1.45;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+}
+
+.field-input {
+    width: 100%;
+    padding: 12px 14px;
+    background: #fbfbfd;
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text-primary);
+    outline: none;
+    transition: all .16s ease;
+    box-sizing: border-box;
+}
+
+.field-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.field-input:focus {
+    background: #ffffff;
+    border-color: var(--input-focus);
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+
+.pass-wrapper {
+    position: relative;
+}
+
+.pass-wrapper .field-input {
+    padding-right: 64px;
+}
+
+.btn-toggle-show {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--apple-blue);
+    padding: 4px 6px;
+    font-family: inherit;
+    line-height: 1;
+    border-radius: 4px;
+    transition: color .15s ease, background .15s ease;
+}
+
+.btn-toggle-show:hover {
+    color: var(--apple-blue-hover);
+    background: var(--apple-blue-subtle);
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 12px;
+    background: var(--apple-blue);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all .16s ease;
+    letter-spacing: -0.01em;
+    box-shadow: 0 2px 6px rgba(0, 113, 227, 0.25);
+}
+
+.btn-submit:hover {
+    background: var(--apple-blue-hover);
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.35);
+}
+
+.btn-submit:active {
+    transform: scale(0.99);
+}
+
+.alert-error {
+    background: rgba(255, 59, 48, 0.08);
+    color: #ff3b30;
+    border: 1px solid rgba(255, 59, 48, 0.2);
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.demo-credentials {
+    margin-top: 26px;
+    background: #fbfbfd;
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.demo-credentials strong {
+    color: var(--text-primary);
+}
+
+.mobile-logo-wrap {
+    display: none;
+}
+
+.mobile-brand-header {
+    display: none;
+}
+
+/* ================================================================
+   RESPONSIVE — Tablet & Mobile (≤ 1180px)
+   Left hero panel is hidden. Smooth gradient pattern background
+   from cyan/teal (bottom-left) to deep blue/purple (top-right).
+   ================================================================ */
+@media (max-width: 1180px) {
+
+    /* PC-matching deep slate background with subtle upper-left blue glow */
+    html, body {
+        background-color: #121214 !important;
+        background-image: 
+            radial-gradient(circle at 18% 12%, rgba(0, 113, 227, 0.28) 0%, rgba(0, 113, 227, 0.12) 32%, transparent 60%),
+            linear-gradient(155deg, #1c1c1e 0%, #161618 50%, #0f0f11 100%) !important;
+        background-position: center center !important;
+        background-repeat: no-repeat !important;
+        background-size: cover !important;
+        background-attachment: fixed !important;
+    }
+
+    .login-canvas {
+        flex-direction: column;
+        min-height: 100vh;
+        background: transparent !important;
+    }
+
+    /* Remove left hero panel completely */
+    .login-left {
+        display: none;
+    }
+
+    /* Form container on tablet & mobile */
+    .login-right {
+        flex: 1;
+        min-height: 100vh;
+        padding: 60px 24px 64px;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-form-box {
+        width: 100%;
+        max-width: 420px;
+        background: rgba(30, 30, 34, 0.68);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 24px;
+        padding: 44px 36px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    }
+
+    /* Mobile & Tablet Brand Header: Logo + Trackify name underneath */
+    .mobile-brand-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 24px;
+        text-align: center;
+    }
+
+    .mobile-logo-img {
+        width: 52px;
+        height: 52px;
+        object-fit: contain;
+        display: block;
+        margin-bottom: 10px;
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+    }
+
+    .mobile-brand-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: -0.02em;
+    }
+
+    /* Remove old pseudo-element logo if any */
+    .login-form-box::before {
+        display: none !important;
+    }
+
+    /* Title & subtitle inside form box */
+    .login-form-title {
+        font-size: 26px;
+        color: #ffffff;
+        text-align: center;
+        margin-bottom: 6px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+
+    .login-form-desc {
+        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        margin-bottom: 28px;
+        font-size: 13.5px;
+        line-height: 1.45;
+    }
+
+    /* Field labels */
+    .field-label {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 12.5px;
+    }
+
+    /* Inputs with glass effect */
+    .field-input {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+    }
+
+    .field-input::placeholder {
+        color: rgba(255, 255, 255, 0.45);
+    }
+
+    .field-input:focus {
+        background: rgba(255, 255, 255, 0.18);
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3);
+    }
+
+    .btn-toggle-show {
+        color: #93c5fd;
+    }
+    
+    .btn-toggle-show:hover {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-submit {
+        background: #0071e3;
+        box-shadow: 0 4px 14px rgba(0, 113, 227, 0.4);
+    }
+
+    .btn-submit:hover {
+        background: #0077ed;
+        box-shadow: 0 6px 20px rgba(0, 113, 227, 0.55);
+    }
+
+    /* Demo credentials */
+    .demo-credentials {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.14);
+        color: rgba(255, 255, 255, 0.65);
+    }
+
+    .demo-credentials strong {
+        color: #ffffff;
+    }
+
+    /* Error alert */
+    .alert-error {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.4);
+        color: #fca5a5;
+    }
+}
+
+/* Phones */
+@media (max-width: 480px) {
+    .login-right {
+        padding: 36px 16px 44px;
+    }
+    .login-form-box {
+        padding: 32px 22px;
+        border-radius: 20px;
+    }
+    .login-form-title {
+        font-size: 24px;
+    }
+}

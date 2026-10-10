@@ -1,0 +1,24 @@
+# Trackify — project-level protections (needs AllowOverride on; default on XAMPP)
+Options -Indexes
+
+# ── Error pages ──────────────────────────────────────────────────────────────
+# DEPLOYMENT: Update the path below to match your server's folder name.
+# - Root of domain (e.g. https://trackify.com/):  use /403.php  and  /404.php
+# - In a subfolder (e.g. /myapp/):               use /myapp/403.php  etc.
+ErrorDocument 403 /ITP104-System/403.php
+ErrorDocument 404 /ITP104-System/404.php
+
+# ── Block sensitive file types from direct browser access ────────────────────
+# Never serve backups, SQL dumps, notes or config-style files directly
+<FilesMatch "(?i)\.(sql|md|bak|log|ini|env|bat|sh|dist)$">
+    Require all denied
+</FilesMatch>
+
+# Extra defence-in-depth: block PHP execution inside the uploads directory tree
+# (Apache processes .htaccess in subdirectories, so the uploads/.htaccess deny
+# is the primary guard; this adds a second layer at the project root.)
+<FilesMatch "(?i)\.(php|php\d|phtml|phar)$">
+    <If "%{REQUEST_URI} =~ m|/uploads/|">
+        Require all denied
+    </If>
+</FilesMatch>

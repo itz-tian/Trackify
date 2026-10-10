@@ -1,0 +1,5 @@
+# Uploaded files are served ONLY through download.php / preview.php,
+# which check the visitor is logged in and allowed to see the document.
+# Direct links to /uploads/... are blocked for everyone.
+Options -Indexes
+Require all denied
