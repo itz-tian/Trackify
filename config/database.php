@@ -23,7 +23,25 @@ class Database {
                 try {
                     $portPart = defined('DB_PORT') && DB_PORT ? ";port=" . DB_PORT : "";
                     $dsn = "mysql:host={$host}{$portPart};dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
-                    self::$instance = new PDO($dsn, DB_USER, DB_PASS, $options);
+                    $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+
+                    // Check if schema is already applied (users table must exist).
+                    // On Railway, the 'railway' DB already exists so error 1049 never fires —
+                    // we must detect an empty DB here and seed it ourselves.
+                    $tableCheck = $pdo->query("SHOW TABLES LIKE 'users'")->fetchColumn();
+                    if ($tableCheck === false) {
+                        $schemaPath = __DIR__ . '/../database/schema.sql';
+                        if (file_exists($schemaPath)) {
+                            $sql = file_get_contents($schemaPath);
+                            $sql = preg_replace('/^\s*--.*$/m', '', $sql);
+                            $statements = array_filter(array_map('trim', explode(';', $sql)));
+                            foreach ($statements as $stmt) {
+                                if ($stmt !== '') $pdo->exec($stmt);
+                            }
+                        }
+                    }
+
+                    self::$instance = $pdo;
                     break;
                 } catch (PDOException $e) {
                     $lastException = $e;
