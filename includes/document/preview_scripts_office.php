@@ -178,6 +178,7 @@ defined('APP_NAME') or exit('Direct script access denied.');
 <?php if (in_array($ext, ['ppt', 'pptx'])): ?>
 <script>
 (function() {
+    function initPptxPreview() {
     const loading = document.getElementById('pptxLoading');
     const pagesContainer = document.getElementById('pptxPagesContainer');
     const pagesWrapper = document.getElementById('pptxPagesWrapper');
@@ -202,13 +203,18 @@ defined('APP_NAME') or exit('Direct script access denied.');
     let slideImages = [];
     let currentSlideIdx = 0;
 
+    // Early guard: JSZip must be available before we even fetch
+    if (typeof JSZip === 'undefined') {
+        if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Slide viewer library (JSZip) could not be loaded. Please download the file to view.</div>';
+        return;
+    }
+
     fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>')
         .then(res => {
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return res.arrayBuffer();
         })
         .then(buffer => {
-            if (typeof JSZip === 'undefined') throw new Error('JSZip unavailable');
             return JSZip.loadAsync(buffer);
         })
         .then(async zip => {
@@ -357,9 +363,19 @@ defined('APP_NAME') or exit('Direct script access denied.');
                 if (window.lucide) lucide.createIcons();
             }
         });
+    }
+
+    // Run after DOM is fully loaded to ensure JSZip script has executed
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPptxPreview);
+    } else {
+        initPptxPreview();
+    }
 })();
 </script>
 <?php endif; ?>
+
+
 
 <?php if ($ext === 'zip'): ?>
 <script>
