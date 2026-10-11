@@ -108,7 +108,13 @@ include __DIR__ . '/includes/header.php';
                 <option value="<?= $u['id'] ?>" <?= $filters['uploader_id']==$u['id']?'selected':'' ?>><?= htmlspecialchars($u['first_name'].' '.$u['last_name']) ?></option>
                 <?php endforeach; ?>
             </select>
-            <input type="date" name="date" value="<?= htmlspecialchars($filters['date']) ?>" title="Date created" aria-label="Date created">
+            <div class="filter-date-wrap">
+                <label for="filterDate" class="filter-date-label" title="Date Created">
+                    <i data-lucide="calendar"></i>
+                    <span>Date:</span>
+                </label>
+                <input type="date" id="filterDate" name="date" value="<?= htmlspecialchars($filters['date']) ?>" title="Filter by date created" aria-label="Date created">
+            </div>
             <div class="filter-actions" style="display:flex;gap:8px;align-items:center;">
                 <button type="submit" class="btn btn-primary"><i data-lucide="filter"></i> Filter</button>
                 <a href="documents.php" class="btn btn-outline"><i data-lucide="rotate-ccw"></i> Reset</a>

@@ -129,8 +129,25 @@
 [data-theme="dark"] select,
 [data-theme="dark"] select option,
 [data-theme="dark"] select optgroup { color-scheme: dark; }
-[data-theme="dark"] .form-group select { color: #f5f5f7 !important; -webkit-text-fill-color: #f5f5f7; }
 [data-theme="dark"] .form-group select option { color: #f5f5f7 !important; background-color: #2c2c2e !important; }
+
+/* Filter Date Wrap */
+[data-theme="dark"] .filter-date-wrap {
+    background-color: #2c2c2e;
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: none;
+}
+[data-theme="dark"] .filter-date-wrap:focus-within {
+    border-color: #0a84ff;
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.22);
+}
+[data-theme="dark"] .filter-date-label { color: #a1a1a6; }
+[data-theme="dark"] .filter-date-label svg,
+[data-theme="dark"] .filter-date-label i { color: #0a84ff; }
+[data-theme="dark"] .filter-date-wrap input[type="date"] {
+    color: var(--text-primary) !important;
+    background: transparent !important;
+}
 
 /* Dropzone */
 [data-theme="dark"] .apple-dropzone { border-color: rgba(10, 132, 255, 0.35); background: rgba(10, 132, 255, 0.04); }

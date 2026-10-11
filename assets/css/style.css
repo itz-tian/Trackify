@@ -795,6 +795,18 @@
         .filter-form input[name="search"] { flex: 1 1 200px; min-width: 180px; }
         .filter-form input[type="date"] { flex: 0 1 auto; }
         .filter-form .filter-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; flex-wrap: wrap; }
+        .filter-date-wrap {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.12);
+            border-radius: var(--radius-md); padding: 0 10px; height: 38px;
+            box-sizing: border-box; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+            transition: all .16s ease;
+        }
+        .filter-date-wrap:focus-within { border-color: var(--apple-blue); box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18); }
+        .filter-date-label { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); white-space: nowrap; user-select: none; cursor: pointer; }
+        .filter-date-label svg, .filter-date-label i { width: 14px; height: 14px; color: var(--apple-blue); }
+        .filter-date-wrap input[type="date"] { border: none !important; background: transparent !important; padding: 0 0 0 2px !important; box-shadow: none !important; height: 100% !important; width: auto !important; font-size: 12.5px !important; color: var(--text-primary) !important; cursor: pointer; }
+        .filter-date-wrap input[type="date"]:focus { outline: none !important; box-shadow: none !important; }
 
         input:focus, select:focus, textarea:focus {
             outline: none;

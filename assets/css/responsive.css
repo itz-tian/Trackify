@@ -175,7 +175,7 @@
         min-width: 100% !important;
     }
     .filter-form select,
-    .filter-form input[type="date"] {
+    .filter-date-wrap {
         flex: 1 1 calc(50% - 5px) !important;
         min-width: 120px !important;
         width: calc(50% - 5px) !important;
@@ -277,7 +277,7 @@
         height: 340px;
     }
     .filter-form select,
-    .filter-form input[type="date"] {
+    .filter-date-wrap {
         flex: 1 1 100% !important;
         width: 100% !important;
     }
