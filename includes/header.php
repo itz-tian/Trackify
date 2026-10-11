@@ -133,7 +133,17 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
                 $uId   = (int)$_SESSION['user_id'];
 
                 if ($uRole === 'admin') {
-                    $pendingStmt = $db->query("SELECT COUNT(*) FROM documents WHERE deleted_at IS NULL AND status IN ('pending_review', 'under_review')");
+                    $pendingStmt = $db->prepare("
+                        SELECT COUNT(DISTINCT d.id) 
+                        FROM documents d 
+                        JOIN users u ON d.uploaded_by = u.id 
+                        LEFT JOIN approval_workflows aw ON aw.document_id = d.id AND aw.approver_id = ?
+                        WHERE d.deleted_at IS NULL 
+                          AND d.status IN ('pending_review', 'under_review') 
+                          AND u.role <> 'admin' 
+                          AND (aw.id IS NULL OR aw.status = 'pending')
+                    ");
+                    $pendingStmt->execute([$uId]);
                     $pendingCount = (int)$pendingStmt->fetchColumn();
                 } elseif ($uRole === 'department_head') {
                     $pendingStmt = $db->prepare("SELECT COUNT(DISTINCT d.id) FROM documents d LEFT JOIN approval_workflows aw ON aw.document_id = d.id AND aw.approver_id = ? LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.deleted_at IS NULL AND d.department_id = ? AND u.role <> 'admin' AND d.status IN ('pending_review', 'under_review') AND (aw.id IS NULL OR aw.status = 'pending')");

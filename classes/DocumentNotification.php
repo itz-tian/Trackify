@@ -27,23 +27,36 @@ class DocumentNotification {
         $approvers->execute([$uploaderId, $deptId]);
         $approverList = $approvers->fetchAll();
 
-        // Check already assigned approvers to prevent duplicates
-        $existing = $this->db->prepare("SELECT approver_id FROM approval_workflows WHERE document_id = ?");
+        // Get already assigned workflows for this document
+        $existing = $this->db->prepare("SELECT id, approver_id, status FROM approval_workflows WHERE document_id = ?");
         $existing->execute([$docId]);
-        $existingApproverIds = $existing->fetchAll(PDO::FETCH_COLUMN);
+        $existingWorkflows = [];
+        foreach ($existing->fetchAll() as $row) {
+            $existingWorkflows[(int)$row['approver_id']] = $row;
+        }
 
         foreach ($approverList as $approver) {
-            if (!in_array($approver['id'], $existingApproverIds)) {
-                $this->db->prepare("
-                    INSERT INTO notifications (user_id, document_id, type, title, message)
-                    VALUES (?, ?, 'review_request', 'Document Pending Review', ?)
-                ")->execute([$approver['id'], $docId, "Document '{$docData['title']}' requires your review."]);
-
+            $apId = (int)$approver['id'];
+            if (isset($existingWorkflows[$apId])) {
+                // If previous workflow was concluded (e.g. rejected or skipped), reset it to pending for the new review cycle
+                if ($existingWorkflows[$apId]['status'] !== 'pending') {
+                    $this->db->prepare("
+                        UPDATE approval_workflows 
+                        SET status = 'pending', remarks = NULL, acted_at = NULL 
+                        WHERE id = ?
+                    ")->execute([$existingWorkflows[$apId]['id']]);
+                }
+            } else {
                 $this->db->prepare("
                     INSERT INTO approval_workflows (document_id, approver_id, step_order, status)
                     VALUES (?, ?, 1, 'pending')
-                ")->execute([$docId, $approver['id']]);
+                ")->execute([$docId, $apId]);
             }
+
+            $this->db->prepare("
+                INSERT INTO notifications (user_id, document_id, type, title, message)
+                VALUES (?, ?, 'review_request', 'Document Pending Review', ?)
+            ")->execute([$apId, $docId, "Document '{$docData['title']}' requires your review."]);
         }
     }
 

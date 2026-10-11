@@ -464,13 +464,16 @@ class Document {
         }
 
         if ($role === 'admin') {
-            $actStmt = $this->db->query("
-                SELECT COUNT(*) FROM documents d 
-                LEFT JOIN users u ON d.uploaded_by = u.id 
+            $actStmt = $this->db->prepare("
+                SELECT COUNT(DISTINCT d.id) FROM documents d 
+                JOIN users u ON d.uploaded_by = u.id 
+                LEFT JOIN approval_workflows aw ON aw.document_id = d.id AND aw.approver_id = ?
                 WHERE d.deleted_at IS NULL 
                   AND d.status IN ('pending_review', 'under_review') 
                   AND u.role <> 'admin'
+                  AND (aw.id IS NULL OR aw.status = 'pending')
             ");
+            $actStmt->execute([$userId]);
             $stats['actionable_pending'] = (int)$actStmt->fetchColumn();
         } elseif ($role === 'department_head') {
             $actStmt = $this->db->prepare("
