@@ -64,7 +64,7 @@ include __DIR__ . '/includes/header.php';
                     <th style="white-space:nowrap; width:140px;">Department</th>
                     <th style="white-space:nowrap; width:130px;">Uploaded By</th>
                     <th style="white-space:nowrap; width:130px;">Deleted By</th>
-                    <th style="white-space:nowrap; width:160px;">Deleted Date</th>
+                    <th style="white-space:nowrap; width:160px;">Archived Date</th>
                     <th style="white-space:nowrap; text-align:right; width:210px;">Actions</th>
                 </tr>
             </thead>
@@ -85,7 +85,7 @@ include __DIR__ . '/includes/header.php';
                     <td class="text-sm" style="white-space:nowrap;"><?= htmlspecialchars($doc['department_name'] ?? '—') ?></td>
                     <td class="text-sm" style="white-space:nowrap;"><?= htmlspecialchars($doc['uploaded_by_name'] ?? '—') ?></td>
                     <td class="text-sm" style="white-space:nowrap;"><?= htmlspecialchars($doc['deleted_by_name'] ?? '—') ?></td>
-                    <td class="text-sm text-muted" style="white-space:nowrap;"><?= date('M d, Y · g:i a', strtotime($doc['deleted_at'])) ?></td>
+                    <td class="text-sm text-muted" style="white-space:nowrap;"><?= $doc['deleted_at'] ? date('M d, Y · g:i a', strtotime($doc['deleted_at'])) : (($doc['updated_at'] ?? '') ? date('M d, Y · g:i a', strtotime($doc['updated_at'])) : '—') ?></td>
                     <td style="white-space:nowrap; text-align:right;">
                         <div style="display:inline-flex; gap:6px; align-items:center; justify-content:flex-end;">
                             <?php if (($doc['uploader_role'] ?? '') !== 'admin' || ($_SESSION['user_role'] ?? '') === 'admin'): ?>

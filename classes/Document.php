@@ -52,8 +52,15 @@ class Document {
         $where  = ['1=1'];
         $params = [];
 
+        $filteringArchived = ($filters['status'] ?? '') === 'archived';
+
         if (!empty($filters['status'])) {
-            $where[] = 'd.status = ?'; $params[] = $filters['status'];
+            if ($filteringArchived) {
+                // Show archived-status docs OR soft-deleted docs (they're all "archived")
+                $where[] = "(d.status = 'archived' OR d.deleted_at IS NOT NULL)";
+            } else {
+                $where[] = 'd.status = ?'; $params[] = $filters['status'];
+            }
         }
         if (!empty($filters['category_id'])) {
             $where[] = 'd.category_id = ?'; $params[] = $filters['category_id'];
@@ -93,7 +100,13 @@ class Document {
             $params[] = $userDept;
         }
 
-        $where[] = 'd.deleted_at IS NULL';
+        if ($filteringArchived) {
+            // No deleted_at filter — we want both soft-deleted and status=archived rows
+        } else {
+            // Normal listing: hide soft-deleted AND hide archived-status docs
+            $where[] = 'd.deleted_at IS NULL';
+            $where[] = "d.status != 'archived'";
+        }
         $whereClause = implode(' AND ', $where);
 
         $countStmt = $this->db->prepare("SELECT COUNT(*) FROM documents d WHERE $whereClause");
@@ -245,10 +258,10 @@ class Document {
     }
 
     public function restore(int $id): array {
-        $stmt = $this->db->prepare("SELECT d.*, u.role AS uploader_role FROM documents d LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.id = ? AND d.deleted_at IS NOT NULL");
+        $stmt = $this->db->prepare("SELECT d.*, u.role AS uploader_role FROM documents d LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.id = ? AND (d.deleted_at IS NOT NULL OR d.status = 'archived')");
         $stmt->execute([$id]);
         $doc = $stmt->fetch();
-        if (!$doc) return ['success' => false, 'message' => 'Deleted document not found.'];
+        if (!$doc) return ['success' => false, 'message' => 'Archived document not found.'];
         $userId = (int)($_SESSION['user_id'] ?? 0);
         $userRole = $_SESSION['user_role'] ?? 'staff';
         $userDept = (int)($_SESSION['user_dept'] ?? 0);
@@ -262,17 +275,18 @@ class Document {
         if ((int)$doc['uploaded_by'] !== $userId && $userRole !== 'admin' && !$isDeptHead) {
             return ['success' => false, 'message' => 'Permission denied.'];
         }
-        $this->db->prepare("UPDATE documents SET deleted_at = NULL, deleted_by = NULL, updated_at = NOW() WHERE id = ?")->execute([$id]);
+        // Restore: clear soft-delete fields and reset status to draft
+        $this->db->prepare("UPDATE documents SET deleted_at = NULL, deleted_by = NULL, status = 'draft', updated_at = NOW() WHERE id = ?")->execute([$id]);
         $this->auth->logActivity($_SESSION['user_id'], $id, 'restore', "Restored document: {$doc['title']}");
         return ['success' => true];
     }
 
     public function permanentDelete(int $id): array {
         if (($_SESSION['user_role'] ?? '') !== 'admin') return ['success' => false, 'message' => 'Only administrators can permanently delete documents.'];
-        $stmt = $this->db->prepare("SELECT * FROM documents WHERE id = ? AND deleted_at IS NOT NULL");
+        $stmt = $this->db->prepare("SELECT * FROM documents WHERE id = ? AND (deleted_at IS NOT NULL OR status = 'archived')");
         $stmt->execute([$id]);
         $doc = $stmt->fetch();
-        if (!$doc) return ['success' => false, 'message' => 'Deleted document not found.'];
+        if (!$doc) return ['success' => false, 'message' => 'Archived document not found.'];
 
         $paths = [$doc['file_path']];
         $v = $this->db->prepare("SELECT file_path FROM document_versions WHERE document_id = ?");
@@ -291,7 +305,8 @@ class Document {
         $role = $_SESSION['user_role'] ?? 'staff';
         $userId = (int)($_SESSION['user_id'] ?? 0);
         $dept = (int)($_SESSION['user_dept'] ?? 0);
-        $where = 'd.deleted_at IS NOT NULL'; $params = [];
+        // Include both soft-deleted docs AND docs with status='archived'
+        $where = "(d.deleted_at IS NOT NULL OR d.status = 'archived')"; $params = [];
         if ($role === 'staff' || $role === 'viewer') {
             $where .= ' AND d.uploaded_by = ?'; $params[] = $userId;
         } elseif ($role === 'department_head') {
@@ -308,7 +323,7 @@ class Document {
             LEFT JOIN departments dep ON d.department_id = dep.id
             LEFT JOIN users u ON d.uploaded_by = u.id
             LEFT JOIN users du ON d.deleted_by = du.id
-            WHERE $where ORDER BY d.deleted_at DESC LIMIT $perPage OFFSET $offset
+            WHERE $where ORDER BY COALESCE(d.deleted_at, d.updated_at) DESC LIMIT $perPage OFFSET $offset
         ");
         $stmt->execute($params);
         return ['documents'=>$stmt->fetchAll(), 'total'=>$total, 'pages'=>ceil($total/$perPage), 'current_page'=>$page];
