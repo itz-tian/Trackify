@@ -1,0 +1,320 @@
+/* ── Multi-Format Document Preview Styles (Responsive & Mobile Fit) ── */
+
+/* Container and Viewport Boundaries */
+.doc-preview-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+}
+
+.doc-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    background: var(--bg-card-subtle);
+    border-bottom: 1px solid var(--border-hairline);
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+}
+
+.doc-preview-body {
+    padding: 16px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .doc-preview-body {
+        padding: 10px 8px;
+    }
+}
+
+/* ── Word Document (DOCX) Fluid Responsive Screen-Fit ── */
+#docxPreviewContainer {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    background: var(--bg-card-subtle) !important;
+    padding: 14px !important;
+    border-radius: 0 0 10px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#docxPreviewContainer .docx-wrapper {
+    background: transparent !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#docxPreviewContainer .docx-rendered-body,
+#docxPreviewContainer section.docx {
+    width: 100% !important;
+    max-width: 860px !important;
+    min-width: 0 !important;
+    min-height: auto !important;
+    padding: 32px 28px !important;
+    margin: 0 auto 16px auto !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    color: #1d1d1f !important;
+    line-height: 1.6 !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+}
+
+#docxPreviewContainer img,
+#docxPreviewContainer svg,
+#docxPreviewContainer canvas {
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    box-sizing: border-box !important;
+}
+
+#docxPreviewContainer table {
+    max-width: 100% !important;
+    width: 100% !important;
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box !important;
+    border-collapse: collapse !important;
+    margin: 12px 0 !important;
+}
+
+#docxPreviewContainer table td,
+#docxPreviewContainer table th {
+    word-break: break-word !important;
+    min-width: 60px !important;
+}
+
+@media (max-width: 768px) {
+    #docxPreviewContainer {
+        padding: 6px !important;
+    }
+    #docxPreviewContainer section.docx {
+        padding: 16px 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        font-size: 13px !important;
+        border-radius: 6px !important;
+    }
+    #docxPreviewContainer section.docx p {
+        margin-bottom: 10px !important;
+        line-height: 1.5 !important;
+    }
+    #docxPreviewContainer section.docx h1 {
+        font-size: 18px !important;
+    }
+    #docxPreviewContainer section.docx h2 {
+        font-size: 16px !important;
+    }
+    #docxPreviewContainer section.docx h3 {
+        font-size: 14.5px !important;
+    }
+}
+
+/* ── Excel Spreadsheet (XLSX) Responsive Grid ── */
+.excel-grid-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    max-height: 580px;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 0 0 10px 10px;
+    background: var(--bg-card);
+    box-sizing: border-box;
+}
+
+.excel-table {
+    border-collapse: collapse;
+    width: max-content;
+    min-width: 100%;
+    font-size: 12px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.excel-table th,
+.excel-table td {
+    border: 1px solid var(--border-hairline);
+    padding: 6px 10px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.excel-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg-card-subtle);
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-align: center;
+    user-select: none;
+}
+
+.excel-table tbody th {
+    position: sticky;
+    left: 0;
+    z-index: 9;
+    background: var(--bg-card-subtle);
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-align: center;
+    user-select: none;
+    width: 44px;
+    min-width: 44px;
+}
+
+.excel-table thead th:first-child {
+    left: 0;
+    z-index: 20;
+}
+
+/* ── Extracted Page Cards (PDF & PowerPoint & ZIP) ── */
+.extracted-page-card {
+    width: 100%;
+    max-width: 860px;
+    min-width: 0;
+    box-sizing: border-box;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+    border: 1px solid var(--border-hairline);
+    background: var(--bg-card);
+    margin: 0 auto 18px auto;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.extracted-page-card:last-child {
+    margin-bottom: 0;
+}
+
+.extracted-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    background: var(--bg-card-subtle);
+    border-bottom: 1px solid var(--border-hairline);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.extracted-page-canvas-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #ffffff;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.extracted-page-canvas-wrap canvas {
+    display: block;
+    max-width: 100% !important;
+    height: auto !important;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .extracted-page-card {
+        border-radius: 6px;
+        margin-bottom: 14px;
+    }
+    .extracted-page-header {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+}
+
+/* ── Interactive Thumbnails ── */
+.preview-thumb-strip {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px 2px 4px;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.preview-thumb-item {
+    height: 52px;
+    width: 76px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    background: #000;
+    transition: all 0.2s ease;
+}
+
+/* ── Unsupported format & Empty State Cards ── */
+.doc-fallback-card {
+    text-align: center;
+    padding: 38px 20px;
+    background: var(--bg-card-subtle);
+    border-radius: 12px;
+    border: 1px dashed var(--border-hairline);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .doc-fallback-card {
+        padding: 24px 14px;
+    }
+}
+
+/* ── Document View Header Layout ── */
+.doc-header-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.doc-header-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.doc-header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}

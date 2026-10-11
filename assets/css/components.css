@@ -1,0 +1,78 @@
+/* ═══════════════════════════════════════════════════════════
+   Trackify — Shared UI Components (Modals, Collapsible Sidebar, Alerts)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Shared Confirm Modal (replaces native confirm()) ── */
+.confirm-modal { max-width: 440px; }
+.confirm-modal .modal-header { margin-bottom: 14px; }
+.confirm-modal-title { display: flex; align-items: center; gap: 10px; color: var(--text-primary); }
+.confirm-modal-icon {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    background: rgba(255, 149, 0, 0.14); color: var(--apple-orange);
+}
+.confirm-modal-icon svg { width: 19px; height: 19px; }
+.confirm-modal-icon.tone-blue { background: var(--apple-blue-subtle); color: var(--apple-blue); }
+.confirm-modal-icon.tone-red  { background: rgba(255, 59, 48, 0.12); color: var(--apple-red); }
+.confirm-modal-message { font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; margin: 0 0 22px; }
+.confirm-modal-details { margin: -10px 0 22px; font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; }
+.confirm-modal-details strong { color: var(--text-primary); font-weight: 600; }
+.confirm-modal-details div { word-break: break-word; }
+.confirm-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ── Collapsible Sidebar (desktop only, > 768px) ── */
+.nav-label { white-space: nowrap; }
+.nav-item a { position: relative; }
+
+@media (min-width: 769px) {
+    .menu-btn { display: inline-flex; }
+    [data-theme="dark"] .menu-btn:hover { background: rgba(255, 255, 255, 0.08); }
+
+    .sidebar      { transition: width .25s cubic-bezier(0.16, 1, 0.3, 1), transform .28s cubic-bezier(0.16, 1, 0.3, 1); }
+    .topbar       { transition: left .25s cubic-bezier(0.16, 1, 0.3, 1); }
+    .main-content { transition: margin-left .25s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    html.sidebar-collapsed { --sidebar-w: 76px; }
+
+    html.sidebar-collapsed .sidebar-logo { padding: 16px 0; justify-content: center; }
+    html.sidebar-collapsed .sidebar-logo .sidebar-logo-link { flex: 0 0 auto; justify-content: center; }
+    html.sidebar-collapsed .sidebar-logo .sidebar-logo-link > div { display: none; }
+
+    html.sidebar-collapsed .sidebar-nav { padding: 14px 12px; overflow-x: hidden; }
+    html.sidebar-collapsed .nav-label { display: none; }
+    html.sidebar-collapsed .nav-item a { justify-content: center; padding: 8px 0; }
+
+    html.sidebar-collapsed .nav-section {
+        font-size: 0; line-height: 0; height: 1px; padding: 0;
+        margin: 12px 14px; background: var(--sidebar-border); overflow: hidden;
+    }
+    html.sidebar-collapsed .nav-section:first-child { display: none; }
+
+    html.sidebar-collapsed .nav-badge {
+        position: absolute; top: 0; right: 8px; margin: 0;
+        font-size: 9px; line-height: 14px; min-width: 14px; padding: 0 4px;
+        box-shadow: 0 0 0 2px var(--sidebar-bg);
+    }
+
+    html.sidebar-collapsed .sidebar-footer { padding: 14px 0; }
+    html.sidebar-collapsed .sidebar-user { justify-content: center; padding: 8px 0; margin: 0 12px; }
+    html.sidebar-collapsed .sidebar-user .user-info,
+    html.sidebar-collapsed .sidebar-user .chevron-icon { display: none; }
+    html.sidebar-collapsed .user-popover { left: 12px; right: auto; width: 230px; }
+}
+
+/* ── Read-Only & Disabled Inputs ── */
+input:disabled, select:disabled, textarea:disabled, input[readonly] {
+    background-color: #f8fafc;
+    cursor: not-allowed;
+}
+[data-theme="dark"] input:disabled,
+[data-theme="dark"] select:disabled,
+[data-theme="dark"] textarea:disabled,
+[data-theme="dark"] input[readonly] {
+    background-color: #232325;
+    color: #a1a1a6;
+    -webkit-text-fill-color: #a1a1a6;
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.08);
+}

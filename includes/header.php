@@ -46,6 +46,11 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
     <title><?= APP_NAME ?> — <?= htmlspecialchars($topbarTitle) ?></title>
     <link rel="icon" type="image/png" href="<?= APP_URL ?>/assets/favicon.png?v=<?= APP_VERSION ?>">
     <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/style.css?v=<?= APP_VERSION ?>">
+    <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/components.css?v=<?= APP_VERSION ?>">
+    <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/dashboard.css?v=<?= APP_VERSION ?>">
+    <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/preview.css?v=<?= APP_VERSION ?>">
+    <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/responsive.css?v=<?= APP_VERSION ?>">
+    <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/dark-theme.css?v=<?= APP_VERSION ?>">
     <script>
         // Theme init — runs synchronously before render to avoid flash
         (function() {
