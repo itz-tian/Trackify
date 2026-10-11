@@ -359,35 +359,113 @@ defined('APP_NAME') or exit('Direct script access denied.');
                 slideEntries.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
                 function extractSlideText(xmlStr) {
-                    // Parse XML and extract all <a:t> text runs, grouping by paragraph <a:p>
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(xmlStr, 'application/xml');
-                    const NS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
-
                     const slides = [];
-                    const shapes = doc.getElementsByTagNameNS(NS, 'sp');
-                    for (const sp of shapes) {
-                        const txBody = sp.getElementsByTagNameNS(NS, 'txBody')[0];
-                        if (!txBody) continue;
 
-                        // Detect if this is a title placeholder
-                        const ph = sp.getElementsByTagNameNS('http://schemas.openxmlformats.org/presentationml/2006/main', 'ph')[0];
-                        const isTitle = ph && (ph.getAttribute('type') === 'title' || ph.getAttribute('type') === 'ctrTitle');
+                    function getElementText(el) {
+                        if (!el) return '';
+                        let tNodes = [];
+                        try {
+                            tNodes = el.getElementsByTagNameNS ? el.getElementsByTagNameNS('*', 't') : [];
+                        } catch(e) {}
+                        if (!tNodes || tNodes.length === 0) {
+                            try { tNodes = el.getElementsByTagName('t'); } catch(e) {}
+                        }
+                        if (!tNodes || tNodes.length === 0) {
+                            try { tNodes = el.getElementsByTagName('a:t'); } catch(e) {}
+                        }
+                        let txt = '';
+                        if (tNodes && tNodes.length > 0) {
+                            for (let k = 0; k < tNodes.length; k++) {
+                                txt += tNodes[k].textContent || '';
+                            }
+                        } else {
+                            txt = el.textContent || '';
+                        }
+                        return txt.trim();
+                    }
 
-                        const paras = txBody.getElementsByTagNameNS(NS, 'p');
-                        for (const p of paras) {
-                            const runs = p.getElementsByTagNameNS(NS, 't');
-                            let text = '';
-                            for (const t of runs) text += t.textContent;
-                            if (text.trim()) slides.push({ text: text.trim(), isTitle });
+                    // 1. Scan PresentationML shapes (<p:sp>)
+                    let shapes = [];
+                    try {
+                        shapes = doc.getElementsByTagNameNS ? doc.getElementsByTagNameNS('*', 'sp') : [];
+                    } catch(e) {}
+                    if (!shapes || shapes.length === 0) {
+                        try { shapes = doc.getElementsByTagName('p:sp'); } catch(e) {}
+                    }
+                    if (!shapes || shapes.length === 0) {
+                        try { shapes = doc.getElementsByTagName('sp'); } catch(e) {}
+                    }
+
+                    if (shapes && shapes.length > 0) {
+                        for (let i = 0; i < shapes.length; i++) {
+                            const sp = shapes[i];
+                            let phList = [];
+                            try { phList = sp.getElementsByTagNameNS ? sp.getElementsByTagNameNS('*', 'ph') : []; } catch(e) {}
+                            if (!phList || phList.length === 0) {
+                                try { phList = sp.getElementsByTagName('p:ph'); } catch(e) {}
+                            }
+                            let isTitle = false;
+                            if (phList && phList.length > 0) {
+                                const phType = (phList[0].getAttribute('type') || '').toLowerCase();
+                                isTitle = (phType === 'title' || phType === 'ctrtitle' || phType === 'subtitle');
+                            }
+
+                            let paras = [];
+                            try { paras = sp.getElementsByTagNameNS ? sp.getElementsByTagNameNS('*', 'p') : []; } catch(e) {}
+                            if (!paras || paras.length === 0) {
+                                try { paras = sp.getElementsByTagName('a:p'); } catch(e) {}
+                            }
+
+                            for (let j = 0; j < paras.length; j++) {
+                                const txt = getElementText(paras[j]);
+                                if (txt) {
+                                    slides.push({ text: txt, isTitle: isTitle && j === 0 });
+                                }
+                            }
                         }
                     }
+
+                    // 2. Fallback: scan all paragraphs across entire document
+                    if (slides.length === 0) {
+                        let allParas = [];
+                        try { allParas = doc.getElementsByTagNameNS ? doc.getElementsByTagNameNS('*', 'p') : []; } catch(e) {}
+                        if (!allParas || allParas.length === 0) {
+                            try { allParas = doc.getElementsByTagName('a:p'); } catch(e) {}
+                        }
+                        for (let j = 0; j < allParas.length; j++) {
+                            const txt = getElementText(allParas[j]);
+                            if (txt) {
+                                slides.push({ text: txt, isTitle: (j === 0) });
+                            }
+                        }
+                    }
+
+                    // 3. Fallback: regex extraction of <a:t> / <*:t> text from raw XML
+                    if (slides.length === 0) {
+                        const matches = xmlStr.match(/<(?:\w+:)?t[^>]*>([\s\S]*?)<\/(?:\w+:)?t>/gi);
+                        if (matches && matches.length > 0) {
+                            const rawTexts = [];
+                            matches.forEach(m => {
+                                const clean = m.replace(/<[^>]+>/g, '').trim();
+                                if (clean) rawTexts.push(clean);
+                            });
+                            if (rawTexts.length > 0) {
+                                slides.push({ text: rawTexts[0], isTitle: true });
+                                for (let r = 1; r < rawTexts.length; r++) {
+                                    slides.push({ text: rawTexts[r], isTitle: false });
+                                }
+                            }
+                        }
+                    }
+
                     return slides;
                 }
 
                 if (slideEntries.length > 0) {
                     if (countBadge) {
-                        countBadge.textContent = `${slideEntries.length} Slide${slideEntries.length > 1 ? 's' : ''} (Text)`;
+                        countBadge.textContent = `${slideEntries.length} Slide${slideEntries.length > 1 ? 's' : ''}`;
                         countBadge.style.display = 'inline-block';
                     }
                     if (pagesContainer) pagesContainer.style.display = 'block';
@@ -401,20 +479,25 @@ defined('APP_NAME') or exit('Direct script access denied.');
                         card.className = 'extracted-page-card';
                         card.style.cssText = 'background:#1c1c1e; border-radius:8px; overflow:hidden; width:100%; box-shadow:0 4px 18px rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.08);';
 
-                        let innerHtml = `<div class="extracted-page-header" style="background:#2c2c2e; padding:6px 14px; font-size:11.5px; color:#f1f1f1; display:flex; justify-content:space-between; align-items:center;">
+                        let innerHtml = `<div class="extracted-page-header" style="background:#2c2c2e; padding:8px 14px; font-size:11.5px; color:#f1f1f1; display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-weight:600;">Slide ${si + 1} of ${slideEntries.length}</span>
-                            <span style="color:#a1a1a6; font-size:11px;">Text Content</span>
+                            <span style="color:#a1a1a6; font-size:11px;">Slide Content</span>
                         </div>
-                        <div style="padding:20px 24px; min-height:120px; background:#1c1c1e; color:#f5f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">`;
+                        <div style="padding:22px 26px; min-height:120px; background:#1c1c1e; color:#f5f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">`;
 
                         if (textItems.length === 0) {
-                            innerHtml += '<div style="color:#6e6e73; font-size:13px; text-align:center; padding:20px;">Empty slide</div>';
+                            innerHtml += '<div style="color:#8e8e93; font-size:13px; text-align:center; padding:24px 14px;">(No text content on this slide)</div>';
                         } else {
-                            textItems.forEach(item => {
-                                if (item.isTitle) {
-                                    innerHtml += `<div style="font-size:18px; font-weight:700; color:#f5f5f7; margin-bottom:12px; line-height:1.3; border-left:3px solid #0a84ff; padding-left:12px;">${escHtmlPptx(item.text)}</div>`;
+                            let hasTitle = false;
+                            textItems.forEach((item, itemIdx) => {
+                                if (item.isTitle || (itemIdx === 0 && !hasTitle)) {
+                                    hasTitle = true;
+                                    innerHtml += `<div style="font-size:19px; font-weight:700; color:#f5f5f7; margin-bottom:14px; line-height:1.35; border-left:3.5px solid #0a84ff; padding-left:12px; letter-spacing:-0.01em;">${escHtmlPptx(item.text)}</div>`;
                                 } else {
-                                    innerHtml += `<div style="font-size:13.5px; color:#d1d1d6; margin-bottom:8px; line-height:1.6; padding-left:4px;">• ${escHtmlPptx(item.text)}</div>`;
+                                    innerHtml += `<div style="font-size:14px; color:#e5e5ea; margin-bottom:10px; line-height:1.65; padding-left:8px; display:flex; align-items:flex-start; gap:8px;">
+                                        <span style="color:#0a84ff; font-weight:700; line-height:1.4;">•</span>
+                                        <span>${escHtmlPptx(item.text)}</span>
+                                    </div>`;
                                 }
                             });
                         }
