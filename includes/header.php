@@ -8,11 +8,22 @@ $auth->requireLogin();
 prevent_browser_cache(); // Prevent browser back/forward to cached protected pages
 $user = $auth->currentUser();
 
-// Unread notifications
+// Unread notifications & recent items for modal
 $db = Database::getInstance();
 $notifStmt = $db->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");
 $notifStmt->execute([$_SESSION['user_id']]);
 $unreadCount = (int)$notifStmt->fetchColumn();
+
+$recentNotifsStmt = $db->prepare("
+    SELECT n.*, d.title AS doc_title
+    FROM notifications n
+    LEFT JOIN documents d ON n.document_id = d.id
+    WHERE n.user_id = ?
+    ORDER BY n.created_at DESC
+    LIMIT 6
+");
+$recentNotifsStmt->execute([$_SESSION['user_id']]);
+$recentNotifications = $recentNotifsStmt->fetchAll();
 
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
@@ -138,13 +149,6 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
         </div>
         <?php endif; // end workflow role guard ?>
         <div class="nav-item">
-            <a href="<?= APP_URL ?>/notifications.php" class="<?= $currentPage==='notifications'?'active':'' ?>">
-                <span class="nav-icon" style="background:#ff3b30;"><i data-lucide="bell"></i></span>
-                <span class="nav-label">Notifications</span>
-                <?php if ($unreadCount > 0): ?><span class="nav-badge"><?= $unreadCount ?></span><?php endif; ?>
-            </a>
-        </div>
-        <div class="nav-item">
             <a href="<?= APP_URL ?>/activity_log.php" class="<?= $currentPage==='activity_log'?'active':'' ?>">
                 <span class="nav-icon" style="background:#8e8e93;"><i data-lucide="history"></i></span>
                 <span class="nav-label">Activity Log</span>
@@ -231,10 +235,10 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
         <div class="topbar-title" id="pageTitle"><?= htmlspecialchars($topbarTitle) ?></div>
     </div>
     <div class="topbar-actions">
-        <a href="<?= APP_URL ?>/notifications.php" class="topbar-btn" title="Notifications">
+        <button type="button" class="topbar-btn" id="notifBtn" onclick="openNotifModal()" title="Notifications" aria-label="Open notifications" aria-haspopup="dialog">
             <i data-lucide="bell"></i>
-            <?php if ($unreadCount > 0): ?><span class="badge"><?= $unreadCount ?></span><?php endif; ?>
-        </a>
+            <?php if ($unreadCount > 0): ?><span class="badge" id="topbarNotifBadge"><?= $unreadCount ?></span><?php endif; ?>
+        </button>
         <button type="button" class="topbar-btn" id="themeQuickBtn" onclick="quickToggleTheme()" title="Switch light / dark" aria-label="Switch between light and dark theme">
             <i data-lucide="moon" class="ico-moon"></i><i data-lucide="sun" class="ico-sun"></i>
         </button>
@@ -271,6 +275,81 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
         <div class="settings-list">
             <a href="<?= APP_URL ?>/profile.php" class="settings-row"><i data-lucide="user-round"></i><span>My Profile</span><i data-lucide="chevron-right" class="settings-chevron"></i></a>
             <a href="<?= APP_URL ?>/logout.php" class="settings-row danger"><i data-lucide="log-out"></i><span>Sign Out</span></a>
+        </div>
+    </div>
+</div>
+
+<!-- Notifications Modal -->
+<div class="modal-overlay" id="notifModal" role="dialog" aria-modal="true" aria-labelledby="notifModalTitle" onclick="if(event.target===this)closeNotifModal()">
+    <div class="modal notif-modal" style="max-width:440px;">
+        <div class="notif-modal-header">
+            <div class="notif-modal-title" id="notifModalTitle">
+                <i data-lucide="bell" style="color:var(--apple-blue); width:18px; height:18px;"></i>
+                <span>Notifications</span>
+                <?php if ($unreadCount > 0): ?>
+                <span class="badge" style="background:var(--apple-red); color:#fff; font-size:11px; padding:2px 7px; border-radius:10px; font-weight:600;"><?= $unreadCount ?> new</span>
+                <?php endif; ?>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <?php if ($unreadCount > 0): ?>
+                <a href="<?= APP_URL ?>/notifications.php?mark_read=1&return_to=<?= urlencode($_SERVER['REQUEST_URI'] ?? '') ?>" style="color:var(--apple-blue); font-size:12px; font-weight:500; text-decoration:none;">Mark all read</a>
+                <?php endif; ?>
+                <button type="button" class="modal-close" onclick="closeNotifModal()" aria-label="Close notifications">×</button>
+            </div>
+        </div>
+
+        <div class="notif-modal-body">
+            <?php if (empty($recentNotifications)): ?>
+            <div style="padding:44px 20px; text-align:center; color:var(--text-secondary);">
+                <div style="width:44px; height:44px; border-radius:50%; background:rgba(0,0,0,0.04); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; color:var(--text-tertiary);">
+                    <i data-lucide="bell-off" style="width:20px; height:20px;"></i>
+                </div>
+                <div style="font-size:13.5px; font-weight:600; color:var(--text-primary); margin-bottom:4px;">No notifications yet</div>
+                <div style="font-size:12px; color:var(--text-secondary);">You're all caught up! Updates will appear here.</div>
+            </div>
+            <?php else: ?>
+            <div class="notif-modal-list">
+                <?php foreach ($recentNotifications as $n): ?>
+                <?php
+                    $nIco = match($n['type']) {
+                        'review_request' => ['list-todo', '#d97706', 'rgba(217,119,6,0.12)'],
+                        'status_update'  => ['arrow-left-right', '#2563eb', 'rgba(37,99,235,0.12)'],
+                        'comment'        => ['message-square', '#7c3aed', 'rgba(124,58,237,0.12)'],
+                        'expiry_reminder_30', 'expiry_reminder_14', 'expiry_reminder_7' => ['calendar-clock', '#ff9500', 'rgba(255,149,0,0.12)'],
+                        'expiry_reminder_3'  => ['calendar-clock', '#ff3b30', 'rgba(255,59,48,0.12)'],
+                        'expiry_reminder_1'  => ['alarm-clock', '#ff3b30', 'rgba(255,59,48,0.12)'],
+                        'expiry_reminder_0'  => ['triangle-alert', '#ff3b30', 'rgba(255,59,48,0.12)'],
+                        default => ['info', '#64748b', 'rgba(100,116,139,0.12)'],
+                    };
+                    $nLink = $n['document_id'] 
+                        ? APP_URL . '/document_view.php?id=' . $n['document_id'] . '&read=' . $n['id'] 
+                        : APP_URL . '/notifications.php?read=' . $n['id'] . '&return_to=' . urlencode($_SERVER['REQUEST_URI'] ?? '');
+                ?>
+                <a href="<?= $nLink ?>" class="notif-modal-item<?= $n['is_read'] ? '' : ' notif-unread' ?>">
+                    <div style="width:34px; height:34px; border-radius:9px; background:<?= $nIco[2] ?>; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">
+                        <i data-lucide="<?= $nIco[0] ?>" style="color:<?= $nIco[1] ?>; width:16px; height:16px;"></i>
+                    </div>
+                    <div style="flex:1; min-width:0;">
+                        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px;">
+                            <div style="font-size:13px; font-weight:<?= $n['is_read'] ? 500 : 700 ?>; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><?= htmlspecialchars($n['title']) ?></div>
+                            <span style="font-size:11px; color:var(--text-tertiary); white-space:nowrap; flex-shrink:0;"><?= time_ago($n['created_at']) ?></span>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-secondary); margin-top:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.35;"><?= htmlspecialchars($n['message']) ?></div>
+                    </div>
+                    <?php if (!$n['is_read']): ?>
+                    <div style="width:7px; height:7px; border-radius:50%; background:var(--apple-blue); flex-shrink:0; margin-top:6px;"></div>
+                    <?php endif; ?>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="notif-modal-footer">
+            <a href="<?= APP_URL ?>/notifications.php?return_to=<?= urlencode($_SERVER['REQUEST_URI'] ?? '') ?>" class="btn btn-primary notif-show-all-btn">
+                <span>Show all</span>
+                <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
+            </a>
         </div>
     </div>
 </div>
@@ -422,6 +501,18 @@ function syncThemeUI(setting) {
     });
 }
 
+/* ── Notifications Modal ──────────────────────────────── */
+function openNotifModal() {
+    var m = document.getElementById('notifModal');
+    if (m) m.classList.add('open');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function closeNotifModal() {
+    var m = document.getElementById('notifModal');
+    if (m) m.classList.remove('open');
+}
+
 /* ── Settings Modal ───────────────────────────────────── */
 function openSettingsModal() {
     var m = document.getElementById('settingsModal');
@@ -435,7 +526,10 @@ function closeSettingsModal() {
 }
 
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeSettingsModal();
+    if (e.key === 'Escape') {
+        closeSettingsModal();
+        closeNotifModal();
+    }
 });
 
 // Listen for OS dark-mode changes (System theme)

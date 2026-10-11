@@ -280,3 +280,16 @@ function render_error_page(int $code): void {
     require __DIR__ . '/../' . $code . '.php';
     exit;
 }
+
+/** Friendly human-readable relative time (e.g. 'Just now', '5m ago', '2h ago', '3d ago'). */
+function time_ago(string $datetime): string {
+    $time = strtotime($datetime);
+    if (!$time) return '';
+    $diff = time() - $time;
+    if ($diff < 60) return 'Just now';
+    if ($diff < 3600) return floor($diff / 60) . 'm ago';
+    if ($diff < 86400) return floor($diff / 3600) . 'h ago';
+    if ($diff < 604800) return floor($diff / 86400) . 'd ago';
+    return date('M j', $time);
+}
+

@@ -76,3 +76,112 @@ input:disabled, select:disabled, textarea:disabled, input[readonly] {
     opacity: 1;
     border-color: rgba(255, 255, 255, 0.08);
 }
+
+/* ── Topbar Notifications Modal (compact, non-fullscreen) ── */
+.notif-modal {
+    max-width: 440px;
+    width: calc(100% - 28px);
+    max-height: 80vh;
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-hairline);
+    box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.28), 0 0 0 1px var(--border-hairline);
+    animation: notifModalPop .18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes notifModalPop {
+    from { opacity: 0; transform: scale(0.96) translateY(-6px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.notif-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border-hairline);
+    background: var(--bg-card);
+    flex-shrink: 0;
+}
+
+.notif-modal-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notif-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 380px;
+    background: var(--bg-card);
+    -webkit-overflow-scrolling: touch;
+}
+
+.notif-modal-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.notif-modal-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-hairline);
+    text-decoration: none;
+    color: inherit;
+    transition: background .14s ease;
+    align-items: flex-start;
+}
+
+.notif-modal-item:last-child {
+    border-bottom: none;
+}
+
+.notif-modal-item:hover {
+    background: rgba(0, 0, 0, 0.035);
+}
+
+[data-theme="dark"] .notif-modal-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.notif-modal-item.notif-unread {
+    background: rgba(0, 113, 227, 0.045);
+}
+
+[data-theme="dark"] .notif-modal-item.notif-unread {
+    background: rgba(0, 113, 227, 0.10);
+}
+
+.notif-modal-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-hairline);
+    background: var(--bg-card-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notif-show-all-btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    text-decoration: none;
+    border-radius: 980px;
+}
+

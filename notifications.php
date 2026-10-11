@@ -7,10 +7,28 @@ $auth = new Auth();
 $auth->requireLogin();
 $db   = Database::getInstance();
 
+// Determine safe return URL for the Back button
+$returnTo = $_GET['return_to'] ?? '';
+$safeReturnUrl = APP_URL . '/dashboard.php';
+if (!empty($returnTo)) {
+    if (str_starts_with($returnTo, '/') && !str_starts_with($returnTo, '//')) {
+        $safeReturnUrl = $returnTo;
+    } elseif (str_starts_with($returnTo, APP_URL)) {
+        $safeReturnUrl = $returnTo;
+    }
+} elseif (!empty($_SERVER['HTTP_REFERER'])) {
+    $ref = $_SERVER['HTTP_REFERER'];
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    if ($host !== '' && str_contains($ref, $host) && !str_contains($ref, 'notifications.php')) {
+        $safeReturnUrl = $ref;
+    }
+}
+
 // Mark all read
 if (isset($_GET['mark_read'])) {
     $db->prepare("UPDATE notifications SET is_read=1 WHERE user_id=?")->execute([$_SESSION['user_id']]);
-    header('Location: notifications.php'); exit;
+    $redirectUrl = !empty($returnTo) ? ('notifications.php?return_to=' . urlencode($returnTo)) : 'notifications.php';
+    header('Location: ' . $redirectUrl); exit;
 }
 
 // Mark single read
@@ -45,10 +63,16 @@ include __DIR__ . '/includes/header.php';
 ?>
 
 <div style="max-width:760px;margin:0 auto;">
-    <div class="flex justify-between items-center mb-16">
-        <h2 style="font-size:18px;font-weight:700;">Notifications</h2>
+    <div class="flex justify-between items-center mb-16 flex-wrap gap-10">
+        <div class="flex items-center gap-12">
+            <a href="<?= htmlspecialchars($safeReturnUrl) ?>" class="btn btn-outline btn-sm" id="notifBackBtn" onclick="return handleNotifBack(event, '<?= htmlspecialchars(addslashes($safeReturnUrl)) ?>');" title="Back to previous page" style="display:inline-flex; align-items:center; gap:6px; font-weight:500;">
+                <i data-lucide="arrow-left" style="width:15px; height:15px;"></i>
+                <span>Back</span>
+            </a>
+            <h2 style="font-size:18px;font-weight:700;margin:0;letter-spacing:-0.015em;">Notifications</h2>
+        </div>
         <?php if (!empty($notifications)): ?>
-        <a href="notifications.php?mark_read=1" class="btn btn-outline btn-sm"><i data-lucide="check-check"></i> Mark All Read</a>
+        <a href="notifications.php?mark_read=1<?= $returnTo ? '&return_to='.urlencode($returnTo) : '' ?>" class="btn btn-outline btn-sm"><i data-lucide="check-check"></i> Mark All Read</a>
         <?php endif; ?>
     </div>
 
@@ -63,7 +87,12 @@ include __DIR__ . '/includes/header.php';
     <div class="card" style="overflow:hidden;">
         <?php foreach ($notifications as $notif): ?>
         <?php $ico = $typeIcons[$notif['type']] ?? ['info','#64748b','rgba(100,116,139,0.12)']; ?>
-        <a href="<?= $notif['document_id'] ? APP_URL.'/document_view.php?id='.$notif['document_id'].'&read='.$notif['id'] : 'notifications.php?read='.$notif['id'] ?>"
+        <?php 
+            $itemLink = $notif['document_id'] 
+                ? APP_URL . '/document_view.php?id=' . $notif['document_id'] . '&read=' . $notif['id'] 
+                : 'notifications.php?read=' . $notif['id'] . ($returnTo ? '&return_to=' . urlencode($returnTo) : '');
+        ?>
+        <a href="<?= $itemLink ?>"
            class="notif-item<?= $notif['is_read'] ? '' : ' notif-item-unread' ?>"
            style="display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid var(--border-hairline);text-decoration:none;color:inherit;transition:background .14s ease;">
             <div style="width:40px;height:40px;border-radius:10px;background:<?= $ico[2] ?>;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -83,4 +112,16 @@ include __DIR__ . '/includes/header.php';
     <?php endif; ?>
 </div>
 
+<script>
+function handleNotifBack(e, fallbackUrl) {
+    if (window.history.length > 1 && document.referrer && document.referrer.indexOf(window.location.host) !== -1 && document.referrer !== window.location.href) {
+        e.preventDefault();
+        window.history.back();
+        return false;
+    }
+    return true;
+}
+</script>
+
 <?php include __DIR__ . '/includes/footer.php'; ?>
+
