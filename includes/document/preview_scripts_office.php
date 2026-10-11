@@ -203,6 +203,12 @@ defined('APP_NAME') or exit('Direct script access denied.');
     let slideImages = [];
     let currentSlideIdx = 0;
 
+    function escHtmlPptx(str) {
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
     // Early guard: JSZip must be available before we even fetch
     if (typeof JSZip === 'undefined') {
         if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Slide viewer library (JSZip) could not be loaded. Please download the file to view.</div>';
@@ -343,9 +349,85 @@ defined('APP_NAME') or exit('Direct script access denied.');
                 // Default to All Slide Pages View
                 setMode('pages');
             } else {
-                if (textContainer) {
-                    textContainer.innerHTML = '<div class="text-muted text-center" style="padding:30px;">Could not extract slides from this presentation. Please download the file to view.</div>';
-                    textContainer.style.display = 'block';
+                // No embedded media images — parse slide XML for text content
+                const slideEntries = [];
+                zip.forEach((path, entry) => {
+                    if (!entry.dir && /^ppt\/slides\/slide\d+\.xml$/i.test(path)) {
+                        slideEntries.push(entry);
+                    }
+                });
+                slideEntries.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+                function extractSlideText(xmlStr) {
+                    // Parse XML and extract all <a:t> text runs, grouping by paragraph <a:p>
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(xmlStr, 'application/xml');
+                    const NS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+
+                    const slides = [];
+                    const shapes = doc.getElementsByTagNameNS(NS, 'sp');
+                    for (const sp of shapes) {
+                        const txBody = sp.getElementsByTagNameNS(NS, 'txBody')[0];
+                        if (!txBody) continue;
+
+                        // Detect if this is a title placeholder
+                        const ph = sp.getElementsByTagNameNS('http://schemas.openxmlformats.org/presentationml/2006/main', 'ph')[0];
+                        const isTitle = ph && (ph.getAttribute('type') === 'title' || ph.getAttribute('type') === 'ctrTitle');
+
+                        const paras = txBody.getElementsByTagNameNS(NS, 'p');
+                        for (const p of paras) {
+                            const runs = p.getElementsByTagNameNS(NS, 't');
+                            let text = '';
+                            for (const t of runs) text += t.textContent;
+                            if (text.trim()) slides.push({ text: text.trim(), isTitle });
+                        }
+                    }
+                    return slides;
+                }
+
+                if (slideEntries.length > 0) {
+                    if (countBadge) {
+                        countBadge.textContent = `${slideEntries.length} Slide${slideEntries.length > 1 ? 's' : ''} (Text)`;
+                        countBadge.style.display = 'inline-block';
+                    }
+                    if (pagesContainer) pagesContainer.style.display = 'block';
+                    if (pagesWrapper) pagesWrapper.innerHTML = '';
+
+                    for (let si = 0; si < slideEntries.length; si++) {
+                        const xmlStr = await slideEntries[si].async('string');
+                        const textItems = extractSlideText(xmlStr);
+
+                        const card = document.createElement('div');
+                        card.className = 'extracted-page-card';
+                        card.style.cssText = 'background:#1c1c1e; border-radius:8px; overflow:hidden; width:100%; box-shadow:0 4px 18px rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.08);';
+
+                        let innerHtml = `<div class="extracted-page-header" style="background:#2c2c2e; padding:6px 14px; font-size:11.5px; color:#f1f1f1; display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:600;">Slide ${si + 1} of ${slideEntries.length}</span>
+                            <span style="color:#a1a1a6; font-size:11px;">Text Content</span>
+                        </div>
+                        <div style="padding:20px 24px; min-height:120px; background:#1c1c1e; color:#f5f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">`;
+
+                        if (textItems.length === 0) {
+                            innerHtml += '<div style="color:#6e6e73; font-size:13px; text-align:center; padding:20px;">Empty slide</div>';
+                        } else {
+                            textItems.forEach(item => {
+                                if (item.isTitle) {
+                                    innerHtml += `<div style="font-size:18px; font-weight:700; color:#f5f5f7; margin-bottom:12px; line-height:1.3; border-left:3px solid #0a84ff; padding-left:12px;">${escHtmlPptx(item.text)}</div>`;
+                                } else {
+                                    innerHtml += `<div style="font-size:13.5px; color:#d1d1d6; margin-bottom:8px; line-height:1.6; padding-left:4px;">• ${escHtmlPptx(item.text)}</div>`;
+                                }
+                            });
+                        }
+
+                        innerHtml += '</div>';
+                        card.innerHTML = innerHtml;
+                        if (pagesWrapper) pagesWrapper.appendChild(card);
+                    }
+                } else {
+                    if (textContainer) {
+                        textContainer.innerHTML = '<div class="text-muted text-center" style="padding:30px;">This presentation appears to be empty or uses an unsupported format. Please download to view.</div>';
+                        textContainer.style.display = 'block';
+                    }
                 }
             }
         })
