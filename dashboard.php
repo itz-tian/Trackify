@@ -206,9 +206,11 @@ $chartData = [
 $apprJoin = ''; $apprWhere = ''; $apprParams = [];
 $apprStatuses = "d.status IN ('pending_review','under_review')";
 if ($userRole === 'admin') {
-    $apprWhere = "d.deleted_at IS NULL AND $apprStatuses";
+    $apprJoin  = "LEFT JOIN approval_workflows aw ON aw.document_id = d.id AND aw.approver_id = ? JOIN users u ON u.id = d.uploaded_by";
+    $apprWhere = "d.deleted_at IS NULL AND u.role <> 'admin' AND $apprStatuses AND (aw.id IS NULL OR aw.status = 'pending')";
+    $apprParams = [$userId];
 } elseif ($userRole === 'department_head') {
-    $apprJoin  = "LEFT JOIN approval_workflows aw ON aw.document_id = d.id AND aw.approver_id = ? LEFT JOIN users u ON u.id = d.uploaded_by";
+    $apprJoin  = "LEFT JOIN approval_workflows aw ON aw.document_id = d.id AND aw.approver_id = ? JOIN users u ON u.id = d.uploaded_by";
     $apprWhere = "d.deleted_at IS NULL AND d.department_id = ? AND u.role <> 'admin' AND $apprStatuses AND (aw.id IS NULL OR aw.status = 'pending')";
     $apprParams = [$userId, $userDept];
 } else {
@@ -218,7 +220,7 @@ if ($userRole === 'admin') {
 $apprCountStmt = $db->prepare("SELECT COUNT(DISTINCT d.id) FROM documents d $apprJoin WHERE $apprWhere");
 $apprCountStmt->execute($apprParams);
 $apprCount = (int)$apprCountStmt->fetchColumn();
-$apprListStmt = $db->prepare("SELECT DISTINCT d.id, d.title, d.status, d.priority, d.updated_at, CONCAT(up.first_name,' ',up.last_name) AS uploader FROM documents d $apprJoin LEFT JOIN users up ON up.id = d.uploaded_by WHERE $apprWhere ORDER BY d.updated_at ASC LIMIT 5");
+$apprListStmt = $db->prepare("SELECT DISTINCT d.id, d.title, d.reference_number, d.status, d.priority, d.updated_at, CONCAT(up.first_name,' ',up.last_name) AS uploader FROM documents d $apprJoin LEFT JOIN users up ON up.id = d.uploaded_by WHERE $apprWhere ORDER BY d.updated_at ASC LIMIT 5");
 $apprListStmt->execute($apprParams);
 $apprList = $apprListStmt->fetchAll();
 $apprTitle = $userRole === 'staff' ? 'My Submissions Awaiting Approval' : 'Needs Your Approval';
