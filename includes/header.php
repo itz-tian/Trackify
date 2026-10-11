@@ -76,7 +76,8 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
         <a href="<?= APP_URL ?>/dashboard.php" class="sidebar-logo-link" title="Go to Dashboard" aria-label="Go to Dashboard">
-            <img src="<?= APP_URL ?>/assets/logo-light.png?v=<?= APP_VERSION ?>" alt="Trackify" class="logo-img">
+            <img src="<?= APP_URL ?>/assets/logo.png?v=<?= APP_VERSION ?>" alt="Trackify" class="logo-img logo-img-light">
+            <img src="<?= APP_URL ?>/assets/logo-light.png?v=<?= APP_VERSION ?>" alt="Trackify" class="logo-img logo-img-dark">
             <div>
                 <div class="logo-text"><?= APP_NAME ?></div>
                 <div class="logo-sub">Document Tracking</div>
