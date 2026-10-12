@@ -176,365 +176,359 @@ defined('APP_NAME') or exit('Direct script access denied.');
 <?php endif; ?>
 
 <?php if (in_array($ext, ['ppt', 'pptx'])): ?>
+<link rel="stylesheet" href="<?= APP_URL ?>/assets/vendor/pptxjs/pptxjs.css">
+<link rel="stylesheet" href="<?= APP_URL ?>/assets/vendor/pptxjs/nv.d3.min.css">
+<style>
+/* ── Trackify PowerPoint Visual Presentation Styling ── */
+#pptxVisualContainer {
+    position: relative;
+    box-sizing: border-box;
+}
+
+#pptxResult .slide {
+    margin: 0 auto !important;
+    border-radius: 8px !important;
+    box-shadow: 0 6px 26px rgba(0, 0, 0, 0.22) !important;
+    border: 1px solid var(--border-hairline) !important;
+    transition: transform 0.15s ease-out;
+}
+
+.pptx-slide-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-hairline);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 0 auto 24px auto;
+    width: 100%;
+    max-width: 960px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+}
+
+.pptx-slide-card-header {
+    background: var(--bg-card-subtle);
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-hairline);
+}
+
+.pptx-slide-stage {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 16px;
+    background: var(--bg-card-subtle);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.pptx-thumb-btn {
+    border: 2px solid transparent;
+    border-radius: 6px;
+    background: var(--bg-card-subtle);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.pptx-thumb-btn:hover {
+    background: var(--bg-card);
+    border-color: var(--apple-blue);
+}
+
+.pptx-thumb-btn.active {
+    background: var(--apple-blue);
+    color: #ffffff;
+    border-color: var(--apple-blue);
+}
+</style>
+<script src="<?= APP_URL ?>/assets/vendor/pptxjs/jquery.min.js"></script>
+<script src="<?= APP_URL ?>/assets/vendor/pptxjs/jszip.min.js"></script>
+<script src="<?= APP_URL ?>/assets/vendor/pptxjs/filereader.js"></script>
+<script src="<?= APP_URL ?>/assets/vendor/pptxjs/d3.min.js"></script>
+<script src="<?= APP_URL ?>/assets/vendor/pptxjs/nv.d3.min.js"></script>
+<script src="<?= APP_URL ?>/assets/vendor/pptxjs/pptxjs.js"></script>
+<script src="<?= APP_URL ?>/assets/vendor/pptxjs/divs2slides.js"></script>
 <script>
 (function() {
-    function initPptxPreview() {
-    const loading = document.getElementById('pptxLoading');
-    const pagesContainer = document.getElementById('pptxPagesContainer');
-    const pagesWrapper = document.getElementById('pptxPagesWrapper');
-    const deckContainer = document.getElementById('pptxDeckContainer');
-    const gridContainer = document.getElementById('pptxGridContainer');
-    const textContainer = document.getElementById('pptxTextContainer');
-    const viewModes = document.getElementById('pptxViewModes');
-    const countBadge = document.getElementById('pptxImageCountBadge');
+    function initPptxVisualViewer() {
+        var $ = window.jQuery;
+        if (!$) return;
 
-    const activeImg = document.getElementById('pptxActiveImage');
-    const activeLink = document.getElementById('pptxActiveImageLink');
-    const prevBtn = document.getElementById('pptxPrevBtn');
-    const nextBtn = document.getElementById('pptxNextBtn');
-    const indicator = document.getElementById('pptxSlideIndicator');
-    const fileNameEl = document.getElementById('pptxCurrentFileName');
-    const thumbStrip = document.getElementById('pptxThumbStrip');
+        var loadingEl      = document.getElementById('pptxLoading');
+        var viewModesEl    = document.getElementById('pptxViewModes');
+        var badgeEl        = document.getElementById('pptxSlideCountBadge');
+        var containerEl    = document.getElementById('pptxVisualContainer');
+        var resultEl       = document.getElementById('pptxResult');
+        var deckNavEl      = document.getElementById('pptxDeckNav');
+        var deckThumbEl    = document.getElementById('pptxDeckThumbnails');
+        var deckIndicator  = document.getElementById('pptxDeckIndicator');
+        var prevBtn        = document.getElementById('pptxPrevBtn');
+        var nextBtn        = document.getElementById('pptxNextBtn');
+        var btnStacked     = document.getElementById('pptxBtnStacked');
+        var btnDeck        = document.getElementById('pptxBtnDeck');
+        var btnFullscreen  = document.getElementById('pptxBtnFullscreen');
+        var fallbackEl     = document.getElementById('pptxFallback');
+        var fallbackMsgEl  = document.getElementById('pptxFallbackMsg');
 
-    const btnPages = document.getElementById('pptxBtnPages');
-    const btnDeck = document.getElementById('pptxBtnDeck');
-    const btnGrid = document.getElementById('pptxBtnGrid');
+        var currentMode = 'stacked';
+        var currentDeckSlide = 0;
+        var slideCards = [];
+        var totalSlideCount = 0;
 
-    let slideImages = [];
-    let currentSlideIdx = 0;
+        function showFallback(msg) {
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (viewModesEl) viewModesEl.style.display = 'none';
+            if (containerEl) containerEl.style.display = 'none';
+            if (deckNavEl) deckNavEl.style.display = 'none';
+            if (deckThumbEl) deckThumbEl.style.display = 'none';
+            if (fallbackEl) {
+                if (fallbackMsgEl) fallbackMsgEl.textContent = msg || 'This presentation could not be rendered directly.';
+                fallbackEl.style.display = 'block';
+            }
+            if (window.lucide) window.lucide.createIcons();
+        }
 
-    function escHtmlPptx(str) {
-        const d = document.createElement('div');
-        d.textContent = str;
-        return d.innerHTML;
-    }
+        // Responsive scaler for all slides
+        function fitSlideCards() {
+            if (!containerEl || !slideCards.length) return;
+            var availWidth = Math.max(220, containerEl.clientWidth - 48);
 
-    // Early guard: JSZip must be available before we even fetch
-    if (typeof JSZip === 'undefined') {
-        if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Slide viewer library (JSZip) could not be loaded. Please download the file to view.</div>';
-        return;
-    }
+            slideCards.forEach(function(cardInfo) {
+                var slideEl    = cardInfo.slide;
+                var viewportEl = cardInfo.viewport;
+                var natW = cardInfo.width;
+                var natH = cardInfo.height;
 
-    fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>')
-        .then(res => {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.arrayBuffer();
-        })
-        .then(buffer => {
-            return JSZip.loadAsync(buffer);
-        })
-        .then(async zip => {
-            if (loading) loading.style.display = 'none';
+                var scale = 1;
+                if (availWidth < natW) {
+                    scale = availWidth / natW;
+                }
 
-            // Find all slide images, drawings, and media files
-            const mediaFiles = [];
-            zip.forEach((path, entry) => {
-                if (!entry.dir && /^ppt\/media\//i.test(path)) {
-                    mediaFiles.push(entry);
+                var scaledW = Math.round(natW * scale);
+                var scaledH = Math.round(natH * scale);
+
+                viewportEl.style.width  = scaledW + 'px';
+                viewportEl.style.height = scaledH + 'px';
+
+                slideEl.style.transform = 'scale(' + scale + ')';
+                slideEl.style.transformOrigin = '0 0';
+            });
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            if (btnStacked) btnStacked.className = mode === 'stacked' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+            if (btnDeck)    btnDeck.className    = mode === 'deck'    ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+
+            if (mode === 'stacked') {
+                if (deckNavEl)   deckNavEl.style.display   = 'none';
+                if (deckThumbEl) deckThumbEl.style.display = 'none';
+                slideCards.forEach(function(c) {
+                    c.card.style.display = 'block';
+                });
+            } else if (mode === 'deck') {
+                if (deckNavEl)   deckNavEl.style.display   = 'flex';
+                if (deckThumbEl) deckThumbEl.style.display = 'flex';
+                updateDeckView(currentDeckSlide);
+            }
+            fitSlideCards();
+        }
+
+        function updateDeckView(idx) {
+            if (!slideCards.length) return;
+            currentDeckSlide = Math.max(0, Math.min(idx, slideCards.length - 1));
+
+            slideCards.forEach(function(c, i) {
+                c.card.style.display = (i === currentDeckSlide) ? 'block' : 'none';
+            });
+
+            if (deckIndicator) {
+                deckIndicator.textContent = 'Slide ' + (currentDeckSlide + 1) + ' of ' + slideCards.length;
+            }
+            if (prevBtn) prevBtn.disabled = (currentDeckSlide === 0);
+            if (nextBtn) nextBtn.disabled = (currentDeckSlide === slideCards.length - 1);
+
+            // Update active thumbnail
+            if (deckThumbEl) {
+                var thumbBtns = deckThumbEl.querySelectorAll('.pptx-thumb-btn');
+                thumbBtns.forEach(function(tb, tIdx) {
+                    if (tIdx === currentDeckSlide) {
+                        tb.classList.add('active');
+                        tb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    } else {
+                        tb.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        if (prevBtn) prevBtn.onclick = function() { updateDeckView(currentDeckSlide - 1); };
+        if (nextBtn) nextBtn.onclick = function() { updateDeckView(currentDeckSlide + 1); };
+
+        if (btnStacked) btnStacked.onclick = function() { setMode('stacked'); };
+        if (btnDeck)    btnDeck.onclick    = function() { setMode('deck'); };
+
+        if (btnFullscreen) {
+            btnFullscreen.onclick = function() {
+                var card = document.getElementById('pptxMainCard');
+                if (!card) return;
+                if (!document.fullscreenElement) {
+                    if (card.requestFullscreen) {
+                        card.requestFullscreen();
+                    } else if (card.webkitRequestFullscreen) {
+                        card.webkitRequestFullscreen();
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            };
+        }
+
+        // Keyboard arrow navigation
+        window.addEventListener('keydown', function(e) {
+            if (currentMode !== 'deck') return;
+            if (e.key === 'ArrowLeft') {
+                updateDeckView(currentDeckSlide - 1);
+            } else if (e.key === 'ArrowRight') {
+                updateDeckView(currentDeckSlide + 1);
+            }
+        });
+
+        window.addEventListener('resize', fitSlideCards);
+
+        // Begin PPTX rendering via PPTXjs
+        var targetUrl = '<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>';
+
+        try {
+            $('#pptxResult').pptxToHtml({
+                pptxFileUrl: targetUrl,
+                slideMode: false
+            });
+        } catch (err) {
+            console.error('PPTXjs invocation error:', err);
+            showFallback('Could not initialize presentation viewer.');
+            return;
+        }
+
+        // Wait for PPTXjs to finish generating slides
+        var maxWaitSeconds = 25;
+        var startTime = Date.now();
+
+        var pollInterval = setInterval(function() {
+            var slides = resultEl ? resultEl.querySelectorAll('.slide') : [];
+            var isMsgDone = document.querySelectorAll('.slides-loadnig-msg').length === 0;
+
+            if (slides.length > 0 && isMsgDone) {
+                clearInterval(pollInterval);
+                onSlidesRendered(slides);
+            } else if (Date.now() - startTime > maxWaitSeconds * 1000) {
+                clearInterval(pollInterval);
+                if (slides.length > 0) {
+                    onSlidesRendered(slides);
+                } else {
+                    showFallback('Presentation rendering timed out. Please download the file to view.');
+                }
+            }
+        }, 150);
+
+        function onSlidesRendered(slidesNodeList) {
+            totalSlideCount = slidesNodeList.length;
+            if (!totalSlideCount) {
+                showFallback('No presentation slides could be parsed.');
+                return;
+            }
+
+            // Hide loading, show viewmodes & badge
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (badgeEl) {
+                badgeEl.textContent = totalSlideCount + ' Slide' + (totalSlideCount > 1 ? 's' : '');
+                badgeEl.style.display = 'inline-block';
+            }
+            if (viewModesEl) viewModesEl.style.display = 'flex';
+            if (containerEl) containerEl.style.display = 'block';
+
+            // Wrap each slide into an elegant presentation card
+            slideCards = [];
+            if (deckThumbEl) deckThumbEl.innerHTML = '';
+
+            Array.from(slidesNodeList).forEach(function(slide, idx) {
+                var sNum = idx + 1;
+                var natW = parseFloat(slide.style.width) || 960;
+                var natH = parseFloat(slide.style.height) || 540;
+
+                // Card wrapper
+                var card = document.createElement('div');
+                card.className = 'pptx-slide-card';
+                card.setAttribute('data-slide-index', idx);
+
+                // Header
+                var header = document.createElement('div');
+                header.className = 'pptx-slide-card-header';
+                header.innerHTML = '<span><i data-lucide="presentation" style="width:13px; height:13px; display:inline-block; vertical-align:middle; margin-right:4px; color:var(--apple-orange);"></i> Slide ' + sNum + ' of ' + totalSlideCount + '</span><span style="font-size:11px; color:var(--text-tertiary); font-weight:normal;">' + Math.round(natW) + ' × ' + Math.round(natH) + ' px</span>';
+
+                // Stage & Viewport wrapper for pixel-perfect transform scaling
+                var stage = document.createElement('div');
+                stage.className = 'pptx-slide-stage';
+
+                var viewport = document.createElement('div');
+                viewport.className = 'pptx-slide-viewport';
+                viewport.style.cssText = 'position:relative; margin:0 auto; overflow:hidden; border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,0.25);';
+
+                slide.style.position = 'absolute';
+                slide.style.left = '0';
+                slide.style.top = '0';
+                slide.style.margin = '0';
+                slide.style.transformOrigin = '0 0';
+
+                // Insert into card
+                slide.parentNode.insertBefore(card, slide);
+                card.appendChild(header);
+                card.appendChild(stage);
+                stage.appendChild(viewport);
+                viewport.appendChild(slide);
+
+                slideCards.push({
+                    card: card,
+                    stage: stage,
+                    viewport: viewport,
+                    slide: slide,
+                    width: natW,
+                    height: natH
+                });
+
+                // Thumbnail button in Deck mode
+                if (deckThumbEl) {
+                    var thumbBtn = document.createElement('button');
+                    thumbBtn.type = 'button';
+                    thumbBtn.className = 'pptx-thumb-btn' + (idx === 0 ? ' active' : '');
+                    thumbBtn.textContent = 'Slide ' + sNum;
+                    thumbBtn.onclick = function() {
+                        updateDeckView(idx);
+                    };
+                    deckThumbEl.appendChild(thumbBtn);
                 }
             });
 
-            // Natural sort order (image1, image2, image3...)
-            mediaFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
-
-            if (mediaFiles.length > 0) {
-                if (countBadge) {
-                    countBadge.textContent = `${mediaFiles.length} Slide Visual${mediaFiles.length > 1 ? 's' : ''}`;
-                    countBadge.style.display = 'inline-block';
-                }
-                if (viewModes) viewModes.style.display = 'flex';
-
-                // Extract image blobs and create object URLs
-                slideImages = [];
-                for (let i = 0; i < mediaFiles.length; i++) {
-                    const entry = mediaFiles[i];
-                    const blob = await entry.async('blob');
-                    const url = URL.createObjectURL(blob);
-                    slideImages.push({
-                        name: entry.name.split('/').pop(),
-                        url: url,
-                        index: i + 1
-                    });
-                }
-
-                // 1. Build Extracted Slide Pages (Scrollable Stack)
-                if (pagesWrapper) {
-                    pagesWrapper.innerHTML = '';
-                    slideImages.forEach(item => {
-                        const card = document.createElement('div');
-                        card.className = 'extracted-page-card';
-                        card.style.cssText = 'background:#1c1c1e; border-radius:8px; overflow:hidden; width:100%; box-shadow:0 4px 18px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08);';
-                        card.innerHTML = `
-                            <div class="extracted-page-header" style="background:#2c2c2e; padding:6px 14px; font-size:11.5px; color:#f1f1f1; display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-weight:600;">Slide / Visual ${item.index} of ${slideImages.length}</span>
-                                <span style="color:#a1a1a6; font-size:11px;">${item.name}</span>
-                            </div>
-                            <div style="text-align:center; padding:12px; background:#1c1c1e;">
-                                <a href="${item.url}" target="_blank" title="Click to view full image in new tab">
-                                    <img src="${item.url}" alt="${item.name}" style="max-width:100%; max-height:560px; object-fit:contain; border-radius:4px; cursor:zoom-in;">
-                                </a>
-                            </div>
-                        `;
-                        pagesWrapper.appendChild(card);
-                    });
-                }
-
-                // 2. Build Slide Deck View
-                function showSlide(idx) {
-                    if (!slideImages.length) return;
-                    currentSlideIdx = Math.max(0, Math.min(idx, slideImages.length - 1));
-                    const cur = slideImages[currentSlideIdx];
-
-                    if (activeImg) activeImg.src = cur.url;
-                    if (activeLink) activeLink.href = cur.url;
-                    if (indicator) indicator.textContent = `Slide ${cur.index} of ${slideImages.length}`;
-                    if (fileNameEl) fileNameEl.textContent = cur.name;
-                    if (prevBtn) prevBtn.disabled = (currentSlideIdx === 0);
-                    if (nextBtn) nextBtn.disabled = (currentSlideIdx === slideImages.length - 1);
-
-                    // Update thumbnail active states
-                    if (thumbStrip) {
-                        thumbStrip.querySelectorAll('.preview-thumb-item').forEach((el, tIdx) => {
-                            if (tIdx === currentSlideIdx) {
-                                el.style.border = '2px solid var(--apple-blue)';
-                                el.style.opacity = '1';
-                                el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                            } else {
-                                el.style.border = '2px solid transparent';
-                                el.style.opacity = '0.6';
-                            }
-                        });
-                    }
-                }
-
-                if (thumbStrip) {
-                    thumbStrip.innerHTML = '';
-                    slideImages.forEach((item, tIdx) => {
-                        const thumb = document.createElement('img');
-                        thumb.className = 'preview-thumb-item';
-                        thumb.src = item.url;
-                        thumb.alt = item.name;
-                        thumb.onclick = () => showSlide(tIdx);
-                        thumbStrip.appendChild(thumb);
-                    });
-                }
-
-                if (prevBtn) prevBtn.onclick = () => showSlide(currentSlideIdx - 1);
-                if (nextBtn) nextBtn.onclick = () => showSlide(currentSlideIdx + 1);
-
-                // 3. Mode Toggles
-                function setMode(mode) {
-                    [btnPages, btnDeck, btnGrid].forEach(b => { if (b) b.className = 'btn btn-outline btn-sm'; });
-                    if (pagesContainer) pagesContainer.style.display = 'none';
-                    if (deckContainer) deckContainer.style.display = 'none';
-                    if (gridContainer) gridContainer.style.display = 'none';
-
-                    if (mode === 'pages' && pagesContainer) {
-                        if (btnPages) btnPages.className = 'btn btn-primary btn-sm';
-                        pagesContainer.style.display = 'block';
-                    } else if (mode === 'deck' && deckContainer) {
-                        if (btnDeck) btnDeck.className = 'btn btn-primary btn-sm';
-                        deckContainer.style.display = 'block';
-                        showSlide(currentSlideIdx);
-                    } else if (mode === 'grid' && gridContainer) {
-                        if (btnGrid) btnGrid.className = 'btn btn-primary btn-sm';
-                        gridContainer.style.display = 'block';
-                    }
-                }
-
-                if (btnPages) btnPages.onclick = () => setMode('pages');
-                if (btnDeck) btnDeck.onclick = () => setMode('deck');
-                if (btnGrid) btnGrid.onclick = () => setMode('grid');
-
-                // Default to All Slide Pages View
-                setMode('pages');
-            } else {
-                // No embedded media images — parse slide XML for text content
-                const slideEntries = [];
-                zip.forEach((path, entry) => {
-                    if (!entry.dir && /^ppt\/slides\/slide\d+\.xml$/i.test(path)) {
-                        slideEntries.push(entry);
-                    }
-                });
-                slideEntries.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
-
-                function extractSlideText(xmlStr) {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(xmlStr, 'application/xml');
-                    const slides = [];
-
-                    function getElementText(el) {
-                        if (!el) return '';
-                        let tNodes = [];
-                        try {
-                            tNodes = el.getElementsByTagNameNS ? el.getElementsByTagNameNS('*', 't') : [];
-                        } catch(e) {}
-                        if (!tNodes || tNodes.length === 0) {
-                            try { tNodes = el.getElementsByTagName('t'); } catch(e) {}
-                        }
-                        if (!tNodes || tNodes.length === 0) {
-                            try { tNodes = el.getElementsByTagName('a:t'); } catch(e) {}
-                        }
-                        let txt = '';
-                        if (tNodes && tNodes.length > 0) {
-                            for (let k = 0; k < tNodes.length; k++) {
-                                txt += tNodes[k].textContent || '';
-                            }
-                        } else {
-                            txt = el.textContent || '';
-                        }
-                        return txt.trim();
-                    }
-
-                    // 1. Scan PresentationML shapes (<p:sp>)
-                    let shapes = [];
-                    try {
-                        shapes = doc.getElementsByTagNameNS ? doc.getElementsByTagNameNS('*', 'sp') : [];
-                    } catch(e) {}
-                    if (!shapes || shapes.length === 0) {
-                        try { shapes = doc.getElementsByTagName('p:sp'); } catch(e) {}
-                    }
-                    if (!shapes || shapes.length === 0) {
-                        try { shapes = doc.getElementsByTagName('sp'); } catch(e) {}
-                    }
-
-                    if (shapes && shapes.length > 0) {
-                        for (let i = 0; i < shapes.length; i++) {
-                            const sp = shapes[i];
-                            let phList = [];
-                            try { phList = sp.getElementsByTagNameNS ? sp.getElementsByTagNameNS('*', 'ph') : []; } catch(e) {}
-                            if (!phList || phList.length === 0) {
-                                try { phList = sp.getElementsByTagName('p:ph'); } catch(e) {}
-                            }
-                            let isTitle = false;
-                            if (phList && phList.length > 0) {
-                                const phType = (phList[0].getAttribute('type') || '').toLowerCase();
-                                isTitle = (phType === 'title' || phType === 'ctrtitle' || phType === 'subtitle');
-                            }
-
-                            let paras = [];
-                            try { paras = sp.getElementsByTagNameNS ? sp.getElementsByTagNameNS('*', 'p') : []; } catch(e) {}
-                            if (!paras || paras.length === 0) {
-                                try { paras = sp.getElementsByTagName('a:p'); } catch(e) {}
-                            }
-
-                            for (let j = 0; j < paras.length; j++) {
-                                const txt = getElementText(paras[j]);
-                                if (txt) {
-                                    slides.push({ text: txt, isTitle: isTitle && j === 0 });
-                                }
-                            }
-                        }
-                    }
-
-                    // 2. Fallback: scan all paragraphs across entire document
-                    if (slides.length === 0) {
-                        let allParas = [];
-                        try { allParas = doc.getElementsByTagNameNS ? doc.getElementsByTagNameNS('*', 'p') : []; } catch(e) {}
-                        if (!allParas || allParas.length === 0) {
-                            try { allParas = doc.getElementsByTagName('a:p'); } catch(e) {}
-                        }
-                        for (let j = 0; j < allParas.length; j++) {
-                            const txt = getElementText(allParas[j]);
-                            if (txt) {
-                                slides.push({ text: txt, isTitle: (j === 0) });
-                            }
-                        }
-                    }
-
-                    // 3. Fallback: regex extraction of <a:t> / <*:t> text from raw XML
-                    if (slides.length === 0) {
-                        const matches = xmlStr.match(/<(?:\w+:)?t[^>]*>([\s\S]*?)<\/(?:\w+:)?t>/gi);
-                        if (matches && matches.length > 0) {
-                            const rawTexts = [];
-                            matches.forEach(m => {
-                                const clean = m.replace(/<[^>]+>/g, '').trim();
-                                if (clean) rawTexts.push(clean);
-                            });
-                            if (rawTexts.length > 0) {
-                                slides.push({ text: rawTexts[0], isTitle: true });
-                                for (let r = 1; r < rawTexts.length; r++) {
-                                    slides.push({ text: rawTexts[r], isTitle: false });
-                                }
-                            }
-                        }
-                    }
-
-                    return slides;
-                }
-
-                if (slideEntries.length > 0) {
-                    if (countBadge) {
-                        countBadge.textContent = `${slideEntries.length} Slide${slideEntries.length > 1 ? 's' : ''}`;
-                        countBadge.style.display = 'inline-block';
-                    }
-                    if (pagesContainer) pagesContainer.style.display = 'block';
-                    if (pagesWrapper) pagesWrapper.innerHTML = '';
-
-                    for (let si = 0; si < slideEntries.length; si++) {
-                        const xmlStr = await slideEntries[si].async('string');
-                        const textItems = extractSlideText(xmlStr);
-
-                        const card = document.createElement('div');
-                        card.className = 'extracted-page-card';
-                        card.style.cssText = 'background:#1c1c1e; border-radius:8px; overflow:hidden; width:100%; box-shadow:0 4px 18px rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.08);';
-
-                        let innerHtml = `<div class="extracted-page-header" style="background:#2c2c2e; padding:8px 14px; font-size:11.5px; color:#f1f1f1; display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-weight:600;">Slide ${si + 1} of ${slideEntries.length}</span>
-                            <span style="color:#a1a1a6; font-size:11px;">Slide Content</span>
-                        </div>
-                        <div style="padding:22px 26px; min-height:120px; background:#1c1c1e; color:#f5f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">`;
-
-                        if (textItems.length === 0) {
-                            innerHtml += '<div style="color:#8e8e93; font-size:13px; text-align:center; padding:24px 14px;">(No text content on this slide)</div>';
-                        } else {
-                            let hasTitle = false;
-                            textItems.forEach((item, itemIdx) => {
-                                if (item.isTitle || (itemIdx === 0 && !hasTitle)) {
-                                    hasTitle = true;
-                                    innerHtml += `<div style="font-size:19px; font-weight:700; color:#f5f5f7; margin-bottom:14px; line-height:1.35; border-left:3.5px solid #0a84ff; padding-left:12px; letter-spacing:-0.01em;">${escHtmlPptx(item.text)}</div>`;
-                                } else {
-                                    innerHtml += `<div style="font-size:14px; color:#e5e5ea; margin-bottom:10px; line-height:1.65; padding-left:8px; display:flex; align-items:flex-start; gap:8px;">
-                                        <span style="color:#0a84ff; font-weight:700; line-height:1.4;">•</span>
-                                        <span>${escHtmlPptx(item.text)}</span>
-                                    </div>`;
-                                }
-                            });
-                        }
-
-                        innerHtml += '</div>';
-                        card.innerHTML = innerHtml;
-                        if (pagesWrapper) pagesWrapper.appendChild(card);
-                    }
-                } else {
-                    if (textContainer) {
-                        textContainer.innerHTML = '<div class="text-muted text-center" style="padding:30px;">This presentation appears to be empty or uses an unsupported format. Please download to view.</div>';
-                        textContainer.style.display = 'block';
-                    }
-                }
-            }
-        })
-        .catch(err => {
-            console.error('PPTX parse error:', err);
-            if (loading) {
-                loading.innerHTML = `
-                    <div style="padding:20px; text-align:center;">
-                        <div style="color:var(--text-secondary); margin-bottom:12px; font-size:13px;">This presentation file could not be parsed directly.</div>
-                        <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-primary btn-sm">
-                            <i data-lucide="download"></i> Download Presentation
-                        </a>
-                    </div>
-                `;
-                if (window.lucide) lucide.createIcons();
-            }
-        });
+            if (window.lucide) window.lucide.createIcons();
+            setMode('stacked');
+        }
     }
 
-    // Run after DOM is fully loaded to ensure JSZip script has executed
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initPptxPreview);
+        document.addEventListener('DOMContentLoaded', initPptxVisualViewer);
     } else {
-        initPptxPreview();
+        initPptxVisualViewer();
     }
 })();
 </script>

@@ -160,59 +160,67 @@ $hasDiskFile = ($diskFile && is_file($diskFile));
         </div>
 
         <?php elseif (in_array($ext, ['ppt', 'pptx'])): ?>
-        <!-- PowerPoint Interactive Presentation & Extracted Slide Pages Viewer -->
-        <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card); width:100%; max-width:100%;">
+        <!-- PowerPoint Visual Slide Presentation Viewer -->
+        <div class="doc-preview-wrapper" id="pptxMainCard" style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card); width:100%; max-width:100%;">
             <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
                 <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
                     <i data-lucide="presentation" style="color:var(--apple-orange); width:18px; height:18px;"></i>
-                    PowerPoint Slides & Pages
-                    <span id="pptxImageCountBadge" class="badge" style="background:rgba(255,149,0,0.15); color:var(--apple-orange); font-size:11px; padding:2px 8px; border-radius:12px; display:none;"></span>
+                    PowerPoint Visual Slides
+                    <span id="pptxSlideCountBadge" class="badge" style="background:rgba(255,149,0,0.15); color:var(--apple-orange); font-size:11px; padding:2px 8px; border-radius:12px; display:none;"></span>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     <div id="pptxViewModes" style="display:none; gap:4px; flex-wrap:wrap;">
-                        <button type="button" id="pptxBtnPages" class="btn btn-primary btn-sm" style="font-size:11.5px; padding:4px 10px;">All Slide Pages</button>
-                        <button type="button" id="pptxBtnDeck" class="btn btn-outline btn-sm" style="font-size:11.5px; padding:4px 10px;">Slide Deck</button>
-                        <button type="button" id="pptxBtnGrid" class="btn btn-outline btn-sm" style="font-size:11.5px; padding:4px 10px;">Media Grid</button>
+                        <button type="button" id="pptxBtnStacked" class="btn btn-primary btn-sm" style="font-size:11.5px; padding:4px 10px;">
+                            <i data-lucide="layers" style="width:13px; height:13px; display:inline-block; vertical-align:middle;"></i> All Slide Pages
+                        </button>
+                        <button type="button" id="pptxBtnDeck" class="btn btn-outline btn-sm" style="font-size:11.5px; padding:4px 10px;">
+                            <i data-lucide="play" style="width:13px; height:13px; display:inline-block; vertical-align:middle;"></i> Slide Deck
+                        </button>
+                        <button type="button" id="pptxBtnFullscreen" class="btn btn-outline btn-sm" style="font-size:11.5px; padding:4px 10px;" title="View presentation in fullscreen">
+                            <i data-lucide="maximize-2" style="width:13px; height:13px; display:inline-block; vertical-align:middle;"></i> Fullscreen
+                        </button>
                     </div>
                     <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm">
                         <i data-lucide="download"></i> Download .<?= $ext ?>
                     </a>
                 </div>
             </div>
-            <div id="pptxLoading" style="text-align:center; padding:40px; color:var(--text-secondary);">
-                <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px; color:var(--apple-orange);"></i>
-                <div>Extracting presentation slide pages…</div>
-            </div>
-            <!-- All Extracted Slide Pages (Scrollable Stack) -->
-            <div id="pptxPagesContainer" style="display:none; padding:16px; max-height:680px; overflow-y:auto; -webkit-overflow-scrolling:touch;">
-                <div id="pptxPagesWrapper" style="display:flex; flex-direction:column; gap:20px; align-items:center; width:100%; max-width:860px; margin:0 auto;"></div>
-            </div>
-            <!-- Slide Deck View (Featured Slide + Controls + Thumbnails) -->
-            <div id="pptxDeckContainer" style="display:none; padding:16px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:var(--bg-card-subtle); padding:8px 14px; border-radius:8px; font-size:12px; flex-wrap:wrap; gap:8px;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <button type="button" id="pptxPrevBtn" class="btn btn-outline btn-sm" style="padding:3px 10px;">‹ Previous</button>
-                        <span style="font-weight:600;" id="pptxSlideIndicator">Slide 1 of 1</span>
-                        <button type="button" id="pptxNextBtn" class="btn btn-outline btn-sm" style="padding:3px 10px;">Next ›</button>
-                    </div>
-                    <span id="pptxCurrentFileName" class="text-muted" style="font-size:11.5px;"></span>
-                </div>
-                <div style="text-align:center; background:#1c1c1e; border-radius:8px; padding:16px; min-height:360px; display:flex; align-items:center; justify-content:center;">
-                    <a id="pptxActiveImageLink" href="#" target="_blank" title="Click to view full slide in new tab">
-                        <img id="pptxActiveImage" src="" alt="Presentation Slide" style="max-width:100%; max-height:560px; object-fit:contain; border-radius:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5); cursor:zoom-in;">
-                    </a>
-                </div>
-                <!-- Thumbnail Strip -->
-                <div id="pptxThumbStrip" style="display:flex; gap:8px; overflow-x:auto; padding:12px 0 4px; margin-top:10px;"></div>
-            </div>
-            <!-- Grid View of All Visuals -->
-            <div id="pptxGridContainer" style="display:none; padding:16px; max-height:600px; overflow-y:auto;">
-                <div id="pptxGridWrapper" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:14px;"></div>
-            </div>
-            <!-- Text Outline Fallback -->
-            <div id="pptxTextContainer" style="display:none; padding:20px; max-height:500px; overflow-y:auto;"></div>
-        </div>
 
+            <!-- Loading indicator -->
+            <div id="pptxLoading" style="text-align:center; padding:48px 20px; color:var(--text-secondary);">
+                <i data-lucide="loader-circle" class="icon-spin" style="width:30px; height:30px; margin-bottom:10px; color:var(--apple-orange);"></i>
+                <div style="font-size:13.5px; font-weight:500; color:var(--text-primary); margin-bottom:4px;">Extracting and rendering presentation slide pages…</div>
+                <div style="font-size:12px; color:var(--text-tertiary);">Rendering visual layouts, shapes, typography, and slide content</div>
+            </div>
+
+            <!-- Slide Deck Navigation Bar (visible only in Deck mode) -->
+            <div id="pptxDeckNav" style="display:none; justify-content:space-between; align-items:center; padding:8px 16px; background:var(--bg-card-subtle); border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button type="button" id="pptxPrevBtn" class="btn btn-outline btn-sm" style="padding:3px 12px; font-size:12px;">‹ Previous</button>
+                    <span style="font-weight:600; font-size:12.5px; min-width:80px; text-align:center;" id="pptxDeckIndicator">Slide 1 of 1</span>
+                    <button type="button" id="pptxNextBtn" class="btn btn-outline btn-sm" style="padding:3px 12px; font-size:12px;">Next ›</button>
+                </div>
+                <span class="text-muted" style="font-size:11.5px; display:inline-flex; align-items:center; gap:4px;">
+                    <i data-lucide="info" style="width:12px; height:12px;"></i> Press Left / Right arrow keys to navigate slides
+                </span>
+            </div>
+
+            <!-- Visual Slide Presentation Display Area -->
+            <div id="pptxVisualContainer" style="display:none; padding:20px 14px; max-height:720px; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; background:var(--bg-card-subtle);">
+                <div id="pptxResult" style="width:100%; max-width:100%; margin:0 auto;"></div>
+            </div>
+
+            <!-- Thumbnail Navigator for Slide Deck Mode -->
+            <div id="pptxDeckThumbnails" style="display:none; gap:8px; overflow-x:auto; padding:10px 16px; background:var(--bg-card); border-top:1px solid var(--border-hairline); -webkit-overflow-scrolling:touch;"></div>
+
+            <!-- Fallback error container -->
+            <div id="pptxFallback" style="display:none; padding:36px 20px; text-align:center;">
+                <div style="color:var(--text-secondary); margin-bottom:12px; font-size:13px;" id="pptxFallbackMsg">This presentation could not be rendered directly.</div>
+                <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-primary btn-sm">
+                    <i data-lucide="download"></i> Download Presentation
+                </a>
+            </div>
+        </div>
         <?php elseif ($ext === 'zip'): ?>
         <!-- ZIP Archive & Extracted Presentation Pages Inspector -->
         <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card); width:100%; max-width:100%;">
