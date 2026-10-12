@@ -34,6 +34,10 @@
         slideCards.forEach(function (card, slideIndex) {
             card.style.display = mode === 'stacked' || slideIndex === activeSlide ? 'block' : 'none';
         });
+        if (mode === 'deck') {
+            loadSlideImage(activeSlide);
+            loadSlideImage(activeSlide + 1);
+        }
         if (indicator) indicator.textContent = 'Slide ' + (activeSlide + 1) + ' of ' + slideCards.length;
         if (previous) previous.disabled = activeSlide === 0;
         if (next) next.disabled = activeSlide === slideCards.length - 1;
@@ -44,6 +48,14 @@
         if (mode === 'deck' && activeThumbnail) {
             activeThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
+    }
+
+    function loadSlideImage(index) {
+        const card = slideCards[index];
+        const image = card && card.querySelector('img[data-src]');
+        if (!image) return;
+        image.src = image.dataset.src;
+        image.removeAttribute('data-src');
     }
 
     function setMode(nextMode) {
@@ -71,14 +83,15 @@
 
             const image = document.createElement('img');
             image.className = 'pptx-slide-image';
-            image.src = url;
             image.alt = 'Slide ' + (index + 1);
             image.loading = 'lazy';
             image.decoding = 'async';
+            image.dataset.src = url;
 
             card.append(caption, image);
             slidesContainer.appendChild(card);
             slideCards.push(card);
+            if (index === 0) loadSlideImage(index);
 
             const thumbnail = document.createElement('button');
             thumbnail.type = 'button';
@@ -97,6 +110,19 @@
         thumbnails.style.display = 'none';
         badge.textContent = result.count + (result.count === 1 ? ' Slide' : ' Slides');
         badge.style.display = 'inline-block';
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        loadSlideImage(Number(entry.target.dataset.slideIndex));
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { root: container, rootMargin: '400px 0px' });
+            slideCards.forEach(function (card) { observer.observe(card); });
+        } else {
+            slideCards.forEach(function (_, index) { loadSlideImage(index); });
+        }
         showSlide(0);
     }
 

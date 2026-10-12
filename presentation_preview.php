@@ -38,6 +38,8 @@ if ($isSlideRequest) {
         exit('Invalid or expired slide URL.');
     }
 
+    session_write_close();
+
     try {
         $renderer = new PresentationPreview();
         $imagePath = $renderer->getCachedSlide($slide, $cacheKey);
@@ -88,9 +90,13 @@ if ($sourcePath === false || $uploadPrefix === '' || !str_starts_with($sourcePat
 }
 
 try {
+    $expires = time() + 3600;
+    session_write_close();
     $renderer = new PresentationPreview();
     $preview = $renderer->create($sourcePath, $documentId);
-    $expires = time() + 3600;
+    if (!session_start()) {
+        throw new RuntimeException('The presentation preview session could not be restored.');
+    }
     $tokens = $_SESSION['presentation_preview_tokens'] ?? [];
     foreach ($tokens as $token => $grant) {
         if (!is_array($grant) || (int)($grant['expires'] ?? 0) < time()) {
@@ -105,6 +111,7 @@ try {
         'expires' => $expires,
     ];
     $_SESSION['presentation_preview_tokens'] = $tokens;
+    session_write_close();
     $signedSlides = [];
 
     foreach ($preview['slides'] as $slideUrl) {

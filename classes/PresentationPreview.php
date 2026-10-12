@@ -3,7 +3,7 @@
 class PresentationPreview {
     private const MAX_SLIDES = 100;
     private const MAX_RENDER_SECONDS = 120;
-    private const RENDER_DPI = 120;
+    private const RENDER_DPI = 96;
     private const MAX_IMAGE_DIMENSION = 1600;
 
     private string $cacheRoot;
@@ -59,9 +59,36 @@ class PresentationPreview {
             throw new InvalidArgumentException('Invalid slide request.');
         }
 
-        $path = $this->cacheRoot . DIRECTORY_SEPARATOR . $hash . DIRECTORY_SEPARATOR . sprintf('slide-%03d.png', $slide);
-        if (!is_file($path) || filesize($path) === 0) {
-            throw new RuntimeException('The presentation preview has expired. Reload the document and try again.');
+        $cacheDir = $this->cacheRoot . DIRECTORY_SEPARATOR . $hash;
+        $path = $cacheDir . DIRECTORY_SEPARATOR . sprintf('slide-%03d.png', $slide);
+        if (is_file($path) && filesize($path) > 0) {
+            return $path;
+        }
+
+        $lock = fopen($this->cacheRoot . DIRECTORY_SEPARATOR . $hash . '.lock', 'c');
+        if ($lock === false) {
+            throw new RuntimeException('The presentation preview cache is unavailable.');
+        }
+
+        try {
+            if (!flock($lock, LOCK_EX)) {
+                throw new RuntimeException('The presentation preview is temporarily unavailable.');
+            }
+
+            $count = $this->cachedSlideCount($cacheDir);
+            if ($count === null) {
+                throw new RuntimeException('The presentation preview has expired. Reload the document and try again.');
+            }
+            if ($slide > $count) {
+                throw new InvalidArgumentException('Slide number is outside this presentation.');
+            }
+            if (!is_file($path) || filesize($path) === 0) {
+                set_time_limit(self::MAX_RENDER_SECONDS + 10);
+                $this->renderSlide($cacheDir, $slide);
+            }
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
         }
 
         return $path;
@@ -113,41 +140,9 @@ class PresentationPreview {
                 throw new RuntimeException('Presentations must contain between 1 and ' . self::MAX_SLIDES . ' slides to preview.');
             }
 
-            $imagePrefix = $workingDir . DIRECTORY_SEPARATOR . 'slide';
-            $this->runCommand([
-                $pdftoppm,
-                '-png',
-                '-r',
-                (string)self::RENDER_DPI,
-                '-scale-to',
-                (string)self::MAX_IMAGE_DIMENSION,
-                '-f',
-                '1',
-                '-l',
-                (string)$slideCount,
-                $pdfPath,
-                $imagePrefix,
-            ], $deadline);
-
-            $images = glob($imagePrefix . '-*.png') ?: [];
-            usort($images, static function (string $left, string $right): int {
-                preg_match('/-(\d+)\.png\z/', $left, $leftMatch);
-                preg_match('/-(\d+)\.png\z/', $right, $rightMatch);
-                return (int)$leftMatch[1] <=> (int)$rightMatch[1];
-            });
-            if (count($images) !== $slideCount) {
-                throw new RuntimeException('Not all presentation slides could be rendered.');
-            }
-
-            foreach ($images as $index => $image) {
-                $target = $workingDir . DIRECTORY_SEPARATOR . sprintf('slide-%03d.png', $index + 1);
-                if (!rename($image, $target)) {
-                    throw new RuntimeException('A rendered slide could not be saved.');
-                }
-            }
+            $this->renderSlide($workingDir, 1, $deadline);
 
             unlink($inputPath);
-            unlink($pdfPath);
             $profileDirectory = $workingDir . DIRECTORY_SEPARATOR . 'office-profile';
             if (is_dir($profileDirectory)) {
                 $this->removeDirectory($profileDirectory);
@@ -175,7 +170,7 @@ class PresentationPreview {
 
     private function cachedSlideCount(string $cacheDir): ?int {
         $manifest = $cacheDir . DIRECTORY_SEPARATOR . 'slide-count';
-        if (!is_file($manifest)) {
+        if (!is_file($manifest) || !is_file($cacheDir . DIRECTORY_SEPARATOR . 'presentation.pdf')) {
             return null;
         }
 
@@ -184,14 +179,46 @@ class PresentationPreview {
             return null;
         }
 
-        for ($slide = 1; $slide <= $count; $slide++) {
-            $path = $cacheDir . DIRECTORY_SEPARATOR . sprintf('slide-%03d.png', $slide);
-            if (!is_file($path) || filesize($path) === 0) {
-                return null;
-            }
+        $firstSlide = $cacheDir . DIRECTORY_SEPARATOR . 'slide-001.png';
+        if (!is_file($firstSlide) || filesize($firstSlide) === 0) {
+            return null;
         }
 
         return $count;
+    }
+
+    private function renderSlide(string $cacheDir, int $slide, ?float $deadline = null): void {
+        $pdfPath = $cacheDir . DIRECTORY_SEPARATOR . 'presentation.pdf';
+        if (!is_file($pdfPath)) {
+            throw new RuntimeException('The cached presentation PDF is unavailable.');
+        }
+
+        $target = $cacheDir . DIRECTORY_SEPARATOR . sprintf('slide-%03d.png', $slide);
+        $temporaryPrefix = $cacheDir . DIRECTORY_SEPARATOR . 'render-' . bin2hex(random_bytes(8));
+        $this->runCommand([
+            $this->findExecutable('pdftoppm'),
+            '-png',
+            '-r',
+            (string)self::RENDER_DPI,
+            '-scale-to',
+            (string)self::MAX_IMAGE_DIMENSION,
+            '-f',
+            (string)$slide,
+            '-l',
+            (string)$slide,
+            '-singlefile',
+            $pdfPath,
+            $temporaryPrefix,
+        ], $deadline ?? (microtime(true) + self::MAX_RENDER_SECONDS));
+
+        $temporaryImage = $temporaryPrefix . '.png';
+        if (!is_file($temporaryImage) || filesize($temporaryImage) === 0) {
+            throw new RuntimeException('The requested slide could not be rendered.');
+        }
+        if (!rename($temporaryImage, $target)) {
+            @unlink($temporaryImage);
+            throw new RuntimeException('The rendered slide could not be cached.');
+        }
     }
 
     private function findExecutable(string $name): string {
