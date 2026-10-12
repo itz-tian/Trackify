@@ -161,7 +161,7 @@ $hasDiskFile = ($diskFile && is_file($diskFile));
 
         <?php elseif (in_array($ext, ['ppt', 'pptx'])): ?>
         <!-- PowerPoint Visual Slide Presentation Viewer -->
-        <div class="doc-preview-wrapper" id="pptxMainCard" style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card); width:100%; max-width:100%;">
+        <div class="doc-preview-wrapper" id="pptxMainCard" data-preview-url="<?= htmlspecialchars(APP_URL . '/presentation_preview.php?id=' . (int)$doc['id'], ENT_QUOTES, 'UTF-8') ?>" style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card); width:100%; max-width:100%;">
             <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
                 <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
                     <i data-lucide="presentation" style="color:var(--apple-orange); width:18px; height:18px;"></i>

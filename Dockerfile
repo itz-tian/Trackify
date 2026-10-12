@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     zip \
     unzip \
+    libreoffice-impress \
+    fonts-liberation \
+    fonts-dejavu-core \
     poppler-utils \
     && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -31,7 +34,13 @@ WORKDIR /app
 COPY . /app
 
 # Ensure uploads folder is writable
-RUN chmod -R 777 /app/uploads
+RUN chmod -R 777 /app/uploads \
+    && chown -R www-data:www-data /app/uploads \
+    && mkdir -p /var/lib/php/sessions \
+    && chown -R www-data:www-data /var/lib/php/sessions
+
+# Do not run uploaded presentation files through LibreOffice as root.
+USER www-data
 
 EXPOSE 8080
 

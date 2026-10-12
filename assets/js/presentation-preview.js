@@ -1,0 +1,136 @@
+(function () {
+    const loading = document.getElementById('pptxLoading');
+    const badge = document.getElementById('pptxSlideCountBadge');
+    const controls = document.getElementById('pptxViewModes');
+    const container = document.getElementById('pptxVisualContainer');
+    const navigation = document.getElementById('pptxDeckNav');
+    const thumbnails = document.getElementById('pptxDeckThumbnails');
+    const slidesContainer = document.getElementById('pptxSlides');
+    const fallback = document.getElementById('pptxFallback');
+    const fallbackMessage = document.getElementById('pptxFallbackMsg');
+    const previous = document.getElementById('pptxPrevBtn');
+    const next = document.getElementById('pptxNextBtn');
+    const indicator = document.getElementById('pptxDeckIndicator');
+    const stackedButton = document.getElementById('pptxBtnStacked');
+    const deckButton = document.getElementById('pptxBtnDeck');
+    const fullscreenButton = document.getElementById('pptxBtnFullscreen');
+    const mainCard = document.getElementById('pptxMainCard');
+
+    if (!loading || !slidesContainer) return;
+
+    let slideCards = [];
+    let activeSlide = 0;
+    let mode = 'stacked';
+
+    function showFallback(message) {
+        loading.style.display = 'none';
+        if (fallbackMessage) fallbackMessage.textContent = message;
+        if (fallback) fallback.style.display = 'block';
+    }
+
+    function showSlide(index) {
+        if (!slideCards.length) return;
+        activeSlide = Math.max(0, Math.min(index, slideCards.length - 1));
+        slideCards.forEach(function (card, slideIndex) {
+            card.style.display = mode === 'stacked' || slideIndex === activeSlide ? 'block' : 'none';
+        });
+        if (indicator) indicator.textContent = 'Slide ' + (activeSlide + 1) + ' of ' + slideCards.length;
+        if (previous) previous.disabled = activeSlide === 0;
+        if (next) next.disabled = activeSlide === slideCards.length - 1;
+        thumbnails.querySelectorAll('button').forEach(function (button, slideIndex) {
+            button.classList.toggle('active', slideIndex === activeSlide);
+        });
+        const activeThumbnail = thumbnails.querySelector('.active');
+        if (mode === 'deck' && activeThumbnail) {
+            activeThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+    }
+
+    function setMode(nextMode) {
+        mode = nextMode;
+        stackedButton.className = mode === 'stacked' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+        deckButton.className = mode === 'deck' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+        navigation.style.display = mode === 'deck' ? 'flex' : 'none';
+        thumbnails.style.display = mode === 'deck' ? 'flex' : 'none';
+        showSlide(activeSlide);
+    }
+
+    function renderSlides(result) {
+        if (!result || !Array.isArray(result.slides) || result.slides.length !== result.count || !result.count) {
+            throw new Error('The presentation did not contain any renderable slides.');
+        }
+
+        result.slides.forEach(function (url, index) {
+            const card = document.createElement('figure');
+            card.className = 'pptx-slide-card';
+            card.setAttribute('data-slide-index', String(index));
+
+            const caption = document.createElement('figcaption');
+            caption.className = 'pptx-slide-card-header';
+            caption.textContent = 'Slide ' + (index + 1) + ' of ' + result.count;
+
+            const image = document.createElement('img');
+            image.className = 'pptx-slide-image';
+            image.src = url;
+            image.alt = 'Slide ' + (index + 1);
+            image.loading = 'lazy';
+            image.decoding = 'async';
+
+            card.append(caption, image);
+            slidesContainer.appendChild(card);
+            slideCards.push(card);
+
+            const thumbnail = document.createElement('button');
+            thumbnail.type = 'button';
+            thumbnail.className = 'pptx-thumb-btn';
+            thumbnail.textContent = String(index + 1);
+            thumbnail.setAttribute('aria-label', 'Show slide ' + (index + 1));
+            thumbnail.addEventListener('click', function () {
+                showSlide(index);
+            });
+            thumbnails.appendChild(thumbnail);
+        });
+
+        loading.style.display = 'none';
+        controls.style.display = 'flex';
+        container.style.display = 'block';
+        thumbnails.style.display = 'none';
+        badge.textContent = result.count + (result.count === 1 ? ' Slide' : ' Slides');
+        badge.style.display = 'inline-block';
+        showSlide(0);
+    }
+
+    previous.addEventListener('click', function () { showSlide(activeSlide - 1); });
+    next.addEventListener('click', function () { showSlide(activeSlide + 1); });
+    stackedButton.addEventListener('click', function () { setMode('stacked'); });
+    deckButton.addEventListener('click', function () { setMode('deck'); });
+    fullscreenButton.addEventListener('click', function () {
+        if (!document.fullscreenElement) {
+            if (mainCard.requestFullscreen) mainCard.requestFullscreen();
+            else if (mainCard.webkitRequestFullscreen) mainCard.webkitRequestFullscreen();
+        } else if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+    });
+
+    window.addEventListener('keydown', function (event) {
+        if (mode !== 'deck') return;
+        if (event.key === 'ArrowLeft') showSlide(activeSlide - 1);
+        if (event.key === 'ArrowRight') showSlide(activeSlide + 1);
+    });
+
+    fetch(mainCard.dataset.previewUrl, { credentials: 'same-origin' })
+        .then(function (response) {
+            return response.json().then(function (data) {
+                if (!response.ok) throw new Error(data.error || 'The presentation could not be rendered.');
+                return data;
+            });
+        })
+        .then(renderSlides)
+        .catch(function (error) {
+            console.error('Presentation preview error:', error);
+            showFallback(error.message || 'The presentation could not be rendered. Please download it to view.');
+        });
+})();
