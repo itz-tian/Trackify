@@ -37,5 +37,11 @@ if (!in_array($ext, ['ppt', 'pptx'], true)) {
     background: var(--apple-blue);
     color: #fff;
 }
+
+.pptx-slide-error {
+    margin: 16px;
+    color: var(--text-primary);
+    font-size: 14px;
+}
 </style>
-<script src="<?= APP_URL ?>/assets/js/presentation-preview.js?v=3" defer></script>
+<script src="<?= APP_URL ?>/assets/js/presentation-preview.js?v=4" defer></script>

@@ -8,6 +8,7 @@ require_once __DIR__ . '/classes/PresentationPreview.php';
 
 $auth = new Auth();
 $auth->requireLogin();
+header('X-Trackify-Preview-Version: 4');
 
 $documentId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$documentId || $documentId < 1) {

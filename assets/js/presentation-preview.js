@@ -1,4 +1,5 @@
 (function () {
+    const previewVersion = '4';
     const loading = document.getElementById('pptxLoading');
     const badge = document.getElementById('pptxSlideCountBadge');
     const controls = document.getElementById('pptxViewModes');
@@ -87,6 +88,13 @@
             image.loading = 'lazy';
             image.decoding = 'async';
             image.dataset.src = url;
+            image.addEventListener('error', function () {
+                const errorMessage = document.createElement('p');
+                errorMessage.className = 'pptx-slide-error';
+                errorMessage.setAttribute('role', 'alert');
+                errorMessage.textContent = 'Slide ' + (index + 1) + ' could not be loaded. Reload the document; if it continues, check the slide request status in the browser Network panel.';
+                card.appendChild(errorMessage);
+            }, { once: true });
 
             card.append(caption, image);
             slidesContainer.appendChild(card);
@@ -157,14 +165,26 @@
         signal: requestController.signal
     })
         .then(function (response) {
+            if (!response.headers.get('content-type') || !response.headers.get('content-type').includes('application/json')) {
+                throw new Error('The preview endpoint returned a non-JSON response (HTTP ' + response.status + '). It may have redirected to login or encountered a server error; inspect the preview request in the browser Network panel.');
+            }
+            const responseVersion = response.headers.get('X-Trackify-Preview-Version');
+            if (responseVersion !== previewVersion) {
+                throw new Error('The preview page and server endpoint versions do not match. Reload the page or redeploy the latest application files.');
+            }
             return response.json().then(function (data) {
-                if (!response.ok) throw new Error(data.error || 'The presentation could not be rendered.');
+                if (!response.ok) throw new Error(data.error || 'The preview endpoint returned HTTP ' + response.status + '.');
                 return data;
             });
         })
         .then(renderSlides)
         .catch(function (error) {
-            console.error('Presentation preview error:', error);
+            console.error('Presentation preview error:', {
+                version: previewVersion,
+                url: mainCard.dataset.previewUrl,
+                message: error.message,
+                error: error
+            });
             const message = error.name === 'AbortError'
                 ? 'The preview took too long to respond. Check that LibreOffice and Poppler are installed, then reload the document.'
                 : error.message || 'The presentation could not be rendered. Please download it to view.';
