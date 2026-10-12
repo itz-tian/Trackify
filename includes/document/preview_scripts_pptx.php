@@ -38,4 +38,4 @@ if (!in_array($ext, ['ppt', 'pptx'], true)) {
     color: #fff;
 }
 </style>
-<script src="<?= APP_URL ?>/assets/js/presentation-preview.js?v=2" defer></script>
+<script src="<?= APP_URL ?>/assets/js/presentation-preview.js?v=3" defer></script>

@@ -13,6 +13,7 @@ class PresentationPreview {
     }
 
     public function create(string $sourcePath, int $documentId): array {
+        set_time_limit(self::MAX_RENDER_SECONDS + 15);
         $hash = hash_file('sha256', $sourcePath);
         if ($hash === false) {
             throw new RuntimeException('The presentation could not be read.');
@@ -28,9 +29,7 @@ class PresentationPreview {
         }
 
         try {
-            if (!flock($lock, LOCK_EX)) {
-                throw new RuntimeException('The presentation preview is temporarily unavailable.');
-            }
+            $this->acquireLock($lock);
 
             $slideCount = $this->cachedSlideCount($cacheDir);
             if ($slideCount === null) {
@@ -65,15 +64,14 @@ class PresentationPreview {
             return $path;
         }
 
+        set_time_limit(self::MAX_RENDER_SECONDS + 15);
         $lock = fopen($this->cacheRoot . DIRECTORY_SEPARATOR . $hash . '.lock', 'c');
         if ($lock === false) {
             throw new RuntimeException('The presentation preview cache is unavailable.');
         }
 
         try {
-            if (!flock($lock, LOCK_EX)) {
-                throw new RuntimeException('The presentation preview is temporarily unavailable.');
-            }
+            $this->acquireLock($lock);
 
             $count = $this->cachedSlideCount($cacheDir);
             if ($count === null) {
@@ -92,6 +90,18 @@ class PresentationPreview {
         }
 
         return $path;
+    }
+
+    private function acquireLock($lock): void {
+        $deadline = microtime(true) + self::MAX_RENDER_SECONDS + 5;
+        do {
+            if (flock($lock, LOCK_EX | LOCK_NB)) {
+                return;
+            }
+            usleep(100000);
+        } while (microtime(true) < $deadline);
+
+        throw new RuntimeException('The presentation preview is busy. Please reload the document and try again.');
     }
 
     private function render(string $sourcePath, string $cacheDir): int {

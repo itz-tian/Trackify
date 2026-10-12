@@ -147,7 +147,15 @@
         if (event.key === 'ArrowRight') showSlide(activeSlide + 1);
     });
 
-    fetch(mainCard.dataset.previewUrl, { credentials: 'same-origin' })
+    const requestController = new AbortController();
+    const requestTimeout = window.setTimeout(function () {
+        requestController.abort();
+    }, 150000);
+
+    fetch(mainCard.dataset.previewUrl, {
+        credentials: 'same-origin',
+        signal: requestController.signal
+    })
         .then(function (response) {
             return response.json().then(function (data) {
                 if (!response.ok) throw new Error(data.error || 'The presentation could not be rendered.');
@@ -157,6 +165,12 @@
         .then(renderSlides)
         .catch(function (error) {
             console.error('Presentation preview error:', error);
-            showFallback(error.message || 'The presentation could not be rendered. Please download it to view.');
+            const message = error.name === 'AbortError'
+                ? 'The preview took too long to respond. Check that LibreOffice and Poppler are installed, then reload the document.'
+                : error.message || 'The presentation could not be rendered. Please download it to view.';
+            showFallback(message);
+        })
+        .finally(function () {
+            window.clearTimeout(requestTimeout);
         });
 })();
