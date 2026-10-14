@@ -1,6 +1,9 @@
 -- Database Schema
 -- Version 2.0 — security & integrity hardening
 
+CREATE DATABASE IF NOT EXISTS dms_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE dms_db;
+
 -- ─────────────────────────────────────────────
 -- DEPARTMENTS
 -- ─────────────────────────────────────────────
