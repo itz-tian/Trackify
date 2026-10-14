@@ -1,8 +1,6 @@
-/* ═══════════════════════════════════════════════════════════
-   Trackify — Shared UI Components (Modals, Collapsible Sidebar, Alerts)
-   ═══════════════════════════════════════════════════════════ */
 
-/* ── Shared Confirm Modal (replaces native confirm()) ── */
+
+
 .confirm-modal { max-width: 440px; }
 .confirm-modal .modal-header { margin-bottom: 14px; }
 .confirm-modal-title { display: flex; align-items: center; gap: 10px; color: var(--text-primary); }
@@ -20,7 +18,7 @@
 .confirm-modal-details div { word-break: break-word; }
 .confirm-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
-/* ── Collapsible Sidebar (desktop only, > 768px) ── */
+
 .nav-label { white-space: nowrap; }
 .nav-item a { position: relative; }
 
@@ -61,7 +59,7 @@
     html.sidebar-collapsed .user-popover { left: 12px; right: auto; width: 230px; }
 }
 
-/* ── Read-Only & Disabled Inputs ── */
+
 input:disabled, select:disabled, textarea:disabled, input[readonly] {
     background-color: #f8fafc;
     cursor: not-allowed;
@@ -77,7 +75,7 @@ input:disabled, select:disabled, textarea:disabled, input[readonly] {
     border-color: rgba(255, 255, 255, 0.08);
 }
 
-/* ── Topbar Notifications Modal (compact, non-fullscreen) ── */
+
 .notif-modal {
     max-width: 440px;
     width: calc(100% - 28px);

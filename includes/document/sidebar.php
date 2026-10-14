@@ -1,14 +1,11 @@
 <?php
-/**
- * Trackify — Document View Inspector Sidebar
- * Modular component extracted from document_view.php
- */
+
 defined('APP_NAME') or exit('Direct script access denied.');
 ?>
 
-<!-- Right: Apple Inspector Panel -->
+
 <div>
-    <!-- Approval Status Card -->
+    
     <div class="card mb-16">
         <div class="card-header">
             <span class="card-title"><i data-lucide="stamp" style="color:var(--apple-orange); margin-right:6px;"></i>Approval Status</span>
@@ -91,7 +88,7 @@ defined('APP_NAME') or exit('Direct script access denied.');
         </div>
     </div>
 
-    <!-- Document Details -->
+    
     <div class="card mb-16">
         <div class="card-header"><span class="card-title">Document Details</span></div>
         <div class="card-body" style="font-size:12.5px; padding:16px 20px;">
@@ -114,7 +111,7 @@ defined('APP_NAME') or exit('Direct script access denied.');
         </div>
     </div>
 
-    <!-- Version History -->
+    
     <div class="card">
         <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
             <span class="card-title"><i data-lucide="history" style="color:var(--apple-blue); margin-right:6px;"></i>Version History</span>

@@ -14,7 +14,7 @@ $userRole = $_SESSION['user_role'] ?? 'staff';
 $userId   = (int)($_SESSION['user_id']  ?? 0);
 $userDept = (int)($_SESSION['user_dept'] ?? 0);
 
-// Scope filter
+
 $docWhere  = 'd.deleted_at IS NULL';
 $docParams = [];
 if ($userRole === 'viewer') {
@@ -27,7 +27,7 @@ if ($userRole === 'viewer') {
     $docParams = [$userDept];
 }
 
-// Recent docs (10 per page; pagination appears once there are more than 10)
+
 $recentPerPage = 10;
 $recentCountStmt = $db->prepare("SELECT COUNT(*) FROM documents d WHERE $docWhere");
 $recentCountStmt->execute($docParams);
@@ -49,7 +49,7 @@ $recentStmt = $db->prepare("
 $recentStmt->execute($docParams);
 $recentDocs = $recentStmt->fetchAll();
 
-// Activity feed by role
+
 if ($userRole === 'admin') {
     $activityStmt = $db->prepare("
         SELECT al.*, CONCAT(u.first_name,' ',u.last_name) AS user_name, d.title AS doc_title
@@ -82,7 +82,7 @@ if ($userRole === 'admin') {
 }
 $activities = $activityStmt->fetchAll();
 
-// Status colors
+
 $statusColors = [
     'draft'=>'badge-draft','pending_review'=>'badge-pending','under_review'=>'badge-review',
     'approved'=>'badge-approved','rejected'=>'badge-rejected','archived'=>'badge-archived'
@@ -102,7 +102,7 @@ $actionIcons = [
     'password_change'=> ['key-round', 'rgba(88, 86, 214, 0.15)', 'var(--apple-indigo)'],
 ];
 
-// Additional metrics (scoped with the same role filter as the KPI cards so numbers agree)
+
 $thisMonthStmt = $db->prepare("SELECT COUNT(*) FROM documents d WHERE $docWhere AND d.created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')");
 $thisMonthStmt->execute($docParams);
 $thisMonthUploads = (int)$thisMonthStmt->fetchColumn();
@@ -110,8 +110,8 @@ $sizeStmt = $db->prepare("SELECT COALESCE(SUM(d.file_size),0) FROM documents d W
 $sizeStmt->execute($docParams);
 $totalStorage = (int)$sizeStmt->fetchColumn();
 
-// Documents per department - same visibility scope as everything else on this page.
-// The scope sits in the JOIN condition (not WHERE) so departments with 0 visible docs still resolve correctly.
+
+
 $deptStmt = $db->prepare("
     SELECT dep.name, COUNT(d.id) AS cnt
     FROM departments dep
@@ -121,23 +121,23 @@ $deptStmt = $db->prepare("
 $deptStmt->execute($docParams);
 $deptRows = $deptStmt->fetchAll();
 
-// Documents with no department were silently dropped before - count them as "General"
+
 $generalStmt = $db->prepare("SELECT COUNT(*) FROM documents d WHERE $docWhere AND d.department_id IS NULL");
 $generalStmt->execute($docParams);
 $generalCnt = (int)$generalStmt->fetchColumn();
 if ($generalCnt > 0) $deptRows[] = ['name' => 'General', 'cnt' => $generalCnt];
 
-// Non-admins only see departments that actually have documents visible to them
+
 if ($userRole !== 'admin') {
     $deptRows = array_values(array_filter($deptRows, fn($r) => (int)$r['cnt'] > 0));
 }
 usort($deptRows, fn($a, $b) => ((int)$b['cnt'] <=> (int)$a['cnt']) ?: strcasecmp($a['name'], $b['name']));
 $topDepartments = array_slice($deptRows, 0, 5);
 
-// "Pending Review" metrics:
-// - Approvers (admin & department_head): $actionableWaiting counts items requiring THEIR decision/approval
-// - Staff: $myPendingWaiting counts their own submissions awaiting approval
-// - Department-wide pending count is also preserved for stats
+
+
+
+
 $deptPendingWaiting = (int)$stats['pending_review'] + (int)$stats['under_review'];
 $actionableWaiting  = (int)($stats['actionable_pending'] ?? 0);
 $myPendingWaiting   = (int)($stats['my_pending'] ?? 0);
@@ -153,8 +153,8 @@ $deadlineStmt = $db->prepare("SELECT d.id,d.title,d.expires_at,c.name AS categor
 $deadlineStmt->execute($docParams);
 $upcomingDeadlines = $deadlineStmt->fetchAll();
 
-// ── Chart data ───────────────────────────────────────────────────────────
-// Status breakdown (donut)
+
+
 $statusChart = [
     ['label'=>'Pending review', 'value'=>$deptPendingWaiting,        'color'=>'#ff9500'],
     ['label'=>'Approved',       'value'=>(int)$stats['approved'],   'color'=>'#34c759'],
@@ -166,7 +166,7 @@ if ((int)$stats['archived'] > 0) {
 }
 $statusChartTotal = array_sum(array_column($statusChart, 'value'));
 
-// Uploads per month - last 6 months, zero-filled
+
 $monthFirst = new DateTime('first day of this month 00:00:00');
 $monthFrom  = (clone $monthFirst)->modify('-5 months');
 $monthStmt  = $db->prepare("SELECT DATE_FORMAT(d.created_at,'%Y-%m') AS ym, COUNT(*) AS cnt FROM documents d WHERE $docWhere AND d.created_at >= ? GROUP BY ym");
@@ -179,10 +179,10 @@ for ($i = 0; $i < 6; $i++) {
     $monthValues[] = (int)($monthCounts[$m->format('Y-m')] ?? 0);
 }
 
-// Documents per department (reuses $deptRows from above, top 6)
+
 $deptChartRows = array_slice($deptRows, 0, 6);
 
-// Breakdown by category (used for single-department views like staff)
+
 $catStmt = $db->prepare("
     SELECT c.name, COUNT(d.id) AS cnt 
     FROM categories c 
@@ -202,7 +202,7 @@ $chartData = [
     'category' => ['labels'=>array_column($catChartRows,'name'), 'values'=>array_map('intval', array_column($catChartRows,'cnt'))],
 ];
 
-// ── "Needs your approval" panel — same visibility rules as the sidebar Approvals badge ──
+
 $apprJoin = ''; $apprWhere = ''; $apprParams = [];
 $apprStatuses = "d.status IN ('pending_review','under_review')";
 if ($userRole === 'admin') {
@@ -226,7 +226,7 @@ $apprList = $apprListStmt->fetchAll();
 $apprTitle = $userRole === 'staff' ? 'My Submissions Awaiting Approval' : 'Needs Your Approval';
 $canSeeApprovals = in_array($userRole, ['admin','department_head','staff'], true);
 
-// Greeting summary tailored to user role
+
 $attnParts = [];
 if ($userRole === 'staff') {
     if ($myPendingWaiting > 0)             $attnParts[] = $myPendingWaiting . ' of your submission' . ($myPendingWaiting === 1 ? '' : 's') . ' awaiting decision';
@@ -236,7 +236,7 @@ if ($userRole === 'staff') {
     if ((int)$stats['expiring_soon'] > 0)  $attnParts[] = (int)$stats['expiring_soon'] . ' document' . ((int)$stats['expiring_soon'] === 1 ? '' : 's') . ' expiring soon';
     $attnTotal = (int)$stats['expiring_soon'];
 } else {
-    // Admin and Department Head
+    
     if ($actionableWaiting > 0)            $attnParts[] = $actionableWaiting . ' awaiting your approval';
     if ((int)$stats['expiring_soon'] > 0)  $attnParts[] = (int)$stats['expiring_soon'] . ' expiring soon';
     $attnTotal = $actionableWaiting + (int)$stats['expiring_soon'];
@@ -249,7 +249,7 @@ include __DIR__ . '/includes/header.php';
 
 <div class="dash">
 
-<!-- Greeting -->
+
 <div class="dash-hero">
     <div>
         <h1 class="dash-greeting"><span id="greetWord">Welcome back</span>, <?= htmlspecialchars($user['first_name'] ?? 'there') ?></h1>
@@ -350,7 +350,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<?php else: // Admin ?>
+<?php else: ?>
 <div class="kpi-grid">
     <a href="<?= APP_URL ?>/approvals.php" class="kpi kpi-primary <?= $actionableWaiting === 0 ? 'is-zero' : '' ?>" style="--kpi-rgb:255,149,0;">
         <div class="kpi-top"><span class="kpi-label">Pending Approvals</span><span class="kpi-ico"><i data-lucide="clock"></i></span></div>
@@ -463,10 +463,10 @@ include __DIR__ . '/includes/header.php';
     <?php endif; ?>
 </div>
 
-<!-- Main Split: Recent Documents & Activity -->
+
 <div class="content-split dashboard-split">
 
-    <!-- Recent Documents -->
+    
     <div class="card" id="recentDocs">
         <div class="card-header">
             <span class="card-title"><i data-lucide="history" style="color:var(--apple-blue); margin-right:8px;"></i>Recent Documents</span>
@@ -526,7 +526,7 @@ include __DIR__ . '/includes/header.php';
         <?= render_pagination($recentPage, $recentPages, 'rd_page', 'recentDocs') ?>
     </div>
 
-    <!-- Activity Stream -->
+    
     <div class="card">
         <div class="card-header">
             <span class="card-title"><i data-lucide="chart-no-axes-column-increasing" style="color:var(--apple-purple); margin-right:8px;"></i>Activity</span>
@@ -560,12 +560,12 @@ include __DIR__ . '/includes/header.php';
 
 </div>
 
-</div><!-- /.dash -->
+</div>
 
 <script src="<?= APP_URL ?>/assets/js/chart.umd.min.js?v=<?= APP_VERSION ?>"></script>
 <script>
 (function () {
-    // Greeting by the visitor's local time
+    
     var h = new Date().getHours();
     var g = h < 12 ? 'Good morning' : (h < 18 ? 'Good afternoon' : 'Good evening');
     var gw = document.getElementById('greetWord'); if (gw) gw.textContent = g;
@@ -618,7 +618,7 @@ include __DIR__ . '/includes/header.php';
         Chart.defaults.maintainAspectRatio = false;
         var intTicks = { precision: 0 };
 
-        // 1. Donut — status breakdown (total in the middle)
+        
         var elStatus = document.getElementById('chStatus');
         if (elStatus) {
             var empty = !D.status || D.status.total === 0;
@@ -665,7 +665,7 @@ include __DIR__ . '/includes/header.php';
             }));
         }
 
-        // 2. Line — uploads per month
+        
         var elMonthly = document.getElementById('chMonthly');
         if (elMonthly && D.monthly) {
             charts.push(new Chart(elMonthly, {
@@ -705,7 +705,7 @@ include __DIR__ . '/includes/header.php';
             }));
         }
 
-        // 3. Horizontal bar — documents per department or per category
+        
         var elDept = document.getElementById('chDept');
         if (elDept) {
             var useCategory = <?= $showCategoryChart ? 'true' : 'false' ?>;
@@ -752,7 +752,7 @@ include __DIR__ . '/includes/header.php';
         build();
     }
 
-    // Rebuild smoothly when the theme changes (debounced)
+    
     var debounceTimer;
     new MutationObserver(function () {
         clearTimeout(debounceTimer);

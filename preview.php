@@ -1,5 +1,5 @@
 <?php
-/** Document preview gateway. */
+
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/classes/Auth.php';
@@ -24,10 +24,10 @@ if (!$doc) {
     render_error_page(404);
 }
 
-// All authenticated users can view/download every active document.
-// Modification permissions are enforced inside Document.php.
 
-// Determine target file path
+
+
+
 $targetFileName = $doc['file_name'];
 $targetFilePath = $doc['file_path'];
 
@@ -41,7 +41,7 @@ if ($versionId) {
     }
 }
 
-// Directory Traversal Prevention
+
 $baseUploadDir = realpath(UPLOAD_PATH);
 $fullPath = realpath(__DIR__ . '/' . ltrim($targetFilePath, '/\\'));
 
@@ -73,7 +73,7 @@ if (!$fullPath || !$baseUploadDir || strpos($fullPath, $baseUploadDir) !== 0 || 
 
 $ext = strtolower(pathinfo($targetFileName, PATHINFO_EXTENSION));
 
-// Serve all supported formats with correct MIME types for both inline preview and JS-based viewers
+
 $mimeTypes = [
     'pdf'  => 'application/pdf',
     'png'  => 'image/png',
@@ -90,10 +90,10 @@ $mimeTypes = [
     'zip'  => 'application/zip',
 ];
 
-// Fallback: if file type is a valid MIME string use it, otherwise serve as binary stream
+
 $mimeType = $mimeTypes[$ext] ?? (str_contains((string)$doc['file_type'], '/') ? $doc['file_type'] : 'application/octet-stream');
 
-// Clean output buffer before streaming
+
 if (ob_get_level()) {
     ob_end_clean();
 }

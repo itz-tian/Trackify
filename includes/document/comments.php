@@ -1,12 +1,9 @@
 <?php
-/**
- * Trackify — Comments & Discussion Thread
- * Modular component extracted from document_view.php
- */
+
 defined('APP_NAME') or exit('Direct script access denied.');
 ?>
 
-<!-- Comments Discussion Thread -->
+
 <div class="card">
     <div class="card-header">
         <span class="card-title"><i data-lucide="message-square" style="color:var(--apple-blue); margin-right:8px;"></i>Discussion (<?= count($doc['comments']) ?>)</span>

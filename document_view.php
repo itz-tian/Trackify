@@ -20,13 +20,13 @@ $isAdmin    = ($userRole === 'admin');
 $isDeptHead = ($userRole === 'department_head' && !empty($doc['department_id']) && (int)$doc['department_id'] === (int)($_SESSION['user_dept'] ?? 0));
 $isAdminOwned = (($doc['uploader_role'] ?? '') === 'admin');
 
-// Approver check
+
 $checkWf = $db->prepare("SELECT * FROM approval_workflows WHERE document_id = ? AND approver_id = ?");
 $checkWf->execute([$id, $userId]);
 $myWorkflow = $checkWf->fetch();
 
-// Only a System Admin can approve a document the approver uploaded themselves.
-// Department heads/assigned approvers can never approve their own uploads.
+
+
 $canApprove = ($isAdmin || (!$isAdminOwned && !$isOwner && ($isDeptHead || !empty($myWorkflow))));
 
 $categories  = $db->query("SELECT * FROM categories ORDER BY name")->fetchAll();
@@ -36,12 +36,12 @@ $canEdit    = ($isAdmin || (!$isAdminOwned && ($isOwner || ($isDeptHead && (int)
 $canDelete  = ($isAdmin || (!$isAdminOwned && ($isOwner || ($isDeptHead && (int)$doc['uploaded_by'] !== $userId))));
 $canComment = ($isAdmin || !$isAdminOwned);
 
-// CSRF check
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_csrf_token();
 }
 
-// ── POST actions (Post/Redirect/Get) ─────────────────────────────────
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $self = APP_URL . '/document_view.php?id=' . $id;
 
@@ -112,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect_to($self);
 }
 
-// Flash message
+
 ['success' => $success, 'error' => $error] = flash_pull();
 
 $statusColors = [
@@ -146,22 +146,22 @@ include __DIR__ . '/includes/header.php';
 <?php include __DIR__ . '/includes/document/banners.php'; ?>
 
 <div class="content-split">
-    <!-- Left: Main Info, Preview & Comments -->
+    
     <div>
         <?php include __DIR__ . '/includes/document/header_card.php'; ?>
         <?php include __DIR__ . '/includes/document/preview_renderers.php'; ?>
         <?php include __DIR__ . '/includes/document/comments.php'; ?>
     </div>
 
-    <!-- Right: Apple Inspector Panel -->
+    
     <?php include __DIR__ . '/includes/document/sidebar.php'; ?>
 </div>
 
-<!-- Apple Sheet Modals -->
+
 <?php include __DIR__ . '/includes/document/modals.php'; ?>
 <?php include __DIR__ . '/includes/document/modal_scripts.php'; ?>
 
-<!-- Document Preview Interactive Scripts -->
+
 <?php include __DIR__ . '/includes/document/preview_scripts.php'; ?>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

@@ -7,7 +7,7 @@ $auth = new Auth();
 $auth->requireLogin();
 $db   = Database::getInstance();
 
-// Determine safe return URL for the Back button
+
 $returnTo = $_GET['return_to'] ?? '';
 $safeReturnUrl = APP_URL . '/dashboard.php';
 if (!empty($returnTo)) {
@@ -24,14 +24,14 @@ if (!empty($returnTo)) {
     }
 }
 
-// Mark all read
+
 if (isset($_GET['mark_read'])) {
     $db->prepare("UPDATE notifications SET is_read=1 WHERE user_id=?")->execute([$_SESSION['user_id']]);
     $redirectUrl = !empty($returnTo) ? ('notifications.php?return_to=' . urlencode($returnTo)) : 'notifications.php';
     header('Location: ' . $redirectUrl); exit;
 }
 
-// Mark single read
+
 if (isset($_GET['read'])) {
     $db->prepare("UPDATE notifications SET is_read=1 WHERE id=? AND user_id=?")->execute([(int)$_GET['read'], $_SESSION['user_id']]);
 }

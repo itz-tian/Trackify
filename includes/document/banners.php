@@ -1,8 +1,5 @@
 <?php
-/**
- * Trackify — Document View Banners & Alerts
- * Modular component extracted from document_view.php
- */
+
 defined('APP_NAME') or exit('Direct script access denied.');
 ?>
 
@@ -13,7 +10,7 @@ defined('APP_NAME') or exit('Direct script access denied.');
 <?php if ($error): ?><div class="alert alert-danger"><i data-lucide="circle-alert"></i> <?= htmlspecialchars($error) ?></div><?php endif; ?>
 <?php if ($isAdminOwned && !$isAdmin): ?><div class="alert alert-info"><i data-lucide="shield-check"></i> Administrator-owned document: view and download only. Editing, archiving, version changes, approvals, and comments are protected.</div><?php endif; ?>
 
-<!-- Approval Banner -->
+
 <?php if (in_array($doc['status'], ['pending_review', 'under_review'])): ?>
     <?php if ($canApprove): ?>
     <div class="card mb-16" style="border-left: 4px solid var(--apple-orange); background: linear-gradient(90deg, rgba(255, 149, 0, 0.08) 0%, var(--bg-card) 100%);">

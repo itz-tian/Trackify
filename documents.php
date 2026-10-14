@@ -9,7 +9,7 @@ $auth->requireLogin();
 $docClass = new Document();
 $db       = Database::getInstance();
 
-// Filters
+
 $filters = [
     'status'        => $_GET['status'] ?? '',
     'category_id'   => $_GET['category_id'] ?? '',
@@ -24,7 +24,7 @@ $requestedPerPage = (int)($_GET['per_page'] ?? 15);
 $perPage = in_array($requestedPerPage, [15, 25, 50], true) ? $requestedPerPage : 15;
 $result = $docClass->getAll($filters, $page, $perPage);
 
-// Dropdowns
+
 $categories  = $db->query("SELECT * FROM categories ORDER BY name")->fetchAll();
 $departments = $db->query("SELECT * FROM departments ORDER BY name")->fetchAll();
 $uploaders = $db->query("SELECT id, first_name, last_name FROM users WHERE is_active = 1 ORDER BY first_name, last_name")->fetchAll();
@@ -37,7 +37,7 @@ $statusColors = [
 $batchUploadResult = $_SESSION['upload_batch_result'] ?? null;
 unset($_SESSION['upload_batch_result']);
 
-// Handle delete action
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_csrf_token();
 }
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $res = $docClass->delete((int)$_POST['delete_id']);
         flash_result($res, 'Document deleted.');
     }
-    redirect_self(); // Post/Redirect/Get
+    redirect_self(); 
 }
 $flash = flash_pull();
 $deleteMsg = $flash['success'] ?: $flash['error'];
@@ -79,7 +79,7 @@ include __DIR__ . '/includes/header.php';
 </div>
 <?php endif; ?>
 
-<!-- Toolbar -->
+
 <div class="card mb-16">
     <div class="card-body" style="padding:16px;">
         <form method="GET" class="filter-form">
@@ -125,7 +125,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<!-- Documents Table -->
+
 <div class="card">
     <div class="card-header">
         <span class="card-title"><i data-lucide="folder" style="color:var(--apple-blue); margin-right:8px;"></i>All Documents
@@ -194,7 +194,7 @@ include __DIR__ . '/includes/header.php';
         </table>
     </div>
 
-    <!-- Pagination -->
+    
     <?php if ($result['pages'] > 1): ?>
     <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <?php for ($p=1; $p<=$result['pages']; $p++): ?>
@@ -205,7 +205,7 @@ include __DIR__ . '/includes/header.php';
     <?php endif; ?>
 </div>
 
-<!-- Delete Confirm Modal -->
+
 <div class="modal-overlay" id="deleteModal">
     <div class="modal" style="max-width:420px;">
         <div class="modal-header">

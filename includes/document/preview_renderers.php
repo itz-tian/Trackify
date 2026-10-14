@@ -1,15 +1,12 @@
 <?php
-/**
- * Trackify — Document Preview Renderers (Markup)
- * Modular component extracted from document_view.php
- */
+
 defined('APP_NAME') or exit('Direct script access denied.');
 
 $diskFile = realpath(__DIR__ . '/../../' . ltrim($doc['file_path'], '/\\'));
 $hasDiskFile = ($diskFile && is_file($diskFile));
 ?>
 
-<!-- Document Preview -->
+
 <div class="card mb-16" style="min-width:0; max-width:100%; overflow:hidden;">
     <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <span class="card-title">
@@ -34,7 +31,7 @@ $hasDiskFile = ($diskFile && is_file($diskFile));
     </div>
     <div class="card-body" style="padding:16px; min-width:0; max-width:100%; overflow:hidden;">
         <?php if (!$hasDiskFile): ?>
-        <!-- Missing file state: graceful fallback -->
+        
         <div style="text-align:center; padding:38px 20px; background:var(--bg-card-subtle); border-radius:12px; border:1px dashed var(--border-hairline);">
             <div style="width:54px; height:54px; border-radius:16px; background:rgba(255, 149, 0, 0.12); color:var(--apple-orange); display:inline-flex; align-items:center; justify-content:center; font-size:26px; margin-bottom:12px;">
                 <i data-lucide="file-question"></i>
@@ -53,9 +50,9 @@ $hasDiskFile = ($diskFile && is_file($diskFile));
         </div>
 
         <?php elseif ($ext === 'pdf'): ?>
-        <!-- Universal In-Browser PDF Preview: Extracted Pages Reader + Slide View + Native Frame -->
+        
         <div id="pdfViewerContainer" style="border-radius:10px; overflow:hidden; border:1px solid var(--border-hairline); background:#525659; width:100%; max-width:100%;">
-            <!-- PDF Controls Toolbar -->
+            
             <div style="display:flex; justify-content:space-between; align-items:center; background:#323639; padding:8px 14px; color:#f1f1f1; font-size:12.5px; border-bottom:1px solid rgba(255,255,255,0.1); flex-wrap:wrap; gap:8px;">
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     <span id="pdfPageBadge" class="badge" style="background:rgba(255,255,255,0.15); color:#fff; font-size:11.5px; padding:3px 8px; border-radius:6px;">
@@ -84,19 +81,19 @@ $hasDiskFile = ($diskFile && is_file($diskFile));
                     </a>
                 </div>
             </div>
-            <!-- PDF Canvas Viewport -->
+            
             <div id="pdfCanvasWrapper" style="overflow-x:auto; overflow-y:auto; max-height:720px; min-height:480px; padding:16px; background:#525659; -webkit-overflow-scrolling:touch;">
                 <div id="pdfLoadingSpinner" style="color:#fff; padding:40px; text-align:center;">
                     <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px;"></i>
                     <div>Extracting PDF pages…</div>
                 </div>
-                <!-- Container for all extracted pages stacked vertically -->
+                
                 <div id="pdfPagesContainer" style="display:none; flex-direction:column; align-items:center; gap:20px; width:100%;"></div>
-                <!-- Single slide view container -->
+                
                 <div id="pdfSingleContainer" style="display:none; justify-content:center; align-items:flex-start; width:100%;">
                     <canvas id="pdfSingleCanvas" style="box-shadow:0 4px 20px rgba(0,0,0,0.35); max-width:100%; height:auto; background:#fff; border-radius:4px;"></canvas>
                 </div>
-                <!-- Native iframe container -->
+                
                 <div id="pdfNativeWrapper" style="display:none; width:100%; height:680px;">
                     <iframe id="pdfIframe" src="" style="width:100%; height:100%; border:none; border-radius:6px; background:#fff;"></iframe>
                 </div>
@@ -104,7 +101,7 @@ $hasDiskFile = ($diskFile && is_file($diskFile));
         </div>
 
         <?php elseif (in_array($ext, ['png', 'jpg', 'jpeg'])): ?>
-        <!-- Image Preview -->
+        
         <div style="text-align:center; padding:20px; background:rgba(0,0,0,0.02); border-radius:10px; border:1px solid var(--border-hairline);">
             <a href="<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>" target="_blank">
                 <img src="<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>" 
@@ -117,7 +114,7 @@ $hasDiskFile = ($diskFile && is_file($diskFile));
         </div>
 
         <?php elseif ($ext === 'docx'): ?>
-        <!-- DOCX Interactive Document Viewer -->
+        
         <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card); width:100%; max-width:100%;">
             <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
                 <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
@@ -137,7 +134,7 @@ $hasDiskFile = ($diskFile && is_file($diskFile));
         </div>
 
         <?php elseif (in_array($ext, ['xls', 'xlsx'])): ?>
-        <!-- Excel-Styled Interactive Spreadsheet Grid Viewer -->
+        
         <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card); width:100%; max-width:100%;">
             <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
                 <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
@@ -160,69 +157,21 @@ $hasDiskFile = ($diskFile && is_file($diskFile));
         </div>
 
         <?php elseif (in_array($ext, ['ppt', 'pptx'])): ?>
-        <!-- PowerPoint Visual Slide Presentation Viewer -->
-        <div class="doc-preview-wrapper" id="pptxMainCard" data-preview-url="<?= htmlspecialchars(APP_URL . '/presentation_preview.php?id=' . (int)$doc['id'], ENT_QUOTES, 'UTF-8') ?>" style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card); width:100%; max-width:100%;">
-            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
-                <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
-                    <i data-lucide="presentation" style="color:var(--apple-orange); width:18px; height:18px;"></i>
-                    PowerPoint Visual Slides
-                    <span id="pptxSlideCountBadge" class="badge" style="background:rgba(255,149,0,0.15); color:var(--apple-orange); font-size:11px; padding:2px 8px; border-radius:12px; display:none;"></span>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <div id="pptxViewModes" style="display:none; gap:4px; flex-wrap:wrap;">
-                        <button type="button" id="pptxBtnStacked" class="btn btn-primary btn-sm" style="font-size:11.5px; padding:4px 10px;">
-                            <i data-lucide="layers" style="width:13px; height:13px; display:inline-block; vertical-align:middle;"></i> All Slide Pages
-                        </button>
-                        <button type="button" id="pptxBtnDeck" class="btn btn-outline btn-sm" style="font-size:11.5px; padding:4px 10px;">
-                            <i data-lucide="play" style="width:13px; height:13px; display:inline-block; vertical-align:middle;"></i> Slide Deck
-                        </button>
-                        <button type="button" id="pptxBtnFullscreen" class="btn btn-outline btn-sm" style="font-size:11.5px; padding:4px 10px;" title="View presentation in fullscreen">
-                            <i data-lucide="maximize-2" style="width:13px; height:13px; display:inline-block; vertical-align:middle;"></i> Fullscreen
-                        </button>
-                    </div>
-                    <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-outline btn-sm">
-                        <i data-lucide="download"></i> Download .<?= $ext ?>
-                    </a>
-                </div>
+        
+        <div class="doc-fallback-card">
+            <div style="width:54px; height:54px; border-radius:16px; background:rgba(255,149,0,0.12); color:var(--apple-orange); display:inline-flex; align-items:center; justify-content:center; font-size:26px; margin-bottom:12px;">
+                <i data-lucide="presentation"></i>
             </div>
-
-            <!-- Loading indicator -->
-            <div id="pptxLoading" style="text-align:center; padding:48px 20px; color:var(--text-secondary);">
-                <i data-lucide="loader-circle" class="icon-spin" style="width:30px; height:30px; margin-bottom:10px; color:var(--apple-orange);"></i>
-                <div style="font-size:13.5px; font-weight:500; color:var(--text-primary); margin-bottom:4px;">Extracting and rendering presentation slide pages…</div>
-                <div style="font-size:12px; color:var(--text-tertiary);">Rendering visual layouts, shapes, typography, and slide content</div>
-            </div>
-
-            <!-- Slide Deck Navigation Bar (visible only in Deck mode) -->
-            <div id="pptxDeckNav" style="display:none; justify-content:space-between; align-items:center; padding:8px 16px; background:var(--bg-card-subtle); border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <button type="button" id="pptxPrevBtn" class="btn btn-outline btn-sm" style="padding:3px 12px; font-size:12px;">‹ Previous</button>
-                    <span style="font-weight:600; font-size:12.5px; min-width:80px; text-align:center;" id="pptxDeckIndicator">Slide 1 of 1</span>
-                    <button type="button" id="pptxNextBtn" class="btn btn-outline btn-sm" style="padding:3px 12px; font-size:12px;">Next ›</button>
-                </div>
-                <span class="text-muted" style="font-size:11.5px; display:inline-flex; align-items:center; gap:4px;">
-                    <i data-lucide="info" style="width:12px; height:12px;"></i> Press Left / Right arrow keys to navigate slides
-                </span>
-            </div>
-
-            <!-- Visual Slide Presentation Display Area -->
-            <div id="pptxVisualContainer" style="display:none; padding:20px 14px; max-height:720px; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; background:var(--bg-card-subtle);">
-                <div id="pptxResult" style="width:100%; max-width:100%; margin:0 auto;"></div>
-            </div>
-
-            <!-- Thumbnail Navigator for Slide Deck Mode -->
-            <div id="pptxDeckThumbnails" style="display:none; gap:8px; overflow-x:auto; padding:10px 16px; background:var(--bg-card); border-top:1px solid var(--border-hairline); -webkit-overflow-scrolling:touch;"></div>
-
-            <!-- Fallback error container -->
-            <div id="pptxFallback" style="display:none; padding:36px 20px; text-align:center;">
-                <div style="color:var(--text-secondary); margin-bottom:12px; font-size:13px;" id="pptxFallbackMsg">This presentation could not be rendered directly.</div>
-                <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-primary btn-sm">
-                    <i data-lucide="download"></i> Download Presentation
-                </a>
-            </div>
+            <h3 style="font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:6px;">PowerPoint preview isn't available</h3>
+            <p style="font-size:13px; color:var(--text-secondary); max-width:460px; margin:0 auto 16px; line-height:1.5;">
+                Browser-based previews can change slide layout, fonts, animations, and embedded media. Download the presentation to view it with PowerPoint or another compatible app.
+            </p>
+            <a href="<?= APP_URL . '/download.php?id=' . (int)$doc['id'] ?>" class="btn btn-primary btn-sm">
+                <i data-lucide="download"></i> Download .<?= htmlspecialchars($ext) ?>
+            </a>
         </div>
         <?php elseif ($ext === 'zip'): ?>
-        <!-- ZIP Archive & Extracted Presentation Pages Inspector -->
+        
         <div style="border-radius:10px; border:1px solid var(--border-hairline); overflow:hidden; background:var(--bg-card); width:100%; max-width:100%;">
             <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-subtle); padding:10px 16px; border-bottom:1px solid var(--border-hairline); flex-wrap:wrap; gap:8px;">
                 <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; color:var(--text-primary);">
@@ -245,11 +194,11 @@ $hasDiskFile = ($diskFile && is_file($diskFile));
                 <i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px; color:var(--apple-orange);"></i>
                 <div>Reading archive contents & slides…</div>
             </div>
-            <!-- Extracted Pages Scrollable View (Page 1, Page 2... stacked) -->
+            
             <div id="zipPagesContainer" style="display:none; padding:16px; max-height:680px; overflow-y:auto; -webkit-overflow-scrolling:touch;">
                 <div id="zipPagesWrapper" style="display:flex; flex-direction:column; gap:20px; align-items:center; width:100%; max-width:860px; margin:0 auto;"></div>
             </div>
-            <!-- Slide Deck View -->
+            
             <div id="zipDeckContainer" style="display:none; padding:16px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:var(--bg-card-subtle); padding:8px 14px; border-radius:8px; font-size:12px; flex-wrap:wrap; gap:8px;">
                     <div style="display:flex; align-items:center; gap:8px;">
@@ -264,15 +213,15 @@ $hasDiskFile = ($diskFile && is_file($diskFile));
                         <img id="zipActiveImage" src="" alt="Extracted Slide Page" style="max-width:100%; max-height:560px; object-fit:contain; border-radius:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5); cursor:zoom-in;">
                     </a>
                 </div>
-                <!-- Thumbnail Strip -->
+                
                 <div id="zipThumbStrip" style="display:flex; gap:8px; overflow-x:auto; padding:12px 0 4px; margin-top:10px;"></div>
             </div>
-            <!-- File list wrapper -->
+            
             <div id="zipFileListWrapper" style="display:none; padding:12px; max-height:500px; overflow:auto;"></div>
         </div>
 
         <?php elseif ($ext === 'txt'): ?>
-        <!-- Text File Preview -->
+        
         <?php
         $fullPath = realpath(__DIR__ . '/../../' . ltrim($doc['file_path'], '/\\'));
         $textContent = ($fullPath && is_file($fullPath)) ? file_get_contents($fullPath) : '';
@@ -280,7 +229,7 @@ $hasDiskFile = ($diskFile && is_file($diskFile));
         <pre style="background:rgba(0,0,0,0.02); border:1px solid var(--border-hairline); border-radius:10px; padding:18px 20px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size:12.5px; line-height:1.6; max-height:500px; overflow:auto; color:var(--text-primary); white-space:pre-wrap; word-break:break-word; max-width:100%;"><?= htmlspecialchars($textContent) ?></pre>
 
         <?php else: ?>
-        <!-- Unsupported / Other Format Quick Look Card -->
+        
         <div style="text-align:center; padding:44px 20px; background:linear-gradient(180deg, rgba(0,0,0,0.01) 0%, rgba(0,0,0,0.03) 100%); border-radius:12px; border:1px dashed var(--border-hairline);">
             <div style="width:68px; height:68px; border-radius:18px; background:<?= $icon[2] ?>; color:<?= $icon[1] ?>; display:inline-flex; align-items:center; justify-content:center; font-size:32px; margin-bottom:14px; box-shadow:0 4px 14px rgba(0,0,0,0.06);">
                 <i data-lucide="<?= $icon[0] ?>"></i>

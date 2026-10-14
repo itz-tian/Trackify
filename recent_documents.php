@@ -7,7 +7,7 @@ $auth = new Auth(); $auth->requireLogin(); $db = Database::getInstance();
 $where='d.deleted_at IS NULL'; $params=[];
 $role=$_SESSION['user_role'] ?? 'staff'; $dept=(int)($_SESSION['user_dept'] ?? 0);
 if ($role === 'viewer') { $where .= " AND d.status='approved'"; } elseif ($role !== 'admin') { $where .= ' AND d.department_id=?'; $params[]=$dept; }
-// Latest 50 documents, shown 10 per page (pagination appears once there are more than 10).
+
 $perPage=10; $cap=50;
 $cnt=$db->prepare("SELECT COUNT(*) FROM documents d WHERE $where"); $cnt->execute($params);
 $total=min($cap,(int)$cnt->fetchColumn());

@@ -1,8 +1,5 @@
 <?php
-/**
- * Trackify — Office & Archive Preview Scripts (DOCX, XLSX, PPTX, ZIP)
- * Modular component extracted from document_view.php
- */
+
 defined('APP_NAME') or exit('Direct script access denied.');
 ?>
 
@@ -18,34 +15,28 @@ defined('APP_NAME') or exit('Direct script access denied.');
         return;
     }
 
-    fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>')
-        .then(res => {
-            if (!res.ok) throw new Error('Network error loading DOCX');
-            return res.blob();
-        })
-        .then(blob => {
-            if (loading) loading.style.display = 'none';
-            docx.renderAsync(blob, docxContainer, null, {
+    (async function() {
+        try {
+            const response = await fetch('<?= APP_URL . '/preview.php?id=' . (int)$doc['id'] ?>');
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const blob = await response.blob();
+            await docx.renderAsync(blob, docxContainer, null, {
                 className: 'docx-rendered-body',
                 inWrapper: false,
                 ignoreWidth: true,
                 ignoreHeight: false
-            }).then(() => {
-                // Ensure all rendered sections and tables respect fluid screen fitting
-                const sections = docxContainer.querySelectorAll('section, .docx, table, img');
-                sections.forEach(el => {
-                    el.style.maxWidth = '100%';
-                    el.style.boxSizing = 'border-box';
-                });
-            }).catch(err => {
-                console.error('docx preview render error:', err);
-                docxContainer.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Unable to parse document layout. Please download the file to view.</div>';
             });
-        })
-        .catch(err => {
-            console.error('docx fetch error:', err);
-            if (loading) loading.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Could not load document preview. Please download to view.</div>';
-        });
+            const sections = docxContainer.querySelectorAll('section, .docx, table, img');
+            sections.forEach(el => {
+                el.style.maxWidth = '100%';
+                el.style.boxSizing = 'border-box';
+            });
+            if (loading) loading.style.display = 'none';
+        } catch (err) {
+            console.error('docx preview error:', err);
+            docxContainer.innerHTML = '<div class="text-muted text-center" style="padding:20px;">Could not render this Word document. Please download the file to view.</div>';
+        }
+    })();
 })();
 </script>
 <?php endif; ?>
@@ -86,9 +77,8 @@ defined('APP_NAME') or exit('Direct script access denied.');
         })
         .then(buffer => {
             const workbook = XLSX.read(buffer, { type: 'array' });
-            if (loading) loading.style.display = 'none';
-
             if (!workbook.SheetNames || !workbook.SheetNames.length) {
+                if (loading) loading.style.display = 'none';
                 tableWrapper.innerHTML = '<div class="text-muted text-center" style="padding:20px;">No sheets found in spreadsheet.</div>';
                 return;
             }
@@ -112,10 +102,10 @@ defined('APP_NAME') or exit('Direct script access denied.');
                     metaBadge.style.display = 'inline-block';
                 }
 
-                // Build authentic Excel grid table directly inside the responsive scroll wrapper
+                
                 let html = '<table class="excel-table">';
                 
-                // Column Letters Header Row (A, B, C...)
+                
                 html += '<thead><tr>';
                 html += '<th></th>';
                 for (let c = 0; c < maxCols; c++) {
@@ -123,7 +113,7 @@ defined('APP_NAME') or exit('Direct script access denied.');
                 }
                 html += '</tr></thead><tbody>';
 
-                // Data Rows with Row Numbers (1, 2, 3...)
+                
                 rows.forEach((row, rIdx) => {
                     html += '<tr>';
                     html += `<th>${rIdx + 1}</th>`;
@@ -141,7 +131,7 @@ defined('APP_NAME') or exit('Direct script access denied.');
                 tableWrapper.innerHTML = html;
             }
 
-            // Render sheet tabs styled like Excel
+            
             sheetsContainer.innerHTML = '';
             workbook.SheetNames.forEach((name, idx) => {
                 const btn = document.createElement('button');
@@ -166,6 +156,7 @@ defined('APP_NAME') or exit('Direct script access denied.');
             });
 
             renderSheet(workbook.SheetNames[0]);
+            if (loading) loading.style.display = 'none';
         })
         .catch(err => {
             console.error('XLSX render error:', err);
@@ -174,8 +165,6 @@ defined('APP_NAME') or exit('Direct script access denied.');
 })();
 </script>
 <?php endif; ?>
-
-<?php include __DIR__ . '/preview_scripts_pptx.php'; ?>
 
 <?php if ($ext === 'zip'): ?>
 <script>
@@ -213,41 +202,47 @@ defined('APP_NAME') or exit('Direct script access denied.');
             return JSZip.loadAsync(buffer);
         })
         .then(async zip => {
-            if (loading) loading.style.display = 'none';
-
             const allFiles = [];
             const imageEntries = [];
 
             zip.forEach((path, entry) => {
                 if (!entry.dir && !path.startsWith('__MACOSX/') && !path.includes('/.')) {
                     allFiles.push(entry);
-                    if (/\.(png|jpe?g|webp|gif|svg)$/i.test(path)) {
+                    if (/\.(png|jpe?g|webp|gif)$/i.test(path)) {
                         imageEntries.push(entry);
                     }
                 }
             });
 
-            // Sort images naturally
+            
             imageEntries.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
-            // Build file listing
+            
             if (listWrapper) {
-                let html = '<div style="display:flex; flex-direction:column; gap:6px;">';
+                const fileList = document.createElement('div');
+                fileList.style.cssText = 'display:flex; flex-direction:column; gap:6px;';
                 allFiles.forEach(file => {
                     const ext = file.name.split('.').pop().toLowerCase();
-                    const isImg = ['png','jpg','jpeg','webp','gif','svg'].includes(ext);
-                    html += `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--bg-card-subtle); border-radius:6px; font-size:12px;">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <i data-lucide="${isImg ? 'image' : 'file'}" style="color:${isImg ? 'var(--apple-blue)' : 'var(--text-secondary)'}; width:15px; height:15px;"></i>
-                                <span style="font-weight:500; font-family:monospace;">${file.name}</span>
-                            </div>
-                            <span class="text-muted" style="font-size:11px;">${ext.toUpperCase()}</span>
-                        </div>
-                    `;
+                    const isImg = ['png','jpg','jpeg','webp','gif'].includes(ext);
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--bg-card-subtle); border-radius:6px; font-size:12px;';
+                    const fileInfo = document.createElement('div');
+                    fileInfo.style.cssText = 'display:flex; align-items:center; gap:8px;';
+                    const icon = document.createElement('i');
+                    icon.setAttribute('data-lucide', isImg ? 'image' : 'file');
+                    icon.style.cssText = `color:${isImg ? 'var(--apple-blue)' : 'var(--text-secondary)'}; width:15px; height:15px;`;
+                    const fileName = document.createElement('span');
+                    fileName.style.cssText = 'font-weight:500; font-family:monospace;';
+                    fileName.textContent = file.name;
+                    const fileType = document.createElement('span');
+                    fileType.className = 'text-muted';
+                    fileType.style.fontSize = '11px';
+                    fileType.textContent = ext.toUpperCase();
+                    fileInfo.append(icon, fileName);
+                    row.append(fileInfo, fileType);
+                    fileList.appendChild(row);
                 });
-                html += '</div>';
-                listWrapper.innerHTML = html;
+                listWrapper.replaceChildren(fileList);
             }
 
             if (imageEntries.length > 0) {
@@ -269,29 +264,43 @@ defined('APP_NAME') or exit('Direct script access denied.');
                     });
                 }
 
-                // 1. Build Extracted Pages View (stacked cards)
+                
                 if (pagesWrapper) {
                     pagesWrapper.innerHTML = '';
                     extractedImages.forEach(item => {
                         const card = document.createElement('div');
                         card.className = 'extracted-page-card';
                         card.style.cssText = 'background:#1c1c1e; border-radius:8px; overflow:hidden; width:100%; box-shadow:0 4px 18px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08);';
-                        card.innerHTML = `
-                            <div class="extracted-page-header" style="background:#2c2c2e; padding:6px 14px; font-size:11.5px; color:#f1f1f1; display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-weight:600;">Page / Visual ${item.index} of ${extractedImages.length}</span>
-                                <span style="color:#a1a1a6; font-size:11px;">${item.name}</span>
-                            </div>
-                            <div style="text-align:center; padding:12px; background:#1c1c1e;">
-                                <a href="${item.url}" target="_blank" title="Click to view full image in new tab">
-                                    <img src="${item.url}" alt="${item.name}" style="max-width:100%; max-height:560px; object-fit:contain; border-radius:4px; cursor:zoom-in;">
-                                </a>
-                            </div>
-                        `;
+                        const cardHeader = document.createElement('div');
+                        cardHeader.className = 'extracted-page-header';
+                        cardHeader.style.cssText = 'background:#2c2c2e; padding:6px 14px; font-size:11.5px; color:#f1f1f1; display:flex; justify-content:space-between; align-items:center;';
+                        const pageLabel = document.createElement('span');
+                        pageLabel.style.fontWeight = '600';
+                        pageLabel.textContent = `Page / Visual ${item.index} of ${extractedImages.length}`;
+                        const imageName = document.createElement('span');
+                        imageName.style.cssText = 'color:#a1a1a6; font-size:11px;';
+                        imageName.textContent = item.name;
+                        cardHeader.append(pageLabel, imageName);
+
+                        const imageWrap = document.createElement('div');
+                        imageWrap.style.cssText = 'text-align:center; padding:12px; background:#1c1c1e;';
+                        const imageLink = document.createElement('a');
+                        imageLink.href = item.url;
+                        imageLink.target = '_blank';
+                        imageLink.rel = 'noopener';
+                        imageLink.title = 'Click to view full image in new tab';
+                        const image = document.createElement('img');
+                        image.src = item.url;
+                        image.alt = item.name;
+                        image.style.cssText = 'max-width:100%; max-height:560px; object-fit:contain; border-radius:4px; cursor:zoom-in;';
+                        imageLink.appendChild(image);
+                        imageWrap.appendChild(imageLink);
+                        card.append(cardHeader, imageWrap);
                         pagesWrapper.appendChild(card);
                     });
                 }
 
-                // 2. Build Slide Deck View
+                
                 function showSlide(idx) {
                     if (!extractedImages.length) return;
                     currentDeckIdx = Math.max(0, Math.min(idx, extractedImages.length - 1));
@@ -333,7 +342,7 @@ defined('APP_NAME') or exit('Direct script access denied.');
                 if (prevBtn) prevBtn.onclick = () => showSlide(currentDeckIdx - 1);
                 if (nextBtn) nextBtn.onclick = () => showSlide(currentDeckIdx + 1);
 
-                // 3. Mode Switching
+                
                 function setZipMode(mode) {
                     [btnPages, btnDeck, btnFiles].forEach(b => { if (b) b.className = 'btn btn-outline btn-sm'; });
                     if (pagesContainer) pagesContainer.style.display = 'none';
@@ -357,12 +366,14 @@ defined('APP_NAME') or exit('Direct script access denied.');
                 if (btnDeck) btnDeck.onclick = () => setZipMode('deck');
                 if (btnFiles) btnFiles.onclick = () => setZipMode('files');
 
-                // Default to Extracted Pages View
+                
                 setZipMode('pages');
             } else {
+                if (headerTitle) headerTitle.textContent = 'Archive Contents';
                 if (listWrapper) listWrapper.style.display = 'block';
             }
 
+            if (loading) loading.style.display = 'none';
             if (window.lucide) lucide.createIcons();
         })
         .catch(err => {

@@ -1,8 +1,6 @@
-/* ═══════════════════════════════════════════════════════════
-   Trackify — Global Responsive Media Queries & Mobile Adaptation
-   ═══════════════════════════════════════════════════════════ */
 
-/* Tablet & Medium Displays (<= 1180px) */
+
+
 @media (max-width: 1180px) {
     .content-split {
         grid-template-columns: minmax(0, 1fr) !important;
@@ -43,7 +41,7 @@
     }
 }
 
-/* Mobile & Small Tablets (<= 768px) */
+
 @media (max-width: 768px) {
     body {
         overflow-x: hidden;
@@ -227,7 +225,7 @@
     }
 }
 
-/* Small Handhelds (<= 480px) */
+
 @media (max-width: 480px) {
     .main-content {
         padding: 12px 10px 24px;

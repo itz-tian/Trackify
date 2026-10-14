@@ -1,12 +1,9 @@
 <?php
-/**
- * Trackify — Document View Header Card & Metadata Details
- * Modular component extracted from document_view.php
- */
+
 defined('APP_NAME') or exit('Direct script access denied.');
 ?>
 
-<!-- Document Header Card -->
+
 <div class="card mb-16">
     <div class="card-body">
         <div class="doc-header-layout">
@@ -66,7 +63,7 @@ defined('APP_NAME') or exit('Direct script access denied.');
         <div style="margin-top:14px; display:flex; gap:6px; flex-wrap:wrap;">
             <?php foreach (explode(',', $doc['tags']) as $tag): ?>
             <span style="background:rgba(0,0,0,0.04); color:var(--text-secondary); font-size:11.5px; font-weight:500; padding:3px 10px; border-radius:var(--radius-pill);">
-                #<?= htmlspecialchars(trim($tag)) ?>
+                
             </span>
             <?php endforeach; ?>
         </div>

@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = $docClass->permanentDelete((int)$_POST['permanent_delete_id']);
         flash_result($result, 'Document permanently deleted.');
     }
-    redirect_self(); // Post/Redirect/Get
+    redirect_self(); 
 }
 
 ['success' => $message, 'error' => $error] = flash_pull();

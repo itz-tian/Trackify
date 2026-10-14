@@ -14,11 +14,11 @@ $userRole = $_SESSION['user_role'] ?? 'staff';
 $userId   = (int)$_SESSION['user_id'];
 $userDept = $_SESSION['user_dept'] ?? 0;
 
-// Approval action
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     require_csrf_token();
     $docId   = (int)($_POST['document_id'] ?? 0);
-    $action  = $_POST['action']; // 'approve', 'reject' or 'cancel'
+    $action  = $_POST['action']; 
     $remarks = trim($_POST['remarks'] ?? '');
 
     if ($docId > 0 && $action === 'cancel') {
@@ -29,15 +29,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $res = $docClass->updateStatus($docId, $newStatus, $remarks);
         flash_result($res, "Document has been " . ($action === 'approve' ? 'approved' : 'rejected') . ".");
     }
-    // Post/Redirect/Get: Back/Forward must never replay this POST.
+    
     redirect_self();
 }
 
-// Message left by the redirect above (shown once)
+
 ['success' => $success, 'error' => $error] = flash_pull();
 
-// Fetch pending items based on user role
-// Role-based pending docs Staff see assigned workflows
+
+
 if ($userRole === 'admin') {
     $query = "
         SELECT d.id AS document_id, d.title, d.status AS doc_status, d.priority, d.created_at AS doc_created,
@@ -94,9 +94,9 @@ if ($userRole === 'admin') {
 
 $workflows = $stmt->fetchAll();
 
-// ── Waiting for approval, per staff ─────────────────────────────
-// Approvers (admin / dept head): one row per staff member, counting THEIR documents still awaiting a decision.
-// Staff: their own submissions that are still waiting for someone to approve.
+
+
+
 $staffWaiting = [];
 $mySubmissions = [];
 if (in_array($userRole, ['admin', 'department_head'], true)) {
@@ -131,7 +131,7 @@ if (in_array($userRole, ['admin', 'department_head'], true)) {
     $mySubmissions = $msStmt->fetchAll();
 }
 
-// Recent history
+
 $historyStmt = $db->prepare("
     SELECT d.id AS document_id, d.title, d.status AS doc_status, d.updated_at,
            c.name AS category_name, c.color AS category_color,
@@ -161,7 +161,7 @@ include __DIR__ . '/includes/header.php';
 <?php if ($error): ?><div class="alert alert-danger"><i data-lucide="circle-alert"></i> <?= htmlspecialchars($error) ?></div><?php endif; ?>
 
 <?php if (in_array($userRole, ['admin','department_head'], true)): ?>
-<!-- Pending Approvals -->
+
 <div class="card mb-24">
     <div class="card-header">
         <span class="card-title">
@@ -260,7 +260,7 @@ include __DIR__ . '/includes/header.php';
 <?php endif; ?>
 
 <?php if (in_array($userRole, ['admin','department_head'], true)): ?>
-<!-- Waiting for Approval per Staff -->
+
 <div class="card mb-24">
     <div class="card-header">
         <span class="card-title">
@@ -301,7 +301,7 @@ include __DIR__ . '/includes/header.php';
     <?php endif; ?>
 </div>
 <?php else: ?>
-<!-- My Submissions Waiting for Approval (staff) -->
+
 <div class="card mb-24">
     <div class="card-header">
         <span class="card-title">
@@ -354,7 +354,7 @@ include __DIR__ . '/includes/header.php';
 </div>
 <?php endif; ?>
 
-<!-- Recent Decisions -->
+
 <?php if (!empty($history)): ?>
 <div class="card">
     <div class="card-header">

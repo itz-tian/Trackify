@@ -1,11 +1,9 @@
-/* ═══════════════════════════════════════════════════════════
-   Trackify — Dashboard Styles & KPI Data Visualizations
-   ═══════════════════════════════════════════════════════════ */
+
 
 .dash { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
 .dash > * { min-width: 0; }
 
-/* Greeting */
+
 .dash-hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .dash-greeting { font-size: 28px; font-weight: 700; letter-spacing: -0.025em; color: var(--text-primary); line-height: 1.15; margin: 0; }
 .dash-sub { margin: 6px 0 0; font-size: 14px; color: var(--text-secondary); }
@@ -15,7 +13,7 @@
 .dash-cta:hover { box-shadow: 0 6px 20px rgba(0, 113, 227, 0.42); transform: translateY(-1px); }
 .dash-hero-actions .btn { transition: transform .18s ease, box-shadow .18s ease, background .18s ease; }
 
-/* KPI cards — depth from tint + glow instead of outlines */
+
 .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .kpi {
     --kpi: rgb(var(--kpi-rgb));
@@ -38,21 +36,21 @@
 .kpi-num { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; color: var(--text-primary); margin-top: 6px; }
 .kpi-hint { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* primary (actionable) cards */
+
 .kpi-primary { padding: 18px 20px 20px; background: radial-gradient(120% 100% at 0% 0%, rgba(var(--kpi-rgb), .16), transparent 65%), var(--bg-card); }
 .kpi-primary::before { height: 4px; }
 .kpi-primary .kpi-num { font-size: 32px; color: var(--kpi); margin-top: 6px; }
 .kpi-primary .kpi-ico { width: 30px; height: 30px; border-radius: 9px; }
 .kpi-primary .kpi-ico svg, .kpi-primary .kpi-ico i { width: 15px; height: 15px; }
 
-/* zero state */
+
 .kpi.is-zero { background: var(--bg-card); }
 .kpi.is-zero::before { opacity: .25; }
 .kpi.is-zero .kpi-num { color: var(--text-tertiary); }
 .kpi.is-zero .kpi-ico { background: rgba(142, 142, 147, .12); color: var(--text-tertiary); }
 .kpi.is-zero:hover { box-shadow: var(--shadow-float); }
 
-/* Storage & activity strip */
+
 .mini-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .mini-stat { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 14px; background: var(--bg-card-subtle); border: 1px solid transparent; transition: background .18s ease, transform .18s ease; }
 .mini-stat:hover { background: var(--bg-card); transform: translateY(-1px); box-shadow: var(--shadow-subtle); }
@@ -62,7 +60,7 @@
 .mini-unit { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
 .mini-label { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
 
-/* Charts */
+
 .chart-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .chart-card { border-color: transparent; transition: transform .18s ease, box-shadow .18s ease; }
 .chart-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-float); }
@@ -76,10 +74,10 @@
 .chart-empty { height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--text-tertiary); font-size: 13px; text-align: center; }
 .chart-empty svg, .chart-empty i { width: 30px; height: 30px; opacity: .6; }
 
-/* Deadlines & Attention Split */
+
 .attention-split { align-items: start; }
 .attention-split > .card { height: auto; }
-#upcomingDeadlinesCard[style*="display: none"] ~ .approvals-card { grid-column: 1 / -1; }
+
 .appr-list { list-style: none; margin: 0; padding: 0; }
 .appr-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--border-hairline); transition: background .15s ease; }
 .appr-list li:last-child { border-bottom: none; }
@@ -92,7 +90,7 @@
 
 .attention-split.single { grid-template-columns: 1fr; }
 
-/* ── Deadline Badges ── */
+
 .badge-dl-overdue { background: var(--apple-red); color: #fff; }
 .badge-dl-urgent  { background: rgba(255, 59, 48, .14);  color: #d70015; }
 .badge-dl-soon    { background: rgba(255, 149, 0, .17);  color: #b25e00; }
@@ -101,7 +99,7 @@
 [data-theme="dark"] .badge-dl-soon   { color: #ffb340; }
 [data-theme="dark"] .badge-dl-later  { color: #64a8ff; }
 
-/* Dashboard Media Queries */
+
 @media (max-width: 1200px) {
     .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
     .chart-grid { grid-template-columns: repeat(2, 1fr); }
@@ -135,8 +133,8 @@
     .kpi:hover, .chart-card:hover, .mini-stat:hover, .dash-cta:hover { transform: none; }
 }
 
-/* ── Stat Cards & Overview Grid (Modularized) ── */
-        /* Stat Cards (PC/Laptop: 1 row x 6 columns) */
+
+        
         .stat-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
@@ -193,7 +191,7 @@
             justify-content: space-between;
         }
 
-        /* Consolidated Overview Card & KPI Grid */
+        
         .overview-kpi-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);

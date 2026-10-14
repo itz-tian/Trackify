@@ -1,8 +1,5 @@
 <?php
-/**
- * Trackify — PDF.js Responsive Preview Script
- * Modular component extracted from document_view.php
- */
+
 defined('APP_NAME') or exit('Direct script access denied.');
 ?>
 <?php if ($ext === 'pdf'): ?>
@@ -40,14 +37,31 @@ defined('APP_NAME') or exit('Direct script access denied.');
         return;
     }
 
-    // Configure worker safely
+    
     pdfjsLib.GlobalWorkerOptions.workerSrc = '<?= APP_URL ?>/assets/vendor/pdfjs/pdf.worker.min.js';
 
     let pdfDoc = null;
     let scale = 1.0;
     let activePage = 1;
-    let viewMode = 'all'; // 'all', 'single', or 'native'
-    let isRendering = false;
+    let viewMode = 'all'; 
+    let renderGeneration = 0;
+    let activeRenderTask = null;
+
+    function showLoading() {
+        if (!spinner) return;
+        spinner.innerHTML = '<i data-lucide="loader-circle" class="icon-spin" style="width:28px; height:28px; margin-bottom:8px;"></i><div>Rendering PDF pages…</div>';
+        spinner.style.display = 'block';
+        if (window.lucide) lucide.createIcons();
+    }
+
+    function cancelRender() {
+        renderGeneration++;
+        if (activeRenderTask) {
+            activeRenderTask.cancel();
+            activeRenderTask = null;
+        }
+        return renderGeneration;
+    }
 
     function updateZoomText() {
         if (zoomLevelEl) zoomLevelEl.textContent = Math.round(scale * 100) + '%';
@@ -56,13 +70,18 @@ defined('APP_NAME') or exit('Direct script access denied.');
     function getTargetWidth() {
         const wrapper = document.getElementById('pdfCanvasWrapper');
         const containerWidth = wrapper ? wrapper.clientWidth : window.innerWidth;
-        const padding = window.innerWidth <= 640 ? 16 : 40;
-        const avail = Math.max(containerWidth - padding, 220);
+        const styles = wrapper ? window.getComputedStyle(wrapper) : null;
+        const padding = styles
+            ? parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight)
+            : 0;
+        const avail = Math.max(containerWidth - padding, 1);
         return Math.min(avail, 860) * scale;
     }
 
-    function renderAllPages() {
+    async function renderAllPages() {
         if (!pdfDoc || !pagesContainer) return;
+        const generation = cancelRender();
+        showLoading();
         pagesContainer.innerHTML = '';
         pagesContainer.style.display = 'flex';
         if (singleContainer) singleContainer.style.display = 'none';
@@ -75,6 +94,7 @@ defined('APP_NAME') or exit('Direct script access denied.');
 
         const targetWidth = getTargetWidth();
 
+        const canvases = [];
         for (let p = 1; p <= pdfDoc.numPages; p++) {
             const card = document.createElement('div');
             card.className = 'extracted-page-card';
@@ -89,34 +109,61 @@ defined('APP_NAME') or exit('Direct script access denied.');
                 </div>
             `;
             pagesContainer.appendChild(card);
+            canvases.push(card.querySelector('canvas'));
+        }
 
-            pdfDoc.getPage(p).then(page => {
-                const canvas = document.getElementById(`pdfCanvasPage_${p}`);
-                if (!canvas) return;
+        for (let p = 1; p <= canvases.length; p++) {
+            if (generation !== renderGeneration) return;
+            const canvas = canvases[p - 1];
+            try {
+                const page = await pdfDoc.getPage(p);
+                if (generation !== renderGeneration || !canvas) return;
                 const ctx = canvas.getContext('2d');
                 const unscaledViewport = page.getViewport({ scale: 1.0 });
                 const renderScale = (targetWidth / unscaledViewport.width);
                 const viewport = page.getViewport({ scale: renderScale });
 
-                const dpr = window.devicePixelRatio || 1;
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
                 canvas.width = Math.floor(viewport.width * dpr);
                 canvas.height = Math.floor(viewport.height * dpr);
-                canvas.style.width = '100%';
-                canvas.style.maxWidth = Math.floor(viewport.width) + 'px';
+                canvas.style.width = Math.floor(viewport.width) + 'px';
+                canvas.style.maxWidth = scale > 1 ? 'none' : '100%';
                 canvas.style.height = 'auto';
+                const canvasWrap = canvas.parentElement;
+                if (canvasWrap) {
+                    canvasWrap.style.justifyContent = scale > 1 ? 'flex-start' : 'center';
+                    canvasWrap.style.overflowX = scale > 1 ? 'auto' : 'hidden';
+                }
 
                 const renderContext = {
                     canvasContext: ctx,
                     viewport: viewport,
                     transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null
                 };
-                page.render(renderContext);
-            });
+                activeRenderTask = page.render(renderContext);
+                await activeRenderTask.promise;
+                activeRenderTask = null;
+                if (generation === renderGeneration && p === 1 && spinner) spinner.style.display = 'none';
+            } catch (err) {
+                if (generation !== renderGeneration) return;
+                if (err.name !== 'RenderingCancelledException') {
+                    console.error(`PDF page ${p} render error:`, err);
+                    const message = document.createElement('div');
+                    message.className = 'text-muted text-center';
+                    message.style.padding = '24px 12px';
+                    message.textContent = 'This page could not be rendered. Open the PDF in a new tab or download it to view.';
+                    canvas.parentElement.replaceChildren(message);
+                }
+                activeRenderTask = null;
+                if (p === 1 && spinner) spinner.style.display = 'none';
+            }
         }
     }
 
-    function renderSinglePage(num) {
+    async function renderSinglePage(num) {
         if (!pdfDoc || !singleCanvas) return;
+        const generation = cancelRender();
+        showLoading();
         activePage = Math.max(1, Math.min(num, pdfDoc.numPages));
         if (pageNumEl) pageNumEl.textContent = activePage;
         if (prevBtn) prevBtn.disabled = (activePage <= 1);
@@ -131,30 +178,44 @@ defined('APP_NAME') or exit('Direct script access denied.');
             if (window.lucide) lucide.createIcons();
         }
 
-        pdfDoc.getPage(activePage).then(page => {
+        try {
+            const page = await pdfDoc.getPage(activePage);
+            if (generation !== renderGeneration) return;
             const ctx = singleCanvas.getContext('2d');
             const targetWidth = getTargetWidth();
             const unscaledViewport = page.getViewport({ scale: 1.0 });
             const renderScale = (targetWidth / unscaledViewport.width);
             const viewport = page.getViewport({ scale: renderScale });
 
-            const dpr = window.devicePixelRatio || 1;
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
             singleCanvas.width = Math.floor(viewport.width * dpr);
             singleCanvas.height = Math.floor(viewport.height * dpr);
-            singleCanvas.style.width = '100%';
-            singleCanvas.style.maxWidth = Math.floor(viewport.width) + 'px';
+            singleCanvas.style.width = Math.floor(viewport.width) + 'px';
+            singleCanvas.style.maxWidth = scale > 1 ? 'none' : '100%';
             singleCanvas.style.height = 'auto';
+            if (singleContainer) singleContainer.style.justifyContent = scale > 1 ? 'flex-start' : 'center';
 
             const renderContext = {
                 canvasContext: ctx,
                 viewport: viewport,
                 transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null
             };
-            page.render(renderContext);
-        });
+            activeRenderTask = page.render(renderContext);
+            await activeRenderTask.promise;
+            activeRenderTask = null;
+            if (generation === renderGeneration && spinner) spinner.style.display = 'none';
+        } catch (err) {
+            if (generation !== renderGeneration) return;
+            activeRenderTask = null;
+            console.error(`PDF page ${activePage} render error:`, err);
+            if (spinner) {
+                spinner.innerHTML = '<div style="color:var(--apple-orange); padding:20px; text-align:center;">This PDF page could not be rendered. Use Native View or download the file.</div>';
+                spinner.style.display = 'block';
+            }
+        }
     }
 
-    // View Mode Toggles
+    
     viewToggleBtn?.addEventListener('click', function() {
         if (viewMode === 'all') {
             viewMode = 'single';
@@ -171,8 +232,10 @@ defined('APP_NAME') or exit('Direct script access denied.');
             nativeToggleBtn.style.background = 'rgba(255,255,255,0.1)';
             renderAllPages();
         } else {
+            cancelRender();
             viewMode = 'native';
             nativeToggleBtn.style.background = 'rgba(0,113,227,0.85)';
+            if (spinner) spinner.style.display = 'none';
             if (pagesContainer) pagesContainer.style.display = 'none';
             if (singleContainer) singleContainer.style.display = 'none';
             if (slideNavControls) slideNavControls.style.display = 'none';
@@ -183,11 +246,11 @@ defined('APP_NAME') or exit('Direct script access denied.');
         }
     });
 
-    // Pagination
+    
     prevBtn?.addEventListener('click', () => { if (activePage > 1) renderSinglePage(activePage - 1); });
     nextBtn?.addEventListener('click', () => { if (pdfDoc && activePage < pdfDoc.numPages) renderSinglePage(activePage + 1); });
 
-    // Zoom
+    
     zoomInBtn?.addEventListener('click', () => {
         scale = Math.min(scale + 0.25, 2.5);
         updateZoomText();
@@ -202,16 +265,20 @@ defined('APP_NAME') or exit('Direct script access denied.');
         else renderAllPages();
     });
 
-    // Fetch and load PDF
-    const loadingTask = pdfjsLib.getDocument({
-        url: pdfUrl,
-        cMapUrl: '<?= APP_URL ?>/assets/vendor/pdfjs/cmaps/',
-        cMapPacked: true
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        window.clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(() => {
+            if (viewMode === 'all') renderAllPages();
+            else if (viewMode === 'single') renderSinglePage(activePage);
+        }, 150);
     });
+
+    
+    const loadingTask = pdfjsLib.getDocument(pdfUrl);
 
     loadingTask.promise.then(pdf => {
         pdfDoc = pdf;
-        if (spinner) spinner.style.display = 'none';
         if (extractedCount) extractedCount.textContent = `${pdf.numPages} Page${pdf.numPages > 1 ? 's' : ''} Extracted`;
         if (pageCountEl) pageCountEl.textContent = pdf.numPages;
         renderAllPages();

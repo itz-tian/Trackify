@@ -1,5 +1,5 @@
 <?php
-/** Secure download gateway. */
+
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/classes/Auth.php';
@@ -24,10 +24,10 @@ if (!$doc) {
     render_error_page(404);
 }
 
-// All authenticated users can view/download every active document.
-// Modification permissions are enforced inside Document.php.
 
-// Target file
+
+
+
 
 $targetFileName = $doc['file_name'];
 $targetFilePath = $doc['file_path'];
@@ -42,7 +42,7 @@ if ($versionId) {
     }
 }
 
-// Directory Traversal Prevention & Realpath Check
+
 
 $baseUploadDir = realpath(UPLOAD_PATH);
 $fullPath = realpath(__DIR__ . '/' . ltrim($targetFilePath, '/\\'));
@@ -51,15 +51,15 @@ if (!$fullPath || !$baseUploadDir || strpos($fullPath, $baseUploadDir) !== 0 || 
     render_error_page(404);
 }
 
-// Log download activity
+
 $auth->logActivity((int)($_SESSION['user_id'] ?? 0), $docId, 'download', "Downloaded file: {$targetFileName}");
 
-// Clean output buffer before streaming
+
 if (ob_get_level()) {
     ob_end_clean();
 }
 
-// Safe headers for downloading
+
 $cleanFileName = str_replace(['"', "'", "\r", "\n"], '', $targetFileName);
 $downloadMimeTypes = [
     'pdf' => 'application/pdf',

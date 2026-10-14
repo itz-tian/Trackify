@@ -1,7 +1,7 @@
 <?php
-// Calendar (v16-trial)
-// Shows, per day: custom tasks (add / edit / done / delete), document deadlines (expiry dates)
-// and approval due dates. Visibility follows the same rules as deadlines.php / the dashboard.
+
+
+
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/classes/Auth.php';
@@ -12,9 +12,9 @@ $role   = $_SESSION['user_role'] ?? 'staff';
 $userId = (int)($_SESSION['user_id'] ?? 0);
 $dept   = (int)($_SESSION['user_dept'] ?? 0);
 $isAdmin = $role === 'admin';
-$canShare = $role !== 'viewer' && $dept > 0;   // may share a task with the department
+$canShare = $role !== 'viewer' && $dept > 0;   
 
-// ── Tasks table (auto-created on first visit; same SQL lives in database/migration_v4_calendar_tasks.sql) ──
+
 if (empty($_SESSION['cal_tasks_table_ok'])) {
     try {
         $db->exec("CREATE TABLE IF NOT EXISTS calendar_tasks (
@@ -36,10 +36,10 @@ if (empty($_SESSION['cal_tasks_table_ok'])) {
             FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $_SESSION['cal_tasks_table_ok'] = true;
-    } catch (Throwable $e) { /* surfaced below if queries fail */ }
+    } catch (Throwable $e) {  }
 }
 
-/** Loads a task the current user is allowed to see, plus whether they may change it. */
+
 function cal_load_task(PDO $db, int $id, int $userId, int $dept, bool $isAdmin): ?array {
     $st = $db->prepare("SELECT * FROM calendar_tasks WHERE id = ?");
     $st->execute([$id]);
@@ -52,7 +52,7 @@ function cal_load_task(PDO $db, int $id, int $userId, int $dept, bool $isAdmin):
     return $t;
 }
 
-// ── POST actions (Post/Redirect/Get) ──
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     require_csrf_token();
     $action  = (string)$_POST['action'];
@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $t = cal_load_task($db, $tid, $userId, $dept, $isAdmin);
                     if (!$t || !$t['can_edit']) { flash_set('error', 'You cannot edit that task.'); }
                     else {
-                        // Admins editing someone else's task keep that task's original owner/department.
+                        
                         if ((int)$t['created_by'] !== $userId) { $vis = $t['visibility']; $deptVal = $t['department_id']; }
                         $db->prepare("UPDATE calendar_tasks SET title=?, description=?, due_date=?, priority=?, visibility=?, department_id=? WHERE id=?")
                            ->execute([$title, $desc !== '' ? $desc : null, $due, $prio, $vis, $deptVal, $tid]);
@@ -115,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 ['success' => $success, 'error' => $error] = flash_pull();
 
-// ── Events ──
+
 $scope  = 'd.deleted_at IS NULL';
 $params = [];
 if ($role === 'viewer') {
@@ -127,7 +127,7 @@ if ($role === 'viewer') {
 
 $events = [];
 
-// 1) Custom tasks
+
 try {
     $stmt = $db->prepare("
         SELECT t.id AS tid, t.title, t.description AS descr, t.due_date AS due, t.priority, t.is_done, t.visibility, t.created_by,
@@ -147,9 +147,9 @@ try {
             'can_edit' => ((int)$r['created_by'] === $userId) || $isAdmin,
         ];
     }
-} catch (Throwable $e) { /* tasks table unavailable — documents still show */ }
+} catch (Throwable $e) {  }
 
-// 2) Document deadlines (expiry dates)
+
 $stmt = $db->prepare("
     SELECT d.id, d.title, d.reference_number AS ref, d.expires_at AS due, d.status, d.priority,
            c.name AS category, dep.name AS department
@@ -162,8 +162,8 @@ $stmt = $db->prepare("
 $stmt->execute($params);
 foreach ($stmt->fetchAll() as $r) { $r['kind'] = 'expiry'; $r['title'] = doc_title($r['title'], $r['ref'] ?? null); $events[] = $r; }
 
-// 3) Approval due dates for documents still waiting on a decision (not shown to viewers).
-//    Uses the approver's deadline when one is stored, otherwise submission date + APPROVAL_SLA_DAYS.
+
+
 if ($role !== 'viewer') {
     $apprWhere  = $scope . " AND d.status IN ('pending_review','under_review')";
     $apprParams = array_merge([(int)APPROVAL_SLA_DAYS], $params);
@@ -230,7 +230,7 @@ include __DIR__ . '/includes/header.php';
     .cal-dot { width: 6px; height: 6px; border-radius: 50%; }
     .cal-dot.done { background: var(--text-tertiary); }
 
-    /* urgency colours (shared by chips, dots and side-panel tags) */
+    
     .u-overdue { background: var(--apple-red); color: #fff; }
     .u-urgent  { background: rgba(255, 59, 48, .14);  color: #d70015; }
     .u-soon    { background: rgba(255, 149, 0, .17);  color: #b25e00; }
@@ -246,7 +246,7 @@ include __DIR__ . '/includes/header.php';
     .cal-legend span { display: inline-flex; align-items: center; gap: 6px; }
     .cal-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 
-    /* side panel */
+    
     .cal-side { display: flex; flex-direction: column; gap: 20px; }
     .cal-side-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; width: 100%; }
     .cal-side-title { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--text-primary); }
@@ -293,7 +293,7 @@ include __DIR__ . '/includes/header.php';
 <?php if ($error): ?><div class="alert alert-error"><i data-lucide="circle-alert"></i> <?= htmlspecialchars($error) ?></div><?php endif; ?>
 
 <div class="cal-wrap">
-    <!-- Calendar -->
+    
     <div class="card">
         <div class="cal-toolbar">
             <div class="cal-nav">
@@ -323,7 +323,7 @@ include __DIR__ . '/includes/header.php';
         </div>
     </div>
 
-    <!-- Side panel -->
+    
     <div class="cal-side">
         <div class="card">
             <div class="card-header">
@@ -344,7 +344,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<!-- Task modal (add / edit) -->
+
 <div class="modal-overlay" id="taskModal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
     <div class="modal" style="max-width:480px;">
         <div class="modal-header">
@@ -407,7 +407,7 @@ include __DIR__ . '/includes/header.php';
 
     var byDate = {};
     EVENTS.forEach(function (e) { (byDate[e.due] = byDate[e.due] || []).push(e); });
-    // tasks first, then approvals, then document expiries inside a day
+    
     var order = { task: 0, approval: 1, expiry: 2 };
     Object.keys(byDate).forEach(function (k) { byDate[k].sort(function (a, b) { return (a.done === b.done ? 0 : a.done ? 1 : -1) || order[a.kind] - order[b.kind]; }); });
     var show = { task: true, expiry: true, approval: true };
@@ -519,7 +519,7 @@ include __DIR__ . '/includes/header.php';
 
     function renderAll() { renderGrid(); renderSelected(); renderNext(); }
 
-    // ── Task modal ──
+    
     var modal = document.getElementById('taskModal');
     function openTask(task, dateKey) {
         document.getElementById('taskModalTitle').textContent = task ? 'Edit Task' : 'New Task';

@@ -1,6 +1,6 @@
-/* ── Multi-Format Document Preview Styles (Responsive & Mobile Fit) ── */
 
-/* Container and Viewport Boundaries */
+
+
 .doc-preview-wrapper {
     width: 100%;
     max-width: 100%;
@@ -38,7 +38,7 @@
     }
 }
 
-/* ── Word Document (DOCX) Fluid Responsive Screen-Fit ── */
+
 #docxPreviewContainer {
     width: 100% !important;
     max-width: 100% !important;
@@ -134,7 +134,7 @@
     }
 }
 
-/* ── Excel Spreadsheet (XLSX) Responsive Grid ── */
+
 .excel-grid-wrapper {
     width: 100% !important;
     max-width: 100% !important;
@@ -194,7 +194,7 @@
     z-index: 20;
 }
 
-/* ── Extracted Page Cards (PDF & PowerPoint & ZIP) ── */
+
 .extracted-page-card {
     width: 100%;
     max-width: 860px;
@@ -245,6 +245,22 @@
     box-sizing: border-box;
 }
 
+#pdfCanvasWrapper {
+    position: relative;
+}
+
+#pdfLoadingSpinner {
+    position: absolute;
+    z-index: 5;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    box-sizing: border-box;
+    min-height: 120px;
+    border-radius: 8px;
+    background: rgba(50, 54, 57, 0.96);
+}
+
 @media (max-width: 768px) {
     .extracted-page-card {
         border-radius: 6px;
@@ -256,7 +272,7 @@
     }
 }
 
-/* ── Interactive Thumbnails ── */
+
 .preview-thumb-strip {
     display: flex;
     gap: 8px;
@@ -279,7 +295,7 @@
     transition: all 0.2s ease;
 }
 
-/* ── Unsupported format & Empty State Cards ── */
+
 .doc-fallback-card {
     text-align: center;
     padding: 38px 20px;
@@ -297,7 +313,7 @@
     }
 }
 
-/* ── Document View Header Layout ── */
+
 .doc-header-layout {
     display: flex;
     gap: 16px;

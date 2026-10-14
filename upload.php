@@ -5,7 +5,7 @@ require_once __DIR__ . '/classes/Auth.php';
 require_once __DIR__ . '/classes/Document.php';
 
 $auth     = new Auth();
-$auth->requireRole(['admin', 'department_head', 'staff']); // viewers cannot upload
+$auth->requireRole(['admin', 'department_head', 'staff']); 
 $docClass = new Document();
 $db       = Database::getInstance();
 
@@ -13,7 +13,7 @@ $success = $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_csrf_token();
-    // When post_max_size is exceeded PHP may discard the entire request body.
+    
     $contentLength = (int)($_SERVER['CONTENT_LENGTH'] ?? 0);
     $postMax = ini_get('post_max_size');
     $postMaxBytes = 0;
@@ -34,8 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $deptId      = trim($_POST['department_id'] ?? '');
     $priority    = trim($_POST['priority'] ?? '');
     $status      = trim($_POST['status'] ?? '');
-    // Administrator uploads do not enter an approval queue. They are immediately
-    // approved and become protected administrator-owned documents.
+    
+    
     if (($_SESSION['user_role'] ?? '') === 'admin') {
         $_POST['status'] = 'approved';
         $status = 'approved';
@@ -47,9 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $expiresAt   = trim($_POST['expires_at'] ?? '');
     $referenceNo = trim($_POST['reference_number'] ?? '');
 
-    // Validation
+    
     if ($error !== '') {
-        // Keep the error and show it in the modal below.
+        
     }
     $hasUpload = isset($_FILES['document']['name']) && (
         is_array($_FILES['document']['name'])
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             : $_FILES['document']['error'] !== UPLOAD_ERR_NO_FILE
     );
     if ($error !== '') {
-        // Server-level upload error already identified.
+        
     } elseif (!$hasUpload) {
         $error = 'Document file or folder is required. Please attach a file or select a folder.';
     } elseif ($title === '') {
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $isBatch = is_array($_FILES['document']['name'] ?? null);
         if ($isBatch) {
             $fileCount = count($_FILES['document']['name'] ?? []);
-            // Preserve the normal single-document workflow when only one file was chosen.
+            
             if ($fileCount === 1) {
                 $singleFile = [
                     'name' => $_FILES['document']['name'][0],
@@ -170,7 +170,7 @@ include __DIR__ . '/includes/header.php';
                 <?= csrf_field() ?>
                 <input type="hidden" name="expected_file_count" id="expectedFileCount" value="0">
 
-                <!-- Apple Style Drop Zone -->
+                
                 <div class="form-group">
                     <label>Document File Attachment <span style="color:var(--apple-red); font-weight:700;">*</span></label>
                     <div class="apple-dropzone" id="dropZone" onclick="document.getElementById('fileInput').click()">
@@ -189,12 +189,12 @@ include __DIR__ . '/includes/header.php';
                         </div>
                         <div id="folderHint" class="text-muted text-sm" style="display:none; margin-top:9px;"></div>
 
-                        <!-- Progress indicator while zipping folder -->
+                        
                         <div id="zipProgress" style="display:none; margin-top:14px; font-size:12.5px; color:var(--apple-blue); font-weight:500;">
                             <i data-lucide="loader-circle" class="icon-spin"></i> Compressing folder into ZIP archive…
                         </div>
 
-                        <!-- File Selected Preview Capsule -->
+                        
                         <div id="filePreview" style="display: none; margin-top: 14px; align-items: center; justify-content: center; gap: 8px;">
                             <span id="fileBadge" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 113, 227, 0.12); color: var(--apple-blue); font-weight: 600; font-size: 12.5px; padding: 6px 14px; border-radius: var(--radius-pill);">
                                 <i data-lucide="file-check"></i> <span id="fileName">File</span> (<span id="fileSize">0 KB</span>)
@@ -209,26 +209,26 @@ include __DIR__ . '/includes/header.php';
                     <input type="file" id="folderInput" style="display:none;" webkitdirectory directory multiple>
                 </div>
 
-                <!-- Reference Number -->
+                
                 <div class="form-group">
                     <label>Reference Number <span class="text-muted text-sm">(Optional — auto-generated if blank)</span></label>
                     <input type="text" name="reference_number" maxlength="50" placeholder="e.g. FIN-2026-001" value="<?= htmlspecialchars($_POST['reference_number'] ?? '') ?>">
                     <div class="text-muted text-sm" style="margin-top:4px;">The system automatically creates a unique reference such as DOC-2026-000123.</div>
                 </div>
 
-                <!-- Document Title (Required) -->
+                
                 <div class="form-group">
                     <label>Document Title <span style="color:var(--apple-red); font-weight:700;">*</span></label>
                     <input type="text" name="title" id="docTitle" required placeholder="e.g. Office Financial Review Q3" value="<?= htmlspecialchars($_POST['title'] ?? '') ?>">
                 </div>
 
-                <!-- Description (Optional) -->
+                
                 <div class="form-group">
                     <label>Description <span class="text-muted text-sm">(Optional)</span></label>
                     <textarea name="description" placeholder="Provide a summary of the document, purpose, and relevant details…"><?= htmlspecialchars($_POST['description'] ?? '') ?></textarea>
                 </div>
 
-                <!-- Category & Department (Both Required) -->
+                
                 <div class="form-row">
                     <div class="form-group">
                         <label>Category <span style="color:var(--apple-red); font-weight:700;">*</span></label>
@@ -259,7 +259,7 @@ include __DIR__ . '/includes/header.php';
                     </div>
                 </div>
 
-                <!-- Priority & Initial Status (Both Required) -->
+                
                 <div class="form-row">
                     <div class="form-group">
                         <label>Priority <span style="color:var(--apple-red); font-weight:700;">*</span></label>
@@ -287,7 +287,7 @@ include __DIR__ . '/includes/header.php';
                     </div>
                 </div>
 
-                <!-- Tags & Expiry Date (Both Required) -->
+                
                 <div class="form-row">
                     <div class="form-group">
                         <label>Tags <span style="color:var(--apple-red); font-weight:700;">*</span> <span class="text-muted text-sm">(Comma-separated)</span></label>
@@ -310,7 +310,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<!-- Cancel Modal -->
+
 <div class="modal-overlay" id="discardModal">
     <div class="modal" style="max-width: 440px;">
         <div class="modal-header" style="margin-bottom: 14px;">
@@ -336,7 +336,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<!-- Nav Leave Modal -->
+
 <div class="modal-overlay" id="navLeaveModal">
     <div class="modal" style="max-width: 440px;">
         <div class="modal-header" style="margin-bottom: 14px;">
@@ -385,11 +385,11 @@ let isZippingFolder  = false;
 let pendingNavUrl    = null;
 let allowHistoryLeave = false;
 
-// ── Browser Back button guard ──
-// Chrome ignores history entries pushed before the user interacts with the page
-// ("history manipulation intervention"), so the Back button would skip our guard and
-// trigger the native "Leave site?" dialog. We therefore push the guard entry on the
-// first user interaction instead of at load.
+
+
+
+
+
 let guardPushed = false;
 function ensureHistoryGuard() {
     if (guardPushed) return;
@@ -407,7 +407,7 @@ window.addEventListener('popstate', function () {
     if (allowHistoryLeave || isFormSubmitting) return;
     if (!guardPushed) return;
     if (!isFormDirty()) {
-        // Nothing to lose: step past the guard entry so Back keeps working normally.
+        
         guardPushed = false;
         window.__historyGuardActive = false;
         history.back();
@@ -417,7 +417,7 @@ window.addEventListener('popstate', function () {
     openNavModal(document.referrer || 'documents.php');
 });
 
-// Dirty check: true only when files are attached or details are typed
+
 function isFormDirty() {
     if (fileIsAttached) return true;
     if (fileInput && fileInput.files && fileInput.files.length > 0) return true;
@@ -431,7 +431,7 @@ function isFormDirty() {
     return false;
 }
 
-// ── Modals ──
+
 function openCancelModal() {
     const modal = document.getElementById('discardModal');
     if (modal) { modal.classList.add('open'); if (window.lucide) lucide.createIcons(); }
@@ -463,7 +463,7 @@ function proceedLeave() {
     isFormSubmitting = true;
     if (pendingNavUrl && pendingNavUrl !== document.referrer) { window.location.href = pendingNavUrl; return; }
     allowHistoryLeave = true;
-    // Skip over both the guard entry and the original upload page entry.
+    
     history.go(guardPushed ? -2 : -1);
 }
 
@@ -545,7 +545,7 @@ function showSelectedFiles(fileList, note = '') {
         const rawName = first.name.replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' ');
         const hashLike = /^[0-9a-f]{16,}$/i.test(rawName.replace(/[\s-]+/g, ''));
         if (hashLike) {
-            // A file named like a hash makes a useless title - ask for a real one instead.
+            
             docTitle.placeholder = 'Give this document a descriptive title';
             docTitle.focus();
         } else {
@@ -594,7 +594,7 @@ fileInput.addEventListener('change', () => {
     showSelectedFiles(fileInput.files);
 });
 
-// ── Folder Selection: Compress into ZIP automatically ──
+
 folderInput.addEventListener('change', async () => {
     const rawFiles = Array.from(folderInput.files || []);
     if (!rawFiles.length) {
@@ -602,7 +602,7 @@ folderInput.addEventListener('change', async () => {
         return;
     }
 
-    // Determine folder root name
+    
     let folderName = 'archive';
     const firstPath = rawFiles[0].webkitRelativePath || rawFiles[0].name;
     const parts = firstPath.split(/[\\/]/);
@@ -670,7 +670,7 @@ folderInput.addEventListener('change', async () => {
     }
 });
 
-// Drag and drop
+
 ['dragenter', 'dragover'].forEach(name => {
     dropZone.addEventListener(name, (e) => {
         e.preventDefault();
@@ -698,7 +698,7 @@ dropZone.addEventListener('drop', (e) => {
     }
 });
 
-// ── Validation and Confirmation when Uploading ──
+
 uploadForm.addEventListener('submit', function(e) {
     if (isZippingFolder) {
         e.preventDefault();
@@ -706,7 +706,7 @@ uploadForm.addEventListener('submit', function(e) {
         return false;
     }
 
-    // 1. Validate File
+    
     const selectedFiles = fileInput.files;
     if (!selectedFiles || !selectedFiles.length) {
         e.preventDefault();
@@ -724,7 +724,7 @@ uploadForm.addEventListener('submit', function(e) {
         return false;
     }
 
-    // 2. Validate Title
+    
     if (!docTitle.value.trim()) {
         e.preventDefault();
         showUploadValidationModal('Please provide a Document Title.');
@@ -732,7 +732,7 @@ uploadForm.addEventListener('submit', function(e) {
         return false;
     }
 
-    // 3. Validate Category
+    
     const catField = document.querySelector('select[name="category_id"]');
     if (!catField.value) {
         e.preventDefault();
@@ -741,7 +741,7 @@ uploadForm.addEventListener('submit', function(e) {
         return false;
     }
 
-    // 4. Validate Department
+    
     const deptField = document.querySelector('select[name="department_id"]');
     if (!deptField.value) {
         e.preventDefault();
@@ -750,7 +750,7 @@ uploadForm.addEventListener('submit', function(e) {
         return false;
     }
 
-    // 5. Validate Priority
+    
     const priorityField = document.querySelector('select[name="priority"]');
     if (!priorityField.value) {
         e.preventDefault();
@@ -759,7 +759,7 @@ uploadForm.addEventListener('submit', function(e) {
         return false;
     }
 
-    // 6. Validate Status
+    
     const statusField = document.querySelector('select[name="status"]');
     if (!statusField.value) {
         e.preventDefault();
@@ -768,7 +768,7 @@ uploadForm.addEventListener('submit', function(e) {
         return false;
     }
 
-    // 7. Validate Tags
+    
     const tagsField = document.querySelector('input[name="tags"]');
     if (!tagsField.value.trim()) {
         e.preventDefault();
@@ -777,7 +777,7 @@ uploadForm.addEventListener('submit', function(e) {
         return false;
     }
 
-    // 8. Validate Expiry Date
+    
     const expiryField = document.querySelector('input[name="expires_at"]');
     if (!expiryField.value) {
         e.preventDefault();
@@ -786,7 +786,7 @@ uploadForm.addEventListener('submit', function(e) {
         return false;
     }
 
-    // ── All Validations Passed: Prompt Confirmation ──
+    
     const title = docTitle.value.trim();
     const statusLabel = statusField.options[statusField.selectedIndex].text.split('(')[0].trim();
     const fileNameText = selectedFiles.length === 1 ? selectedFiles[0].name : `${selectedFiles.length} files`;
@@ -809,7 +809,7 @@ uploadForm.addEventListener('submit', function(e) {
         return false;
     }
 
-    // Confirmed: proceeding with upload
+    
     isFormSubmitting = true;
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i data-lucide="loader-circle" class="icon-spin"></i> Uploading & Submitting…';

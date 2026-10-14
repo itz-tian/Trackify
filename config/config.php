@@ -1,12 +1,12 @@
 <?php
-// ── Application Timezone ─────────────────────────────────────────────────────
+
 date_default_timezone_set('Asia/Manila');
 define('APP_TIMEZONE', 'Asia/Manila');
 
-// ── Database ─────────────────────────────────────────────────────────────────
-// Reads Railway / Cloud environment variables first; falls back to local XAMPP defaults.
+
+
 $env = function(string $key): ?string {
-    // Railway injects variables into $_SERVER (not process env), so check $_SERVER first.
+    
     if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') return (string)$_SERVER[$key];
     if (isset($_ENV[$key]) && $_ENV[$key] !== '') return (string)$_ENV[$key];
     $val = getenv($key);
@@ -20,7 +20,7 @@ $dbPass = $env('MYSQLPASSWORD') ?? $env('MYSQL_PASSWORD') ?? $env('DB_PASS') ?? 
 $dbName = $env('MYSQLDATABASE') ?? $env('DB_NAME') ?? 'dms_db';
 $dbPort = $env('MYSQLPORT') ?? $env('DB_PORT') ?? '3306';
 
-// If Railway provides a full MYSQL_URL or DATABASE_URL
+
 $mysqlUrl = $env('MYSQL_URL') ?? $env('DATABASE_URL');
 if ($mysqlUrl) {
     $parsedUrl = parse_url($mysqlUrl);
@@ -43,13 +43,13 @@ define('DB_CHARSET', 'utf8mb4');
 define('APP_NAME', 'Trackify');
 define('APP_VERSION', '1.0.4');
 
-// Bcrypt cost factor. 12 is the 2024+ recommended minimum.
+
 define('BCRYPT_COST', 12);
 
-// Default days allowed for a document approval decision (used by the calendar).
+
 if (!defined('APPROVAL_SLA_DAYS')) define('APPROVAL_SLA_DAYS', 7);
 
-// ── HTTPS & Reverse Proxy Detection ──────────────────────────────────────────
+
 if (!function_exists('is_https_request')) {
     function is_https_request(): bool {
         if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') return true;
@@ -60,14 +60,14 @@ if (!function_exists('is_https_request')) {
     }
 }
 
-// ── APP_URL — fully automatic, no hardcoded folder name ──────────────────────
-// Works whether the app lives at the root of a domain or inside a subfolder,
-// and correctly detects HTTPS when running behind reverse proxies (Railway, Cloudflare, etc.).
+
+
+
 if (!defined('APP_URL')) {
     $protocol = is_https_request() ? 'https' : 'http';
     $host     = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
-    // Derive the subfolder path by comparing the real app root to the document root.
+    
     $docRoot = realpath($_SERVER['DOCUMENT_ROOT'] ?? '') ?: '';
     $appRoot = realpath(__DIR__ . '/..') ?: '';
     $basePath = '';
@@ -80,20 +80,20 @@ if (!defined('APP_URL')) {
 
 define('UPLOAD_PATH', __DIR__ . '/../uploads/');
 define('UPLOAD_URL', APP_URL . '/uploads/');
-define('MAX_FILE_SIZE', 20 * 1024 * 1024); // 20 MB
-// Permitted file types for upload and versioning. ZIP is used by folder compress-and-upload.
+define('MAX_FILE_SIZE', 20 * 1024 * 1024); 
+
 define('ALLOWED_EXTENSIONS', ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'png', 'jpg', 'jpeg', 'zip', 'csv']);
 
-define('SESSION_TIMEOUT', 3600);            // idle timeout (seconds without activity) — 1 hour
-define('SESSION_ABSOLUTE_TIMEOUT', 28800);  // hard limit per login — 8 hours
-define('SESSION_WARNING_SECONDS', 60);      // show the "still there?" modal this long before the idle timeout
+define('SESSION_TIMEOUT', 3600);            
+define('SESSION_ABSOLUTE_TIMEOUT', 28800);  
+define('SESSION_WARNING_SECONDS', 60);      
 
-// DEPLOYMENT: false — hides the admin credentials hint from the login page.
+
 if (!defined('SHOW_DEMO_CREDENTIALS')) define('SHOW_DEMO_CREDENTIALS', false);
 
 if (session_status() === PHP_SESSION_NONE) {
     session_name('DOCUTRACK_SESSID');
-    // Harden the session cookie: not readable from JavaScript, not sent on cross-site requests, HTTPS-only when on HTTPS.
+    
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
     session_set_cookie_params([
@@ -106,12 +106,12 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Ensure CSRF token exists
+
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-/** No-cache headers; call on every protected page. */
+
 function prevent_browser_cache(): void {
     if (headers_sent()) return;
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
@@ -120,7 +120,7 @@ function prevent_browser_cache(): void {
     header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
 }
 
-/** Baseline security headers. */
+
 function send_security_headers(): void {
     if (headers_sent()) return;
     header('X-Frame-Options: SAMEORIGIN');
@@ -128,20 +128,20 @@ function send_security_headers(): void {
     header('Referrer-Policy: strict-origin-when-cross-origin');
     header('X-XSS-Protection: 1; mode=block');
 
-    // HSTS: tell browsers to always use HTTPS for the next year (HTTPS-only servers).
+    
     if (is_https_request()) {
         header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
     }
 
-    // Content Security Policy — 'unsafe-inline' required because the app uses inline <script>/<style>.
-    // object-src and frame-src 'self' blob: allow browser PDF plugins and frames to render documents.
-    // worker-src 'self' blob: is required for PDF.js Web Worker which renders pages off the main thread.
+    
+    
+    
     header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; object-src 'self' blob:; frame-src 'self' blob:; worker-src 'self' blob:; connect-src 'self'; base-uri 'self'; form-action 'self';");
 }
 
 send_security_headers();
 
-/** Returns session CSRF token. */
+
 function csrf_token(): string {
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -149,12 +149,12 @@ function csrf_token(): string {
     return $_SESSION['csrf_token'];
 }
 
-/** Hidden input with CSRF token. */
+
 function csrf_field(): string {
     return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') . '">';
 }
 
-/** Constant-time CSRF token validation. */
+
 function verify_csrf_token(?string $token): bool {
     if (empty($token) || empty($_SESSION['csrf_token'])) {
         return false;
@@ -162,7 +162,7 @@ function verify_csrf_token(?string $token): bool {
     return hash_equals($_SESSION['csrf_token'], $token);
 }
 
-/** Validates CSRF on POST or dies with 403. */
+
 function require_csrf_token(): void {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
@@ -173,19 +173,13 @@ function require_csrf_token(): void {
     }
 }
 
-/**
- * ── Flash messages + Post/Redirect/Get ──────────────────────────────
- * Every form handler should finish with flash_set() + redirect_self() (or redirect_to())
- * so the browser's history entry is a plain GET page. Pressing Back/Forward then never
- * replays a POST (no "Confirm Form Resubmission", no stale action, no repeat modal).
- * The next page load calls flash_pull() and shows the message once.
- */
+
 function flash_set(string $type, string $message): void {
     if (!in_array($type, ['success', 'error', 'info'], true)) $type = 'info';
     $_SESSION['flash'][$type] = $message;
 }
 
-/** Returns ['success'=>..., 'error'=>..., 'info'=>...] and clears them (empty string when unset). */
+
 function flash_pull(): array {
     $f = $_SESSION['flash'] ?? [];
     unset($_SESSION['flash']);
@@ -196,19 +190,19 @@ function flash_pull(): array {
     ];
 }
 
-/** Sets a success or error flash depending on a Document-class style result array. */
+
 function flash_result(array $res, string $successMsg): void {
     if (!empty($res['success'])) flash_set('success', $successMsg);
     else flash_set('error', (string)($res['message'] ?? 'Something went wrong.'));
 }
 
-/** Redirects (303 See Other) and stops. Use after every successful or failed POST. */
+
 function redirect_to(string $url): void {
     header('Location: ' . $url, true, 303);
     exit;
 }
 
-/** Redirects back to the current page (same path + query string) with a GET. */
+
 function redirect_self(): void {
     $uri  = $_SERVER['REQUEST_URI'] ?? '/';
     $path = '/' . ltrim((string)parse_url($uri, PHP_URL_PATH), '/');
@@ -216,10 +210,7 @@ function redirect_self(): void {
     redirect_to($path . ($qs ? '?' . $qs : ''));
 }
 
-/**
- * Renders a compact pagination bar (Prev / numbers / Next). Returns '' when there is only one page.
- * $pageKey is the query-string key (e.g. 'page'); $anchor optionally scrolls back to a card (e.g. 'recentDocs').
- */
+
 function render_pagination(int $page, int $pages, string $pageKey = 'page', string $anchor = ''): string {
     if ($pages <= 1) return '';
     $base = $_GET;
@@ -246,7 +237,7 @@ function render_pagination(int $page, int $pages, string $pageKey = 'page', stri
     return $html . '</div>';
 }
 
-/** True when a title is just a hash / UUID / long hex string (e.g. "9f4cf0f24b376077a2fcdab2e85c3584"). */
+
 function title_looks_like_hash(string $title): bool {
     $t = trim($title);
     if ($t === '') return false;
@@ -254,7 +245,7 @@ function title_looks_like_hash(string $title): bool {
     return (bool)preg_match('/^[0-9a-f]{16,}$/i', preg_replace('/[\s_-]+/', '', $t));
 }
 
-/** Title to DISPLAY: hash-like titles (old data) fall back to "Untitled document · REF". */
+
 function doc_title($title, $reference = null): string {
     $title = (string)$title;
     if (title_looks_like_hash($title)) {
@@ -263,7 +254,7 @@ function doc_title($title, $reference = null): string {
     return $title;
 }
 
-/** Deadline badge: [css class, label] — red (<=3 days / overdue), orange (<=7), blue (later). */
+
 function deadline_badge(int $days): array {
     if ($days < 0)   return ['badge-dl-overdue', 'Overdue by ' . (-$days) . ' day' . ($days === -1 ? '' : 's')];
     if ($days === 0) return ['badge-dl-urgent',  'Due today'];
@@ -273,7 +264,7 @@ function deadline_badge(int $days): array {
     return ['badge-dl-later', $label];
 }
 
-/** Renders a friendly error page (403.php / 404.php) and stops. */
+
 function render_error_page(int $code): void {
     $code = in_array($code, [403, 404], true) ? $code : 404;
     if (!headers_sent()) http_response_code($code);
@@ -281,7 +272,7 @@ function render_error_page(int $code): void {
     exit;
 }
 
-/** Friendly human-readable relative time (e.g. 'Just now', '5m ago', '2h ago', '3d ago'). */
+
 function time_ago(string $datetime): string {
     $time = strtotime($datetime);
     if (!$time) return '';

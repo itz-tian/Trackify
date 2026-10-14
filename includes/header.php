@@ -5,10 +5,10 @@ require_once __DIR__ . '/../classes/Auth.php';
 
 $auth = new Auth();
 $auth->requireLogin();
-prevent_browser_cache(); // Prevent browser back/forward to cached protected pages
+prevent_browser_cache(); 
 $user = $auth->currentUser();
 
-// Unread notifications & recent items for modal
+
 $db = Database::getInstance();
 $notifStmt = $db->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");
 $notifStmt->execute([$_SESSION['user_id']]);
@@ -63,7 +63,7 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
     <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/responsive.css?v=<?= APP_VERSION ?>">
     <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/dark-theme.css?v=<?= APP_VERSION ?>">
     <script>
-        // Theme init — runs synchronously before render to avoid flash
+        
         (function() {
             var saved = localStorage.getItem('trackify_theme') || 'system';
             var apply = saved;
@@ -72,7 +72,7 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
             }
             document.documentElement.setAttribute('data-theme', apply);
             document.documentElement.setAttribute('data-theme-setting', saved);
-            // Sidebar collapsed state (desktop) — applied before render to avoid flash
+            
             try {
                 if (localStorage.getItem('trackify_sidebar') === 'collapsed') {
                     document.documentElement.classList.add('sidebar-collapsed');
@@ -83,7 +83,7 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
 </head>
 <body>
 
-<!-- Sidebar -->
+
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
         <a href="<?= APP_URL ?>/dashboard.php" class="sidebar-logo-link" title="Go to Dashboard" aria-label="Go to Dashboard">
@@ -157,7 +157,7 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
                 if ($pendingCount > 0): ?><span class="nav-badge"><?= $pendingCount ?></span><?php endif; ?>
             </a>
         </div>
-        <?php endif; // end workflow role guard ?>
+        <?php endif; ?>
         <div class="nav-item">
             <a href="<?= APP_URL ?>/activity_log.php" class="<?= $currentPage==='activity_log'?'active':'' ?>">
                 <span class="nav-icon" style="background:#8e8e93;"><i data-lucide="history"></i></span>
@@ -204,7 +204,7 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
         <?php endif; ?>
     </nav>
     <div class="sidebar-footer">
-        <!-- User Popover Menu -->
+        
         <div class="user-popover" id="userPopover">
             <div class="user-popover-header">
                 <div class="pop-name"><?= htmlspecialchars(($user['first_name']??'User').' '.($user['last_name']??'')) ?></div>
@@ -221,7 +221,7 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
             </a>
         </div>
 
-        <!-- Clickable User Card -->
+        
         <div class="sidebar-user" id="userMenuTrigger" onclick="toggleUserPopover()" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
             <div class="avatar"><i data-lucide="user-round"></i></div>
             <div class="user-info">
@@ -233,10 +233,10 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
     </div>
 </aside>
 
-<!-- Mobile Sidebar Backdrop -->
+
 <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
 
-<!-- Topbar -->
+
 <header class="topbar">
     <div class="flex items-center gap-12">
         <button onclick="toggleSidebar()" class="menu-btn" id="menuBtn" title="Collapse / expand sidebar (Ctrl+B)" aria-label="Toggle sidebar" aria-controls="sidebar" aria-expanded="true">
@@ -258,7 +258,7 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
     </div>
 </header>
 
-<!-- Settings Modal -->
+
 <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle" onclick="if(event.target===this)closeSettingsModal()">
     <div class="modal" style="max-width:420px;">
         <div class="modal-header">
@@ -289,7 +289,7 @@ $topbarTitle = $pageTitle ?? ($pageTitles[$currentPage] ?? ucwords(str_replace('
     </div>
 </div>
 
-<!-- Notifications Modal -->
+
 <div class="modal-overlay" id="notifModal" role="dialog" aria-modal="true" aria-labelledby="notifModalTitle" onclick="if(event.target===this)closeNotifModal()">
     <div class="modal notif-modal" style="max-width:440px;">
         <div class="notif-modal-header">
@@ -434,7 +434,7 @@ function syncSidebarUI() {
 }
 window.addEventListener('resize', syncSidebarUI);
 
-// Ctrl/Cmd + B toggles the sidebar
+
 document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && !e.shiftKey && !e.altKey) {
         const t = e.target;
@@ -461,7 +461,7 @@ function toggleUserPopover() {
     trigger.setAttribute('aria-expanded', String(!isOpen));
 }
 
-// Close on outside click
+
 document.addEventListener('click', function(e) {
     const popover = document.getElementById('userPopover');
     const trigger = document.getElementById('userMenuTrigger');
@@ -473,7 +473,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Keyboard controls
+
 document.getElementById('userMenuTrigger')?.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleUserPopover(); }
     if (e.key === 'Escape') {
@@ -483,7 +483,7 @@ document.getElementById('userMenuTrigger')?.addEventListener('keydown', function
     }
 });
 
-/* ── Theme Switcher ───────────────────────────────────── */
+
 function applyTheme(setting) {
     var resolved = setting;
     if (setting === 'system') {
@@ -511,7 +511,7 @@ function syncThemeUI(setting) {
     });
 }
 
-/* ── Notifications Modal ──────────────────────────────── */
+
 function openNotifModal() {
     var m = document.getElementById('notifModal');
     if (m) m.classList.add('open');
@@ -523,7 +523,7 @@ function closeNotifModal() {
     if (m) m.classList.remove('open');
 }
 
-/* ── Settings Modal ───────────────────────────────────── */
+
 function openSettingsModal() {
     var m = document.getElementById('settingsModal');
     if (m) m.classList.add('open');
@@ -542,7 +542,7 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Listen for OS dark-mode changes (System theme)
+
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
     var saved = localStorage.getItem('trackify_theme') || 'system';
     if (saved === 'system') applyTheme('system');
@@ -590,7 +590,7 @@ document.addEventListener('change', function(e) {
     }
 });
 
-// Init on load
+
 document.addEventListener('DOMContentLoaded', function() {
     loadDataSettings();
     syncSidebarUI();

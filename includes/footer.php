@@ -1,5 +1,5 @@
-</div><!-- end .main-content -->
-<!-- Shared confirm modal (used via appConfirm() or data-confirm-* on forms) -->
+</div>
+
 <div class="modal-overlay" id="appConfirmModal" role="dialog" aria-modal="true" aria-labelledby="appConfirmTitle">
     <div class="modal confirm-modal">
         <div class="modal-header">
@@ -17,7 +17,7 @@
         </div>
     </div>
 </div>
-<!-- Session timeout warning -->
+
 <div class="modal-overlay" id="sessionModal" role="alertdialog" aria-modal="true" aria-labelledby="sessionModalTitle" aria-describedby="sessionModalMsg">
     <div class="modal confirm-modal">
         <div class="modal-header">
@@ -220,7 +220,7 @@ window.addEventListener('pageshow', function (e) {
                 }
             })
             .catch(() => {
-                // Network error — safer to redirect to login.
+                
                 window.location.replace('<?= APP_URL ?>/login.php');
             });
     }

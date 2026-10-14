@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
            ->execute([$_POST['name'],$_POST['description']??null,$_POST['color']??'#3b82f6',(int)$_POST['cat_id']]);
         flash_set('success', 'Category updated.');
     }
-    redirect_self(); // Post/Redirect/Get
+    redirect_self(); 
 }
 
 ['success' => $success] = flash_pull();
@@ -68,7 +68,7 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
-<!-- Create Modal -->
+
 <div class="modal-overlay" id="createModal">
     <div class="modal" style="max-width:440px;">
         <div class="modal-header">
@@ -89,7 +89,7 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
-<!-- Edit Modal -->
+
 <div class="modal-overlay" id="editModal">
     <div class="modal" style="max-width:440px;">
         <div class="modal-header">

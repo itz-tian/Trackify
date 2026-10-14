@@ -1,8 +1,5 @@
 <?php
-/**
- * Trackify — Document View Modal Scripts & Folder-to-Zip Handler
- * Modular component extracted from document_view.php
- */
+
 defined('APP_NAME') or exit('Direct script access denied.');
 ?>
 <script src="<?= APP_URL ?>/assets/js/jszip.min.js"></script>
@@ -157,7 +154,7 @@ defined('APP_NAME') or exit('Direct script access denied.');
         }
     });
 
-    // Drag and drop into version modal dropzone
+    
     ['dragenter', 'dragover'].forEach(name => {
         verDropZone?.addEventListener(name, (e) => {
             e.preventDefault();

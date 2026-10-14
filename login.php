@@ -6,14 +6,14 @@ require_once __DIR__ . '/classes/Auth.php';
 $auth  = new Auth();
 $error = '';
 
-// Redirect if logged in
+
 if ($auth->isLoggedIn()) {
     prevent_browser_cache();
     header('Location: ' . APP_URL . '/dashboard.php', true, 303);
     exit;
 }
 
-// Prevent cache
+
 prevent_browser_cache();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 
 <div class="login-canvas">
-    <!-- Left Hero Half (Apple Dark Slate Panel) -->
+    
     <div class="login-left">
         <div class="left-top">
             <img src="<?= APP_URL ?>/assets/logo-light.png?v=<?= APP_VERSION ?>" alt="<?= APP_NAME ?>" class="brand-logo-img">
@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <!-- Right Form Half (Apple Clean White Panel) -->
+    
     <div class="login-right">
         <div class="login-form-box">
             <div class="mobile-brand-header">

@@ -1,8 +1,5 @@
 <?php
-/**
- * Trackify — Document Preview Scripts Loader
- * Modular component extracted from document_view.php
- */
+
 defined('APP_NAME') or exit('Direct script access denied.');
 
 if ($hasDiskFile) {

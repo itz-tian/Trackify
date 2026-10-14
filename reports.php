@@ -11,7 +11,7 @@ $userRole = $_SESSION['user_role'] ?? 'staff';
 $userId   = (int)($_SESSION['user_id'] ?? 0);
 $userDept = (int)($_SESSION['user_dept'] ?? 0);
 
-// Role scope: admins see everything; dept heads & staff see their department
+
 $scopeWhere = 'deleted_at IS NULL';
 $scopeParams = [];
 if ($userRole !== 'admin') {
@@ -19,12 +19,12 @@ if ($userRole !== 'admin') {
     $scopeParams[] = $userDept;
 }
 
-// By status
+
 $statusStmt = $db->prepare("SELECT status, COUNT(*) AS cnt FROM documents WHERE $scopeWhere GROUP BY status");
 $statusStmt->execute($scopeParams);
 $statusData = $statusStmt->fetchAll();
 
-// By category
+
 $catStmt = $db->prepare("
     SELECT c.name, c.color, COUNT(d.id) AS cnt
     FROM categories c 
@@ -35,7 +35,7 @@ $catStmt = $db->prepare("
 $catStmt->execute($scopeParams);
 $catData = $catStmt->fetchAll();
 
-// By department (admin sees all departments; staff/heads see their department)
+
 if ($userRole === 'admin') {
     $deptStmt = $db->query("
         SELECT dep.name, COUNT(d.id) AS cnt
@@ -56,7 +56,7 @@ if ($userRole === 'admin') {
     $deptData = $deptStmt->fetchAll();
 }
 
-// Monthly uploads
+
 $monthlyStmt = $db->prepare("
     SELECT DATE_FORMAT(MIN(created_at),'%b %Y') AS month, COUNT(*) AS cnt
     FROM documents
@@ -67,7 +67,7 @@ $monthlyStmt = $db->prepare("
 $monthlyStmt->execute($scopeParams);
 $monthlyData = $monthlyStmt->fetchAll();
 
-// Top uploaders
+
 if ($userRole === 'admin') {
     $topStmt = $db->query("
         SELECT CONCAT(u.first_name,' ',u.last_name) AS name, COUNT(d.id) AS cnt
@@ -88,7 +88,7 @@ if ($userRole === 'admin') {
     $topUsers = $topStmt->fetchAll();
 }
 
-// Overall totals
+
 $totalsStmt = $db->prepare("SELECT
     COUNT(*) AS total,
     SUM(status='draft') AS draft,
@@ -103,7 +103,7 @@ $totals = $totalsStmt->fetch();
 include __DIR__ . '/includes/header.php';
 ?>
 
-<!-- Consolidated Single Analytics Card -->
+
 <div class="card mb-24" style="background:var(--bg-card); border-radius:18px; border:1px solid var(--border-card); box-shadow:var(--shadow-card); overflow:hidden;">
     <div class="card-header" style="border-bottom:1px solid var(--border-hairline); padding:16px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
         <div style="min-width:240px; flex:1;">
@@ -119,7 +119,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 
     <div class="card-body" style="padding:22px;">
-        <!-- Top Metrics Row -->
+        
         <div class="overview-kpi-grid" style="margin-bottom:24px;">
             <div class="overview-kpi-item">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
@@ -182,9 +182,9 @@ include __DIR__ . '/includes/header.php';
             </div>
         </div>
 
-        <!-- Section 2: Status & Category Breakdowns -->
+        
         <div style="border-top:1px solid var(--border-hairline); padding-top:20px; display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:24px; margin-bottom:24px;">
-            <!-- Status Breakdown -->
+            
             <div style="background:var(--bg-card-subtle); border:1px solid var(--border-hairline); border-radius:14px; padding:18px;">
                 <div style="font-size:13.5px; font-weight:700; color:var(--text-primary); margin-bottom:14px; display:flex; align-items:center; gap:8px;">
                     <i data-lucide="pie-chart" style="width:16px; height:16px; color:var(--apple-blue);"></i> Documents by Status
@@ -217,7 +217,7 @@ include __DIR__ . '/includes/header.php';
                 </div>
             </div>
 
-            <!-- Category Breakdown -->
+            
             <div style="background:var(--bg-card-subtle); border:1px solid var(--border-hairline); border-radius:14px; padding:18px;">
                 <div style="font-size:13.5px; font-weight:700; color:var(--text-primary); margin-bottom:14px; display:flex; align-items:center; gap:8px;">
                     <i data-lucide="tags" style="width:16px; height:16px; color:var(--apple-purple);"></i> Documents by Category
@@ -247,9 +247,9 @@ include __DIR__ . '/includes/header.php';
             </div>
         </div>
 
-        <!-- Section 3: Monthly Trends & Top Contributors -->
+        
         <div style="border-top:1px solid var(--border-hairline); padding-top:20px; display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:24px;">
-            <!-- Monthly Uploads Chart -->
+            
             <div style="background:var(--bg-card-subtle); border:1px solid var(--border-hairline); border-radius:14px; padding:18px; display:flex; flex-direction:column; justify-content:space-between;">
                 <div style="font-size:13.5px; font-weight:700; color:var(--text-primary); margin-bottom:16px; display:flex; align-items:center; gap:8px;">
                     <i data-lucide="calendar" style="width:16px; height:16px; color:var(--apple-teal);"></i> Monthly Upload Trends (Last 6 Months)
@@ -270,7 +270,7 @@ include __DIR__ . '/includes/header.php';
                 </div>
             </div>
 
-            <!-- Top Contributors -->
+            
             <div style="background:var(--bg-card-subtle); border:1px solid var(--border-hairline); border-radius:14px; padding:18px;">
                 <div style="font-size:13.5px; font-weight:700; color:var(--text-primary); margin-bottom:14px; display:flex; align-items:center; gap:8px;">
                     <i data-lucide="award" style="width:16px; height:16px; color:var(--apple-orange);"></i> Top Contributors

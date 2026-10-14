@@ -1,6 +1,4 @@
-/* =========================================================
-   Trackify DMS — Fullscreen Login Theme (Apple Design System)
-   ========================================================= */
+
 
 *, *::before, *::after {
     box-sizing: border-box;
@@ -53,7 +51,7 @@ body {
     overflow-x: hidden;
 }
 
-/* ── Fullscreen Edge-to-Edge Container (No Card Framing) ── */
+
 .login-canvas {
     width: 100vw;
     min-height: 100vh;
@@ -65,7 +63,7 @@ body {
     box-shadow: none;
 }
 
-/* ── Left Hero Panel (Full Height Slate Gradient) ── */
+
 .login-left {
     width: 48%;
     min-width: 440px;
@@ -179,7 +177,7 @@ body {
     z-index: 1;
 }
 
-/* ── Right Form Panel (Full Height Clean White) ── */
+
 .login-right {
     flex: 1;
     background: #ffffff;
@@ -342,14 +340,10 @@ body {
     display: none;
 }
 
-/* ================================================================
-   RESPONSIVE — Tablet & Mobile (≤ 1180px)
-   Left hero panel is hidden. Smooth gradient pattern background
-   from cyan/teal (bottom-left) to deep blue/purple (top-right).
-   ================================================================ */
+
 @media (max-width: 1180px) {
 
-    /* PC-matching deep slate background with subtle upper-left blue glow */
+    
     html, body {
         background-color: #121214 !important;
         background-image: 
@@ -367,12 +361,12 @@ body {
         background: transparent !important;
     }
 
-    /* Remove left hero panel completely */
+    
     .login-left {
         display: none;
     }
 
-    /* Form container on tablet & mobile */
+    
     .login-right {
         flex: 1;
         min-height: 100vh;
@@ -395,7 +389,7 @@ body {
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
     }
 
-    /* Mobile & Tablet Brand Header: Logo + Trackify name underneath */
+    
     .mobile-brand-header {
         display: flex;
         flex-direction: column;
@@ -421,12 +415,12 @@ body {
         letter-spacing: -0.02em;
     }
 
-    /* Remove old pseudo-element logo if any */
+    
     .login-form-box::before {
         display: none !important;
     }
 
-    /* Title & subtitle inside form box */
+    
     .login-form-title {
         font-size: 26px;
         color: #ffffff;
@@ -444,13 +438,13 @@ body {
         line-height: 1.45;
     }
 
-    /* Field labels */
+    
     .field-label {
         color: rgba(255, 255, 255, 0.85);
         font-size: 12.5px;
     }
 
-    /* Inputs with glass effect */
+    
     .field-input {
         background: rgba(255, 255, 255, 0.12);
         border: 1px solid rgba(255, 255, 255, 0.2);
@@ -486,7 +480,7 @@ body {
         box-shadow: 0 6px 20px rgba(0, 113, 227, 0.55);
     }
 
-    /* Demo credentials */
+    
     .demo-credentials {
         background: rgba(255, 255, 255, 0.08);
         border-color: rgba(255, 255, 255, 0.14);
@@ -497,7 +491,7 @@ body {
         color: #ffffff;
     }
 
-    /* Error alert */
+    
     .alert-error {
         background: rgba(239, 68, 68, 0.2);
         border-color: rgba(239, 68, 68, 0.4);
@@ -505,7 +499,7 @@ body {
     }
 }
 
-/* Phones */
+
 @media (max-width: 480px) {
     .login-right {
         padding: 36px 16px 44px;

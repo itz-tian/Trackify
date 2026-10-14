@@ -1,12 +1,9 @@
 <?php
-/**
- * Trackify — Document View Modals (Status, New Version, Edit Details)
- * Modular component extracted from document_view.php
- */
+
 defined('APP_NAME') or exit('Direct script access denied.');
 ?>
 
-<!-- ── Apple Sheet Modal for Status Override ── -->
+
 <div class="modal-overlay" id="statusModal">
     <div class="modal">
         <div class="modal-header">
@@ -35,7 +32,7 @@ defined('APP_NAME') or exit('Direct script access denied.');
     </div>
 </div>
 
-<!-- ── Apple Sheet Modal for Uploading New Version ── -->
+
 <div class="modal-overlay" id="versionModal">
     <div class="modal">
         <div class="modal-header">
@@ -60,12 +57,12 @@ defined('APP_NAME') or exit('Direct script access denied.');
                     </div>
                     <div id="verFolderHint" class="text-muted text-sm" style="display:none; margin-top:9px;"></div>
 
-                    <!-- Progress indicator while zipping folder -->
+                    
                     <div id="verZipProgress" style="display:none; margin-top:12px; font-size:12.5px; color:var(--apple-blue); font-weight:500;">
                         <i data-lucide="loader-circle" class="icon-spin"></i> Compressing folder into ZIP archive…
                     </div>
 
-                    <!-- Selected file preview capsule -->
+                    
                     <div id="verFilePreview" style="display:none; margin-top:12px; align-items:center; justify-content:center; gap:8px;">
                         <span style="display:inline-flex; align-items:center; gap:6px; background:rgba(0,113,227,0.12); color:var(--apple-blue); font-weight:600; font-size:12px; padding:5px 12px; border-radius:var(--radius-pill);">
                             <i data-lucide="file-check"></i> <span id="verFileName">File</span> (<span id="verFileSize">0 KB</span>)
@@ -103,7 +100,7 @@ defined('APP_NAME') or exit('Direct script access denied.');
     </div>
 </div>
 
-<!-- ── Apple Sheet Modal for Editing Metadata ── -->
+
 <div class="modal-overlay" id="editModal">
     <div class="modal" style="max-width:540px;">
         <div class="modal-header">

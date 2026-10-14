@@ -23,7 +23,7 @@ class Document {
         $this->versioning = new DocumentVersioning($this->db, $this->auth, $this->notifier);
     }
 
-    // ── Upload Delegations ─────────────────────────────────
+    
     public function upload(array $data, array $file): array {
         return $this->uploader->upload($data, $file);
     }
@@ -32,7 +32,7 @@ class Document {
         return $this->uploader->uploadBatch($data, $files);
     }
 
-    // ── Workflow Delegations ───────────────────────────────
+    
     public function updateStatus(int $id, string $status, ?string $remarks = null): array {
         return $this->workflow->updateStatus($id, $status, $remarks);
     }
@@ -41,13 +41,13 @@ class Document {
         return $this->workflow->cancelSubmission($id);
     }
 
-    // ── Versioning Delegations ─────────────────────────────
+    
     public function uploadVersion(int $id, array $file, ?string $notes = null, ?string $newStatus = null): array {
         $doc = $this->getById($id);
         return $this->versioning->uploadVersion($id, $file, $notes, $newStatus, $doc);
     }
 
-    // ── Get All (with filters & search) ────────────────────
+    
     public function getAll(array $filters = [], int $page = 1, int $perPage = 15): array {
         $where  = ['1=1'];
         $params = [];
@@ -56,7 +56,7 @@ class Document {
 
         if (!empty($filters['status'])) {
             if ($filteringArchived) {
-                // Show archived-status docs OR soft-deleted docs (they're all "archived")
+                
                 $where[] = "(d.status = 'archived' OR d.deleted_at IS NOT NULL)";
             } else {
                 $where[] = 'd.status = ?'; $params[] = $filters['status'];
@@ -101,9 +101,9 @@ class Document {
         }
 
         if ($filteringArchived) {
-            // No deleted_at filter — we want both soft-deleted and status=archived rows
+            
         } else {
-            // Normal listing: hide soft-deleted AND hide archived-status docs
+            
             $where[] = 'd.deleted_at IS NULL';
             $where[] = "d.status != 'archived'";
         }
@@ -144,7 +144,7 @@ class Document {
         ];
     }
 
-    // ── Get Single ─────────────────────────────────────────
+    
     public function getById(int $id): ?array {
         $stmt = $this->db->prepare("
             SELECT d.*, c.name AS category_name, c.color AS category_color,
@@ -177,7 +177,7 @@ class Document {
         return $doc;
     }
 
-    // ── Update Document Metadata ────────────────────────────
+    
     public function update(int $id, array $data): array {
         $doc = $this->getById($id);
         if (!$doc) {
@@ -233,7 +233,7 @@ class Document {
         return ['success' => true];
     }
 
-    // ── Delete / Trash / Lifecycle ─────────────────────────
+    
     public function delete(int $id): array {
         $doc = $this->getById($id);
         if (!$doc) return ['success' => false, 'message' => 'Document not found.'];
@@ -275,7 +275,7 @@ class Document {
         if ((int)$doc['uploaded_by'] !== $userId && $userRole !== 'admin' && !$isDeptHead) {
             return ['success' => false, 'message' => 'Permission denied.'];
         }
-        // Restore: clear soft-delete fields and reset status to draft
+        
         $this->db->prepare("UPDATE documents SET deleted_at = NULL, deleted_by = NULL, status = 'draft', updated_at = NOW() WHERE id = ?")->execute([$id]);
         $this->auth->logActivity($_SESSION['user_id'], $id, 'restore', "Restored document: {$doc['title']}");
         return ['success' => true];
@@ -305,7 +305,7 @@ class Document {
         $role = $_SESSION['user_role'] ?? 'staff';
         $userId = (int)($_SESSION['user_id'] ?? 0);
         $dept = (int)($_SESSION['user_dept'] ?? 0);
-        // Include both soft-deleted docs AND docs with status='archived'
+        
         $where = "(d.deleted_at IS NOT NULL OR d.status = 'archived')"; $params = [];
         if ($role === 'staff' || $role === 'viewer') {
             $where .= ' AND d.uploaded_by = ?'; $params[] = $userId;
@@ -329,7 +329,7 @@ class Document {
         return ['documents'=>$stmt->fetchAll(), 'total'=>$total, 'pages'=>ceil($total/$perPage), 'current_page'=>$page];
     }
 
-    // ── Export CSV ─────────────────────────────────────────
+    
     public function exportCsv(array $filters = []): void {
         $result = $this->getAll($filters, 1, 100000);
         $filename = 'documents-export-' . date('Y-m-d-His') . '.csv';
@@ -360,7 +360,7 @@ class Document {
         exit;
     }
 
-    // ── Sub-resource Queries ───────────────────────────────
+    
     private function getVersions(int $docId): array {
         $stmt = $this->db->prepare("
             SELECT dv.*, CONCAT(u.first_name,' ',u.last_name) AS uploaded_by_name
@@ -391,7 +391,7 @@ class Document {
         return $stmt->fetchAll();
     }
 
-    // ── Dashboard Statistics ───────────────────────────────
+    
     public function getStats(): array {
         $role   = $_SESSION['user_role']  ?? 'staff';
         $userId = (int)($_SESSION['user_id']   ?? 0);

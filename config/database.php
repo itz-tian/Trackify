@@ -24,22 +24,22 @@ class Database {
                     $portPart = defined('DB_PORT') && DB_PORT ? ";port=" . DB_PORT : "";
                     $dsn = "mysql:host={$host}{$portPart};dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
                     $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-                    // Disable ONLY_FULL_GROUP_BY for session to ensure cross-version MySQL 8 compatibility
+                    
                     try {
                         $pdo->exec("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
                         $pdo->exec("SET time_zone = '+08:00'");
                     } catch (Throwable $ignored) {}
 
-                    // Check if schema is already applied (users table must exist).
-                    // On Railway, the 'railway' DB already exists so error 1049 never fires —
-                    // we must detect an empty DB here and seed it ourselves.
+                    
+                    
+                    
                     $tableCheck = $pdo->query("SHOW TABLES LIKE 'users'")->fetchColumn();
                     if ($tableCheck === false) {
                         $schemaPath = __DIR__ . '/../database/schema.sql';
                         if (file_exists($schemaPath)) {
                             $sql = file_get_contents($schemaPath);
                             $sql = preg_replace('/^\s*--.*$/m', '', $sql);
-                            // Strip CREATE DATABASE and USE statements — the DB already exists on Railway
+                            
                             $sql = preg_replace('/^\s*(CREATE\s+DATABASE|USE)\s+[^\n;]+;?\s*$/im', '', $sql);
                             $statements = array_filter(array_map('trim', explode(';', $sql)));
                             foreach ($statements as $stmt) {
@@ -53,7 +53,7 @@ class Database {
                 } catch (PDOException $e) {
                     $lastException = $e;
 
-                    // DB missing; auto-init from schema.sql
+                    
                     if ($e->getCode() == 1049) {
                         try {
                             $serverPdo = new PDO("mysql:host={$host};charset=" . DB_CHARSET, DB_USER, DB_PASS, $options);
@@ -63,20 +63,20 @@ class Database {
                             $schemaPath = __DIR__ . '/../database/schema.sql';
                             if (file_exists($schemaPath)) {
                                 $sql = file_get_contents($schemaPath);
-                                // Remove full-line SQL comments before splitting statements. Otherwise a
-                                // comment preceding CREATE TABLE can cause the entire statement to be skipped.
+                                
+                                
                                 $sql = preg_replace('/^\s*--.*$/m', '', $sql);
                                 $statements = array_filter(array_map('trim', explode(';', $sql)));
                                 foreach ($statements as $stmt) {
                                     if ($stmt !== '') {
-                                        // Do not silently ignore schema errors; a partial schema is worse
-                                        // than a visible setup failure.
+                                        
+                                        
                                         $serverPdo->exec($stmt);
                                     }
                                 }
                             }
 
-                            // Reconnect to new DB
+                            
                             $portPart2 = defined('DB_PORT') && DB_PORT ? ";port=" . DB_PORT : "";
                             $dsn = "mysql:host={$host}{$portPart2};dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
                             self::$instance = new PDO($dsn, DB_USER, DB_PASS, $options);

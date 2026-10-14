@@ -1,7 +1,4 @@
-/* ============================================================
-   DARK MODE — Apple Design Tokens
-   Applied when <html data-theme="dark">
-============================================================ */
+
 [data-theme="dark"] {
     --bg-body:           #000000;
     --bg-card:           #1c1c1e;
@@ -38,7 +35,7 @@
 [data-theme="dark"] body { background: var(--bg-body); color: var(--text-primary); }
 [data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); }
 
-/* Topbar */
+
 [data-theme="dark"] .topbar {
     background: rgba(28, 28, 30, 0.88);
     border-bottom-color: rgba(255, 255, 255, 0.08);
@@ -57,7 +54,7 @@
 [data-theme="dark"] .menu-btn { color: var(--text-primary); }
 [data-theme="dark"] .menu-btn:hover { background: rgba(255, 255, 255, 0.08); }
 
-/* Cards */
+
 [data-theme="dark"] .card { background: var(--bg-card); border-color: var(--border-card); box-shadow: var(--shadow-card); }
 [data-theme="dark"] .card-header { border-bottom-color: rgba(255, 255, 255, 0.08); }
 [data-theme="dark"] .stat-card { background: var(--bg-card); border-color: var(--border-card); }
@@ -65,21 +62,21 @@
 [data-theme="dark"] .overview-kpi-item { background: var(--bg-card-subtle); border-color: rgba(255, 255, 255, 0.08); }
 [data-theme="dark"] .overview-secondary-row { border-top-color: rgba(255, 255, 255, 0.08); }
 
-/* Telemetry */
+
 [data-theme="dark"] .telemetry-teal   { background: rgba(100, 210, 255, 0.08); border-color: rgba(100, 210, 255, 0.2); }
 [data-theme="dark"] .telemetry-indigo { background: rgba(125, 122, 255, 0.08); border-color: rgba(125, 122, 255, 0.2); }
 [data-theme="dark"] .telemetry-orange { background: rgba(255, 159, 10, 0.08);  border-color: rgba(255, 159, 10, 0.2); }
 
-/* Top Dept */
+
 [data-theme="dark"] .top-dept-card { background: var(--bg-card-subtle); border-color: rgba(255, 255, 255, 0.08); }
 [data-theme="dark"] .top-dept-card:hover { background: #2c2c2e; box-shadow: var(--shadow-subtle); }
 
-/* Tables */
+
 [data-theme="dark"] th { background: #252528; color: var(--text-secondary); border-bottom-color: rgba(255, 255, 255, 0.08); }
 [data-theme="dark"] td { border-bottom-color: rgba(255, 255, 255, 0.05); color: var(--text-primary); }
 [data-theme="dark"] tr:hover td { background: rgba(255, 255, 255, 0.03); }
 
-/* Badges */
+
 [data-theme="dark"] .badge-draft    { background: #3a3a3c; color: #ebebf5; }
 [data-theme="dark"] .badge-pending  { background: rgba(255, 159, 10, 0.16); color: #ff9f0a; }
 [data-theme="dark"] .badge-review   { background: rgba(10, 132, 255, 0.16); color: #0a84ff; }
@@ -87,11 +84,11 @@
 [data-theme="dark"] .badge-rejected { background: rgba(255, 69, 58, 0.16);  color: #ff453a; }
 [data-theme="dark"] .badge-archived { background: #3a3a3c; color: #86868b; }
 
-/* Buttons */
+
 [data-theme="dark"] .btn-outline { background: rgba(255, 255, 255, 0.06); color: var(--text-primary); border-color: rgba(255, 255, 255, 0.12); }
 [data-theme="dark"] .btn-outline:hover { background: rgba(255, 255, 255, 0.10); }
 
-/* Form Controls */
+
 [data-theme="dark"] input[type=text],
 [data-theme="dark"] input[type=email],
 [data-theme="dark"] input[type=password],
@@ -131,7 +128,7 @@
 [data-theme="dark"] select optgroup { color-scheme: dark; }
 [data-theme="dark"] .form-group select option { color: #f5f5f7 !important; background-color: #2c2c2e !important; }
 
-/* Filter Date Wrap */
+
 [data-theme="dark"] .filter-date-wrap {
     background-color: #2c2c2e;
     border-color: rgba(255, 255, 255, 0.12);
@@ -149,27 +146,27 @@
     background: transparent !important;
 }
 
-/* Dropzone */
+
 [data-theme="dark"] .apple-dropzone { border-color: rgba(10, 132, 255, 0.35); background: rgba(10, 132, 255, 0.04); }
 [data-theme="dark"] .apple-dropzone:hover,
 [data-theme="dark"] .apple-dropzone.dragover { border-color: #0a84ff; background: rgba(10, 132, 255, 0.10); }
 
-/* Alerts */
+
 [data-theme="dark"] .alert-success { background: rgba(48, 209, 88, 0.12);  color: #30d158; border-color: rgba(48, 209, 88, 0.25); }
 [data-theme="dark"] .alert-danger  { background: rgba(255, 69, 58, 0.12);  color: #ff453a; border-color: rgba(255, 69, 58, 0.25); }
 [data-theme="dark"] .alert-warning { background: rgba(255, 159, 10, 0.12); color: #ff9f0a; border-color: rgba(255, 159, 10, 0.25); }
 [data-theme="dark"] .alert-info    { background: rgba(10, 132, 255, 0.12); color: #0a84ff; border-color: rgba(10, 132, 255, 0.25); }
 
-/* Modals */
+
 [data-theme="dark"] .modal { background: #1c1c1e; border-color: rgba(255, 255, 255, 0.1); }
 [data-theme="dark"] .modal-overlay { background: rgba(0, 0, 0, 0.6); }
 [data-theme="dark"] .modal-close { background: rgba(255, 255, 255, 0.08); color: var(--text-secondary); }
 [data-theme="dark"] .modal-close:hover { background: rgba(255, 255, 255, 0.14); color: var(--text-primary); }
 
-/* Sidebar backdrop */
+
 [data-theme="dark"] .sidebar-backdrop { background: rgba(0, 0, 0, 0.7); }
 
-/* Theme Switcher Popover */
+
 .theme-popover-wrapper { position: relative; }
 
 .theme-popover {
@@ -220,14 +217,14 @@
 [data-theme="dark"] .theme-popover { background: #2c2c2e; border-color: rgba(255, 255, 255, 0.1); }
 [data-theme="dark"] .theme-popover-item:hover { background: rgba(255, 255, 255, 0.07); }
 
-/* Notification List Items */
+
 .notif-item { background: transparent; }
 .notif-item:hover { background: var(--bg-card-subtle); }
 .notif-item-unread { background: rgba(0, 113, 227, 0.04); }
 [data-theme="dark"] .notif-item-unread { background: rgba(10, 132, 255, 0.07); }
 [data-theme="dark"] .notif-item:hover { background: rgba(255, 255, 255, 0.04); }
 
-/* ── Sidebar Dark Mode ─────────────────────────────────────── */
+
 [data-theme="dark"] .sidebar {
     background: var(--sidebar-bg);
     border-right-color: var(--sidebar-border);

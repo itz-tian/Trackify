@@ -18,7 +18,7 @@ $params = [];
 if ($search) { $where[]='al.description LIKE ?'; $params[]='%'.$search.'%'; }
 if ($userId) { $where[]='al.user_id = ?'; $params[]=$userId; }
 if ($action) { $where[]='al.action = ?'; $params[]=$action; }
-// Who may see whose activity: admin = everyone, department head = their department, staff/viewer = only themselves.
+
 $myRole = $_SESSION['user_role'] ?? 'staff';
 $myDept = (int)($_SESSION['user_dept'] ?? 0);
 if ($myRole === 'department_head') {
@@ -65,7 +65,7 @@ $actionColors = [
 include __DIR__ . '/includes/header.php';
 ?>
 
-<!-- Filters -->
+
 <div class="card mb-16">
     <div class="card-body" style="padding:14px;">
         <form method="GET" class="filter-form">
@@ -136,7 +136,7 @@ include __DIR__ . '/includes/header.php';
             </tbody>
         </table>
     </div>
-    <!-- Pagination -->
+    
     <?php if (ceil($total/$perPage)>1): ?>
     <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;">
         <?php for ($p=1;$p<=ceil($total/$perPage);$p++): ?>

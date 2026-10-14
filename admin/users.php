@@ -7,7 +7,7 @@ $auth = new Auth();
 $auth->requireRole(['admin']);
 $db   = Database::getInstance();
 
-// Handle CRUD
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_csrf_token();
     $action = $_POST['action'] ?? '';
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db->prepare("DELETE FROM users WHERE id=?")->execute([(int)$_POST['user_id']]);
         flash_set('success', 'User deleted.');
     }
-    redirect_self(); // Post/Redirect/Get
+    redirect_self(); 
 }
 
 ['success' => $success, 'error' => $error] = flash_pull();
@@ -116,7 +116,7 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
-<!-- Create User Modal -->
+
 <div class="modal-overlay" id="createModal">
     <div class="modal">
         <div class="modal-header">

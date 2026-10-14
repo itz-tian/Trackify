@@ -15,7 +15,7 @@ class Auth {
     public function login(string $email, string $password): array {
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-        // Rate limit: 5 / 15m
+        
         try {
             $lockStmt = $this->db->prepare("
                 SELECT COUNT(*) FROM login_attempts 
@@ -45,13 +45,13 @@ class Auth {
             try {
                 $recordStmt = $this->db->prepare("INSERT INTO login_attempts (email, ip_address) VALUES (?, ?)");
                 $recordStmt->execute([$email, $ip]);
-                // housekeeping: forget attempts older than a day
+                
                 $this->db->exec("DELETE FROM login_attempts WHERE attempted_at < DATE_SUB(NOW(), INTERVAL 1 DAY)");
             } catch (Throwable $e) {}
 
-            usleep(300000); // small delay makes password guessing slower
+            usleep(300000); 
 
-            $left = max(0, 4 - $failedCount); // this failure counts too: lockout happens at 5
+            $left = max(0, 4 - $failedCount); 
             $msg  = 'Invalid email or password.';
             if ($left > 0 && $left <= 2) {
                 $msg .= " {$left} attempt" . ($left === 1 ? '' : 's') . ' left before a 15-minute lockout.';
@@ -59,13 +59,13 @@ class Auth {
             return ['success' => false, 'message' => $msg];
         }
 
-        // Clear attempts
+        
         try {
             $clearStmt = $this->db->prepare("DELETE FROM login_attempts WHERE email = ? OR ip_address = ?");
             $clearStmt->execute([$email, $ip]);
         } catch (Throwable $e) {}
 
-        // Prevent session fixation
+        
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_regenerate_id(true);
         }
@@ -97,10 +97,7 @@ class Auth {
         
     }
 
-    /**
-     * @param bool $touch  true = count this request as activity (resets the idle timer);
-     *                     false = just look (used by the session-timeout warning).
-     */
+    
     public function isLoggedIn(bool $touch = true): bool {
         if (empty($_SESSION['user_id']) || !is_numeric($_SESSION['user_id'])) {
             return false;
@@ -117,7 +114,7 @@ class Auth {
         return true;
     }
 
-    /** Seconds until the idle timeout fires (0 when not logged in). */
+    
     public function secondsLeft(): int {
         if (empty($_SESSION['user_id'])) return 0;
         $now  = time();

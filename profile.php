@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!preg_match("/^[a-zA-Z\s'-]+$/", $firstName) || !preg_match("/^[a-zA-Z\s'-]+$/", $lastName)) {
                 flash_set('error', 'First name and Last name must contain only letters (no numbers or symbols).');
             } else {
-                // Email duplicate check
+                
                 $check = $db->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
                 $check->execute([$email, $user['id']]);
                 if ($check->fetch()) {
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash_set('success', 'Password changed successfully.');
         }
     }
-    redirect_self(); // Post/Redirect/Get
+    redirect_self(); 
 }
 
 ['success' => $success, 'error' => $error] = flash_pull();
@@ -67,7 +67,7 @@ include __DIR__ . '/includes/header.php';
     <?php if ($success): ?><div class="alert alert-success"><i data-lucide="circle-check"></i> <?= htmlspecialchars($success) ?></div><?php endif; ?>
     <?php if ($error): ?><div class="alert alert-danger"><i data-lucide="circle-alert"></i> <?= htmlspecialchars($error) ?></div><?php endif; ?>
 
-    <!-- User Profile Card -->
+    
     <div class="card mb-16">
         <div class="card-header">
             <span class="card-title"><i data-lucide="circle-user-round" style="color:var(--primary);margin-right:8px;"></i>My Profile</span>
@@ -107,7 +107,7 @@ include __DIR__ . '/includes/header.php';
         </div>
     </div>
 
-    <!-- Password Change Card -->
+    
     <div class="card">
         <div class="card-header">
             <span class="card-title"><i data-lucide="key-round" style="color:var(--accent);margin-right:8px;"></i>Change Password</span>

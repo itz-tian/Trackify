@@ -16,8 +16,8 @@ class DocumentNotification {
         $uploaderId = (int)$docData['uploaded_by'];
         $deptId = !empty($docData['department_id']) ? (int)$docData['department_id'] : null;
 
-        // System Admin has full approval authority. Department heads also receive
-        // approval requests for documents belonging to their department.
+        
+        
         $approvers = $this->db->prepare("
             SELECT id FROM users
             WHERE is_active = 1
@@ -27,7 +27,7 @@ class DocumentNotification {
         $approvers->execute([$uploaderId, $deptId]);
         $approverList = $approvers->fetchAll();
 
-        // Get already assigned workflows for this document
+        
         $existing = $this->db->prepare("SELECT id, approver_id, status FROM approval_workflows WHERE document_id = ?");
         $existing->execute([$docId]);
         $existingWorkflows = [];
@@ -38,7 +38,7 @@ class DocumentNotification {
         foreach ($approverList as $approver) {
             $apId = (int)$approver['id'];
             if (isset($existingWorkflows[$apId])) {
-                // If previous workflow was concluded (e.g. rejected or skipped), reset it to pending for the new review cycle
+                
                 if ($existingWorkflows[$apId]['status'] !== 'pending') {
                     $this->db->prepare("
                         UPDATE approval_workflows 

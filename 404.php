@@ -1,5 +1,5 @@
 <?php
-// 404 — friendly error page. Works when included by render_error_page() and when served by Apache (ErrorDocument).
+
 if (!defined('APP_URL')) { require_once __DIR__ . '/config/config.php'; }
 if (!headers_sent()) { http_response_code(404); }
 ?><!DOCTYPE html>
